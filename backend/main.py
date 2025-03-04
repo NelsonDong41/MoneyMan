@@ -1,6 +1,6 @@
 import os
 from typing import Optional
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Response
 from schemas import Receipt, Item
 from supabase import create_client, Client
 from dotenv import load_dotenv
@@ -75,25 +75,84 @@ class SignInBody(BaseModel):
 
 
 @app.post("/signin")
-async def signin(request: Request):
+async def signin(request: Request, response: Response):
     body = SignInBody(**(await request.json()))
 
     try:
-        response = supabase.auth.sign_in_with_password(
+        supabase_response = supabase.auth.sign_in_with_password(
             {"email": body.email, "password": body.password}
         )
-        return response
+
+        if supabase_response.user:
+            refresh_token = supabase_response.session.refresh_token
+            access_token = supabase_response.session.access_token
+            expires_at = supabase_response.session.expires_at
+            expires_in = supabase_response.session.expires_in
+
+            # Set refresh token in HttpOnly cookie
+            response.set_cooki(
+                key="refresh_token",
+                value=refresh_token,
+                httponly=True,
+                secure=True,
+                samesite="strict",
+            )
+            response.status_code = 200
+
+            return {
+                "access_token": access_token,
+                "expires_in": expires_in,
+                "expires_at": expires_at,
+            }
+        else:
+            response.status_code = 401
+            return {"error": "Authentication failed"}
     except Exception as e:
         raise HTTPException(status_code=401, detail="Authentication failed")
 
 
 @app.post("/signout")
-async def signout(_: Request):
+async def signout(_: Request, response: Response):
     try:
         supabase.auth.sign_out()
+        response.delete_cookie("refresh_token")
+
         return {"message": "signed out"}
     except Exception as e:
         raise HTTPException(status_code=401, detail="Authentication failed")
+
+
+@app.post("/refresh")
+async def refresh_token(request: Request, response: Response):
+    refresh_token = request.cookies.get("refresh_token")
+    if not refresh_token:
+        response.status_code = 401
+        return {"error": "No refresh token provided"}
+
+    try:
+        auth_response = supabase.auth.refresh_session(refresh_token)
+        access_token = auth_response.session.access_token
+        refresh_token = auth_response.session.refresh_token
+        expires_at = auth_response.session.expires_at
+        expires_in = auth_response.session.expires_in
+
+        # Update refresh token cookie
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            httponly=True,
+            secure=True,
+            samesite="strict",
+        )
+
+        return {
+            "access_token": access_token,
+            "expires_at": expires_at,
+            "expires_in": expires_in,
+        }
+    except Exception as e:
+        response.status_code = 401
+        return {"error": "Invalid or expired refresh token"}
 
 
 @app.get("/items")
