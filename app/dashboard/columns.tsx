@@ -32,6 +32,7 @@ export const columns: ColumnDef<Receipt>[] = [
       <Checkbox
         checked={row.getIsSelected()}
         onCheckedChange={(value) => row.toggleSelected(!!value)}
+        onClick={(e) => e.stopPropagation()}
         aria-label="Select row"
       />
     ),
@@ -156,8 +157,7 @@ export const columns: ColumnDef<Receipt>[] = [
                 Copy Receipt info
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>View customer</DropdownMenuItem>
-              <DropdownMenuItem>View payment details</DropdownMenuItem>
+              <DropdownMenuItem>View Receipt Image</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
