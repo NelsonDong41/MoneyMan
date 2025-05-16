@@ -1,13 +1,34 @@
 import { createClient } from "@/utils/supabase/server";
 import { columns } from "./columns";
 import { DataTable } from "./data-table";
-import { Receipt } from "@/utils/supabase/supabase";
+import { Category, Receipt } from "@/utils/supabase/supabase";
 
-async function getData(): Promise<Receipt[]> {
+export type TableData = {
+  receipt: Receipt[];
+  category: Category[];
+};
+
+async function getData(): Promise<TableData> {
   const supabase = await createClient();
 
-  const { data, error } = await supabase.from("Receipt").select("*");
-  return data as Receipt[];
+  const { data: receiptData, error: receiptError } = await supabase
+    .from("Receipt")
+    .select("*, category(category)");
+
+  const { data: categoryData, error: categoryError } = await supabase
+    .from("Category")
+    .select("*");
+
+  console.log(receiptData);
+
+  if (receiptError || categoryError) {
+    throw new Error("WHUASHJDJSAD");
+  }
+
+  return {
+    receipt: receiptData as Receipt[],
+    category: categoryData.map((entry) => entry.category) as Category[],
+  };
 }
 
 export default async function Dashboard() {

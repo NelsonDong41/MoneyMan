@@ -58,6 +58,13 @@ export const columns: ColumnDef<Receipt>[] = [
     ),
   },
   {
+    id: "category",
+    accessorKey: "category.category",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Category" />
+    ),
+  },
+  {
     accessorKey: "subtotal",
     header: ({ column }) => (
       <DataTableColumnHeader

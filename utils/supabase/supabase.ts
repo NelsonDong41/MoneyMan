@@ -1,26 +1,33 @@
 export type Entry = {
-  id: String;
-  created_at?: String;
-  name?: String;
-  quantity?: Number;
-  value?: Number;
+  id: string;
+  created_at?: string;
+  name?: string;
+  quantity?: number;
+  value?: number;
 };
 
+export enum Category {
+  Food = "FOOD",
+  Rent = "Rent",
+  Subscription = "Subscription",
+}
+
 export type Receipt = {
-  id: String;
-  created_at: String;
-  merchant: String;
-  receipt: String;
-  notes?: String;
-  date?: String;
-  subtotal: Number;
-  tax: Number;
-  tip: Number;
-  total: Number;
-  user_id?: String;
+  id: string;
+  created_at: string;
+  merchant: string;
+  receipt: string;
+  notes?: string;
+  date?: string;
+  subtotal: number;
+  tax: number;
+  tip: number;
+  total: number;
+  user_id?: string;
+  category: { category: Category };
 };
 
 export type ReceiptToEntries = {
-  entry_id: String;
-  receipt_id: String;
+  entry_id: string;
+  receipt_id: string;
 };
