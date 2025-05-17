@@ -1,7 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal } from "lucide-react";
+import { Loader2, MoreHorizontal } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,8 +14,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { DataTableColumnHeader } from "@/components/ui/table";
 import { Receipt } from "@/utils/supabase/supabase";
+import { SheetContext } from "./data-table";
+import DeleteAlert from "./deleteAlert";
+import { useState } from "react";
 
-export const columns: ColumnDef<Receipt>[] = [
+export const columns = (
+  loadingRows: Set<string>,
+  sheetContext: SheetContext
+): ColumnDef<Receipt>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -28,14 +34,24 @@ export const columns: ColumnDef<Receipt>[] = [
         aria-label="Select all"
       />
     ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        onClick={(e) => e.stopPropagation()}
-        aria-label="Select row"
-      />
-    ),
+    cell: ({ row }) => {
+      const isLoading = loadingRows.has(row.id);
+      return (
+        <div className="flex items-center justify-center w-fit h-fit">
+          {isLoading ? (
+            <Loader2 className="animate-spin w-4 h-4 text-muted-foreground" />
+          ) : (
+            <Checkbox
+              className="w-4 h-4 text-muted-foreground"
+              checked={row.getIsSelected()}
+              onCheckedChange={(value) => row.toggleSelected(!!value)}
+              onClick={(e) => e.stopPropagation()}
+              aria-label="Select row"
+            />
+          )}
+        </div>
+      );
+    },
     enableSorting: false,
     enableHiding: false,
   },
@@ -144,9 +160,13 @@ export const columns: ColumnDef<Receipt>[] = [
     id: "actions",
     cell: ({ row }) => {
       const receipt = row.original;
+      const [deleteOpen, setDeleteOpen] = useState(false);
 
       return (
-        <div className="flex justify-center">
+        <div
+          className="flex justify-center"
+          onClick={(e) => e.stopPropagation()}
+        >
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 w-8 p-0">
@@ -165,8 +185,17 @@ export const columns: ColumnDef<Receipt>[] = [
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem>View Receipt Image</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setDeleteOpen((prev) => !prev)}>
+                Delete
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          <DeleteAlert
+            showTrigger={false}
+            onOpenChange={setDeleteOpen}
+            open={deleteOpen}
+            action={() => sheetContext.deleteRow(receipt.id, receipt.user_id)}
+          />
         </div>
       );
     },

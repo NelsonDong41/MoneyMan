@@ -28,20 +28,32 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { DataTableViewOptions } from "@/components/ui/dataTableViewOptions";
-import TableSheet from "./tableSheet";
-import { Category, Receipt } from "@/utils/supabase/supabase";
+import TableSheet, { tableSheetSchema } from "./tableSheet";
+import { CategoryEnum, Receipt } from "@/utils/supabase/supabase";
 import { TableData } from "./page";
+import AddButton from "./addButton";
+import { z } from "zod";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
 
 interface DataTableProps<TValue> {
-  columns: ColumnDef<Receipt, TValue>[];
+  columns: (
+    loadingRows: Set<string>,
+    sheetContext: SheetContext
+  ) => ColumnDef<Receipt, TValue>[];
   data: TableData;
 }
 
 export type SheetContext = {
-  categories: Set<Category>;
+  categories: { [x in CategoryEnum]: number };
+  user?: string;
+  upsertRow: (values: z.infer<typeof tableSheetSchema>) => void;
+  deleteRow: (id: string, user_Id?: string) => void;
 };
 
 export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
+  const router = useRouter();
+  const [loadingRows, setLoadingRows] = React.useState<Set<string>>(new Set());
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -53,11 +65,86 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
       tax: false,
     });
   const [rowSelection, setRowSelection] = React.useState({});
-  const [sheetOpen, setSheetOpen] = React.useState<Row<Receipt> | null>(null);
+  const [activeSheetData, setActiveSheetData] = React.useState<Receipt | null>(
+    null
+  );
+
+  const upsertRow = async (values: z.infer<typeof tableSheetSchema>) => {
+    setLoadingRows((prev) => {
+      if (activeSheetData?.id) {
+        return new Set(prev).add(activeSheetData.id);
+      }
+      return prev;
+    });
+    const { data, error } = await createClient().from("Receipt").upsert(values);
+    console.log(data);
+    if (error) {
+      console.error("Error upserting receipt:", error);
+      return null;
+    }
+
+    setActiveSheetData(null);
+    router.refresh();
+    setLoadingRows((prev) => {
+      if (activeSheetData?.id) {
+        const newSet = new Set(prev);
+        newSet.delete(activeSheetData.id);
+        return newSet;
+      }
+      return prev;
+    });
+  };
+
+  const deleteRow = async (id: string) => {
+    setLoadingRows((prev) => {
+      if (activeSheetData?.id) {
+        return new Set(prev).add(activeSheetData.id);
+      }
+      return prev;
+    });
+    const { data: deleteData, error } = await createClient()
+      .from("Receipt")
+      .delete()
+      .match({ id, user_id: data.user?.id });
+
+    if (error) {
+      console.error("Error upserting receipt:", error);
+      return null;
+    }
+
+    setActiveSheetData(null);
+    router.refresh();
+    setLoadingRows((prev) => {
+      if (activeSheetData?.id) {
+        const newSet = new Set(prev);
+        newSet.delete(activeSheetData.id);
+        return newSet;
+      }
+      return prev;
+    });
+  };
+
+  const sheetContext: SheetContext = {
+    categories: Object.fromEntries(
+      data.category.map((c) => [c.category, c.id])
+    ) as SheetContext["categories"],
+    user: data.user?.id,
+    upsertRow,
+    deleteRow,
+  };
+
+  const handleTableCellClick = (row: Row<Receipt>) => {
+    setActiveSheetData(row.original);
+  };
+
+  const memoizedColumns = React.useMemo(
+    () => columns(loadingRows, sheetContext),
+    [loadingRows, sheetContext]
+  );
 
   const table = useReactTable({
     data: data.receipt,
-    columns,
+    columns: memoizedColumns,
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -74,19 +161,11 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
     },
   });
 
-  const sheetContext: SheetContext = {
-    categories: new Set(data.category),
-  };
-
-  const handleTableCellClick = (row: Row<Receipt>) => {
-    setSheetOpen(row);
-  };
-
   return (
     <div>
-      <div className="flex items-center py-4">
+      <div className="grid grid-cols-[7fr_1fr_1fr] items-center py-4 gap-4">
         <Input
-          placeholder="Filter Receipt..."
+          placeholder="Filter Receipts..."
           value={(table.getColumn("receipt")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
             table.getColumn("receipt")?.setFilterValue(event.target.value)
@@ -94,6 +173,7 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
           className="max-w-sm"
         />
         <DataTableViewOptions table={table} />
+        <AddButton sheetContext={sheetContext} />
       </div>
       <div className="rounded-md border">
         <Table>
@@ -138,7 +218,7 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={memoizedColumns.length}
                   className="h-24 text-center"
                 >
                   No results.
@@ -150,8 +230,9 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
       </div>
       <DataTablePagination table={table} />
       <TableSheet
-        sheetOpen={sheetOpen}
-        setSheetOpen={setSheetOpen}
+        isNewSheet={false}
+        activeSheetData={activeSheetData}
+        setActiveSheetData={setActiveSheetData}
         sheetContext={sheetContext}
       />
     </div>

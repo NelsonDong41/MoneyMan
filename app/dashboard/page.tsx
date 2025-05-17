@@ -2,10 +2,12 @@ import { createClient } from "@/utils/supabase/server";
 import { columns } from "./columns";
 import { DataTable } from "./data-table";
 import { Category, Receipt } from "@/utils/supabase/supabase";
+import { User } from "@supabase/supabase-js";
 
 export type TableData = {
   receipt: Receipt[];
   category: Category[];
+  user: User | null;
 };
 
 async function getData(): Promise<TableData> {
@@ -19,15 +21,19 @@ async function getData(): Promise<TableData> {
     .from("Category")
     .select("*");
 
-  console.log(receiptData);
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
-  if (receiptError || categoryError) {
+  if (receiptError || categoryError || userError) {
     throw new Error("WHUASHJDJSAD");
   }
 
   return {
     receipt: receiptData as Receipt[],
-    category: categoryData.map((entry) => entry.category) as Category[],
+    category: categoryData as Category[],
+    user,
   };
 }
 

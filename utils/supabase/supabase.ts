@@ -6,8 +6,9 @@ export type Entry = {
   value?: number;
 };
 
-export enum Category {
-  Food = "FOOD",
+export type Category = { id: number; category: CategoryEnum };
+export enum CategoryEnum {
+  Food = "Food",
   Rent = "Rent",
   Subscription = "Subscription",
 }
@@ -19,12 +20,12 @@ export type Receipt = {
   receipt: string;
   notes?: string;
   date?: string;
-  subtotal: number;
-  tax: number;
-  tip: number;
+  subtotal?: number;
+  tax?: number;
+  tip?: number;
   total: number;
   user_id?: string;
-  category: { category: Category };
+  category: { category: CategoryEnum | null };
 };
 
 export type ReceiptToEntries = {
