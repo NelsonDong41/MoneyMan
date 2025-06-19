@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/form";
 import { Receipt } from "@/utils/supabase/supabase";
 import { Row } from "@tanstack/react-table";
-import { SheetContext } from "./data-table";
+import { SheetAction, SheetContext } from "./data-table";
 import { useEffect } from "react";
 import CurrencyInput from "@/components/ui/currencyInput";
 import { z } from "zod";
@@ -93,12 +93,14 @@ type TableSheetType = {
   activeSheetData: Receipt | null;
   setActiveSheetData: (value: React.SetStateAction<Receipt | null>) => void;
   sheetContext: SheetContext;
+  sheetActions: SheetAction;
 };
 export default function TableSheet({
   isNewSheet,
   activeSheetData,
   setActiveSheetData,
   sheetContext,
+  sheetActions
 }: TableSheetType) {
   const form = useForm<z.infer<typeof tableSheetSchema>>({
     resolver: zodResolver(tableSheetSchema),
@@ -154,7 +156,7 @@ export default function TableSheet({
             <div className="flex flex-1 flex-col gap-4 overflow-y-auto py-4 text-sm">
               <Form {...form}>
                 <form
-                  onSubmit={form.handleSubmit(sheetContext.upsertRow)}
+                  onSubmit={form.handleSubmit(sheetActions.upsertRow)}
                   className="flex flex-col gap-4 p-1"
                 >
                   <FormField
@@ -323,8 +325,8 @@ export default function TableSheet({
                 <DeleteAlert
                   showTrigger={true}
                   action={() =>
-                    sheetContext.deleteRow(
-                      activeSheetData.id,
+                    sheetActions.deleteRows(
+                      [activeSheetData.id],
                       activeSheetData.user_id
                     )
                   }
@@ -332,7 +334,7 @@ export default function TableSheet({
               )}
               <Button
                 className="w-full"
-                onClick={form.handleSubmit(sheetContext.upsertRow)}
+                onClick={form.handleSubmit(sheetActions.upsertRow)}
               >
                 {isNewSheet ? "Create" : "Update"}
               </Button>

@@ -9,6 +9,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import { Dispatch, SetStateAction, useRef } from "react";
 
 type DeleteAlertProps = {
@@ -26,7 +27,14 @@ export default function DeleteAlert({
 }: DeleteAlertProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      {showTrigger && <AlertDialogTrigger>Delete</AlertDialogTrigger>}
+      {showTrigger &&
+        <AlertDialogTrigger asChild>
+          <Button variant={'destructive'} className="w-full">
+            Delete
+          </Button>
+        </AlertDialogTrigger>
+
+      }
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
@@ -47,6 +55,6 @@ export default function DeleteAlert({
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
-    </AlertDialog>
+    </AlertDialog >
   );
 }

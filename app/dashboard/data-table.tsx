@@ -15,6 +15,7 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
+  type Table as ReactTable,
 } from "@tanstack/react-table";
 
 import {
@@ -35,21 +36,25 @@ import AddButton from "./addButton";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
-
-interface DataTableProps<TValue> {
-  columns: (
-    loadingRows: Set<string>,
-    sheetContext: SheetContext
-  ) => ColumnDef<Receipt, TValue>[];
-  data: TableData;
-}
+import DeleteButton from "./deleteButton";
 
 export type SheetContext = {
   categories: { [x in CategoryEnum]: number };
   user?: string;
-  upsertRow: (values: z.infer<typeof tableSheetSchema>) => void;
-  deleteRow: (id: string, user_Id?: string) => void;
+  table: ReactTable<Receipt>;
 };
+export type SheetAction = {
+  upsertRow: (values: z.infer<typeof tableSheetSchema>) => void;
+  deleteRows: (ids: string[], user_Id?: string) => void;
+};
+
+interface DataTableProps<TValue> {
+  columns: (
+    loadingRows: Set<string>,
+    sheetActions: SheetAction
+  ) => ColumnDef<Receipt, TValue>[];
+  data: TableData;
+}
 
 export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
   const router = useRouter();
@@ -94,7 +99,7 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
     });
   };
 
-  const deleteRow = async (id: string) => {
+  const deleteRows = async (ids: string[]) => {
     setLoadingRows((prev) => {
       if (activeSheetData?.id) {
         return new Set(prev).add(activeSheetData.id);
@@ -104,7 +109,13 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
     const { data: deleteData, error } = await createClient()
       .from("Receipt")
       .delete()
-      .match({ id, user_id: data.user?.id });
+      .match({ user_id: data.user?.id })
+      .in("id", ids)
+      .select();
+
+    if (deleteData) {
+      console.log("Deleted rows:", deleteData);
+    }
 
     if (error) {
       console.error("Error upserting receipt:", error);
@@ -121,24 +132,21 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
       }
       return prev;
     });
-  };
-
-  const sheetContext: SheetContext = {
-    categories: Object.fromEntries(
-      data.category.map((c) => [c.category, c.id])
-    ) as SheetContext["categories"],
-    user: data.user?.id,
-    upsertRow,
-    deleteRow,
+    table.resetRowSelection();
   };
 
   const handleTableCellClick = (row: Row<Receipt>) => {
     setActiveSheetData(row.original);
   };
 
+  const sheetActions = {
+    upsertRow,
+    deleteRows,
+  };
+
   const memoizedColumns = React.useMemo(
-    () => columns(loadingRows, sheetContext),
-    [loadingRows, sheetContext]
+    () => columns(loadingRows, sheetActions),
+    [loadingRows, sheetActions]
   );
 
   const table = useReactTable({
@@ -160,6 +168,14 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
     },
   });
 
+  const sheetContext: SheetContext = {
+    categories: Object.fromEntries(
+      data.category.map((c) => [c.category, c.id])
+    ) as SheetContext["categories"],
+    user: data.user?.id,
+    table,
+  };
+
   return (
     <div>
       <div className="grid grid-cols-[7fr_1fr_1fr] items-center py-4 gap-4">
@@ -172,7 +188,14 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
           className="max-w-sm"
         />
         <DataTableViewOptions table={table} />
-        <AddButton sheetContext={sheetContext} />
+        {table.getIsSomeRowsSelected() || table.getIsAllRowsSelected() ? (
+          <DeleteButton
+            sheetContext={sheetContext}
+            sheetActions={sheetActions}
+          />
+        ) : (
+          <AddButton sheetContext={sheetContext} sheetActions={sheetActions} />
+        )}
       </div>
       <div className="rounded-md border">
         <Table>
@@ -233,6 +256,7 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
         activeSheetData={activeSheetData}
         setActiveSheetData={setActiveSheetData}
         sheetContext={sheetContext}
+        sheetActions={sheetActions}
       />
     </div>
   );

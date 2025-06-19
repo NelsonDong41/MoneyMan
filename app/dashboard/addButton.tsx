@@ -1,16 +1,17 @@
 import { Button } from "@/components/ui/button";
 import { Receipt } from "@/utils/supabase/supabase";
 import { PlusCircle } from "lucide-react";
-import { SheetContext } from "./data-table";
+import { SheetAction, SheetContext } from "./data-table";
 import TableSheet from "./tableSheet";
 import React from "react";
 import { v4 as uuidv4 } from "uuid";
 
-type AddButton = {
+type AddButtonProps = {
   sheetContext: SheetContext;
+  sheetActions: SheetAction;
 };
 
-export default function AddButton({ sheetContext }: AddButton) {
+export default function AddButton({ sheetContext, sheetActions }: AddButtonProps) {
   const defaultRow: Receipt = {
     id: uuidv4(),
     user_id: sheetContext.user,
@@ -41,6 +42,7 @@ export default function AddButton({ sheetContext }: AddButton) {
           setSheetOpen(false);
         }}
         sheetContext={sheetContext}
+        sheetActions={sheetActions}
       />
     </>
   );
