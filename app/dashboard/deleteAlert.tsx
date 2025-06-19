@@ -40,7 +40,6 @@ export default function DeleteAlert({
           <AlertDialogAction
             onClick={(e) => {
               e.preventDefault();
-              console.log("HERE");
               action();
             }}
           >

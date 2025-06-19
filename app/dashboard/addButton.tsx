@@ -38,7 +38,6 @@ export default function AddButton({ sheetContext }: AddButton) {
         isNewSheet={true}
         activeSheetData={sheetOpen ? defaultRow : null}
         setActiveSheetData={() => {
-          console.log("HERE");
           setSheetOpen(false);
         }}
         sheetContext={sheetContext}

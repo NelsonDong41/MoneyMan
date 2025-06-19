@@ -28,7 +28,6 @@ export const signUpAction = async (formData: FormData) => {
   });
 
   if (error) {
-    console.error(error.code + " " + error.message);
     return encodedRedirect("error", "/sign-up", error.message);
   } else {
     return encodedRedirect(
@@ -40,20 +39,21 @@ export const signUpAction = async (formData: FormData) => {
 };
 
 export const signInAction = async (formData: FormData) => {
+  ;
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
-  const supabase = await createClient();
+  const fromLocation = formData.get("fromLocation") as string;
 
+  const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
-
   if (error) {
     return encodedRedirect("error", "/sign-in", error.message);
   }
 
-  return redirect("/protected");
+  return redirect(fromLocation || "/protected");
 };
 
 export const forgotPasswordAction = async (formData: FormData) => {
@@ -71,7 +71,6 @@ export const forgotPasswordAction = async (formData: FormData) => {
   });
 
   if (error) {
-    console.error(error.message);
     return encodedRedirect(
       "error",
       "/forgot-password",

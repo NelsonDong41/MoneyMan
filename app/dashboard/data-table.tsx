@@ -77,7 +77,6 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
       return prev;
     });
     const { data, error } = await createClient().from("Receipt").upsert(values);
-    console.log(data);
     if (error) {
       console.error("Error upserting receipt:", error);
       return null;
@@ -186,9 +185,9 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                     </TableHead>
                   );
                 })}

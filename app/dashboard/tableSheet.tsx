@@ -49,7 +49,6 @@ import {
 import DeleteAlert from "./deleteAlert";
 
 const upsertReceipt = async (receiptData: z.infer<typeof tableSheetSchema>) => {
-  console.log("upsert");
   const { data, error } = await createClient()
     .from("Receipt")
     .upsert(receiptData);
@@ -92,7 +91,7 @@ export const tableSheetSchema = z.object({
 type TableSheetType = {
   isNewSheet: boolean;
   activeSheetData: Receipt | null;
-  setActiveSheetData: any;
+  setActiveSheetData: (value: React.SetStateAction<Receipt | null>) => void;
   sheetContext: SheetContext;
 };
 export default function TableSheet({
