@@ -28,53 +28,58 @@ import {
 import { Input } from "@/components/ui/input";
 import { DataTableViewOptions } from "@/components/ui/dataTableViewOptions";
 import TableSheet from "./tableSheet";
-import { CategoryEnum } from "@/utils/supabase/supabase";
-import { TableData } from "./page";
-import AddButton from "./addButton";
-import { z } from "zod";
+import { TableData, TransactionWithCategory } from "./page";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import DeleteButton from "./deleteButton";
-import { Transaction } from "@/utils/schemas/transactionSchema";
+import { Database } from "@/utils/supabase/types";
+import { FormTransaction } from "@/utils/schemas/transactionFormSchema";
+import { Button } from "@/components/ui/button";
+import { PlusCircle } from "lucide-react";
+
+export type TransactionInsert =
+  Database["public"]["Tables"]["Transaction"]["Insert"];
+export type TransactionUpdate =
+  Database["public"]["Tables"]["Transaction"]["Update"];
 
 export type SheetContext = {
-  categories: { [x in CategoryEnum]: number };
+  categories: { [x in string]: number };
   user: string;
-  table: ReactTable<Transaction>;
+  table: ReactTable<TransactionWithCategory>;
 };
 export type SheetAction = {
-  upsertRow: (values: Transaction) => void;
-  deleteRows: (ids: string[], user_Id?: string) => void;
+  upsertRow: (values: FormTransaction) => void;
+  deleteRows: (ids: number[], user_Id?: string) => void;
 };
 
 interface DataTableProps<TValue> {
   columns: (
-    loadingRows: Set<string>,
+    loadingRows: Set<number>,
     sheetActions: SheetAction
-  ) => ColumnDef<Transaction, TValue>[];
+  ) => ColumnDef<TransactionWithCategory, TValue>[];
   data: TableData;
 }
 
+const hiddenColumns = ["subtotal", "tip", "tax", "type", "status"];
+
 export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
   const router = useRouter();
-  const [loadingRows, setLoadingRows] = React.useState<Set<string>>(new Set());
+  const [loadingRows, setLoadingRows] = React.useState<Set<number>>(new Set());
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   );
   const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({
-      subtotal: false,
-      tip: false,
-      tax: false,
-    });
+    React.useState<VisibilityState>(
+      Object.fromEntries(hiddenColumns.map((key) => [key, false]))
+    );
   const [rowSelection, setRowSelection] = React.useState({});
-  const [activeSheetData, setActiveSheetData] = React.useState<Transaction | null>(
-    null
-  );
+  const [activeSheetData, setActiveSheetData] =
+    React.useState<TransactionWithCategory | null>(null);
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
 
-  const upsertRow = async (values: Transaction) => {
+  const upsertRow = async (values: FormTransaction) => {
+    console.log("enter upsert row", values);
     setLoadingRows((prev) => {
       if (activeSheetData?.id) {
         return new Set(prev).add(activeSheetData.id);
@@ -82,14 +87,26 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
       return prev;
     });
 
-    const { error } = await createClient().from("Transaction").upsert(values);
+    const transactionInsert: TransactionInsert = {
+      ...values,
+      date: new Date(values.date).toISOString(),
+      userId: data.user!.id,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { data: transactionData, error } = await createClient()
+      .from("Transaction")
+      .upsert(transactionInsert)
+      .select();
+
+    console.log(transactionData);
 
     if (error) {
       console.error("Error upserting transaction:", error);
       return null;
     }
-
     setActiveSheetData(null);
+    setIsSheetOpen(false);
     router.refresh();
     setLoadingRows((prev) => {
       if (activeSheetData?.id) {
@@ -101,7 +118,7 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
     });
   };
 
-  const deleteRows = async (ids: string[]) => {
+  const deleteRows = async (ids: number[]) => {
     setLoadingRows((prev) => {
       if (activeSheetData?.id) {
         return new Set(prev).add(activeSheetData.id);
@@ -132,7 +149,7 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
     table.resetRowSelection();
   };
 
-  const handleTableCellClick = (row: Row<Transaction>) => {
+  const handleTableCellClick = (row: Row<TransactionWithCategory>) => {
     setActiveSheetData(row.original);
     setIsSheetOpen(true);
   };
@@ -179,9 +196,11 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
       <div className="grid grid-cols-[7fr_1fr_1fr] items-center py-4 gap-4">
         <Input
           placeholder="Filter Transactions..."
-          value={(table.getColumn("transaction")?.getFilterValue() as string) ?? ""}
+          value={
+            (table.getColumn("description")?.getFilterValue() as string) ?? ""
+          }
           onChange={(event) =>
-            table.getColumn("transaction")?.setFilterValue(event.target.value)
+            table.getColumn("description")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
@@ -192,7 +211,14 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
             sheetActions={sheetActions}
           />
         ) : (
-          <AddButton sheetContext={sheetContext} sheetActions={sheetActions} />
+          <Button
+            variant="secondary"
+            onClick={() => setIsSheetOpen((prev) => !prev)}
+            size="sm"
+          >
+            <PlusCircle />
+            Add
+          </Button>
         )}
       </div>
       <div className="rounded-md border">
@@ -206,9 +232,9 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
                     </TableHead>
                   );
                 })}
@@ -250,7 +276,7 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
       </div>
       <DataTablePagination table={table} />
       <TableSheet
-        isNewSheet={false}
+        isNewSheet={!activeSheetData}
         sheetOpen={isSheetOpen}
         setSheetOpen={setIsSheetOpen}
         activeSheetData={activeSheetData}

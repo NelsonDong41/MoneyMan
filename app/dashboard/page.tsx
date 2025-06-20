@@ -1,20 +1,25 @@
 import { createClient } from "@/utils/supabase/server";
 import { columns } from "./columns";
 import { DataTable } from "./data-table";
-import { Category } from "@/utils/supabase/supabase";
 import { User } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
-import { Transaction } from "@/utils/schemas/transactionSchema";
+import { Tables } from "@/utils/supabase/types";
+
+export type TransactionWithCategory = Omit<
+  Tables<"Transaction">,
+  "category"
+> & {
+  category: { category: Tables<"Category">["category"] };
+};
 
 export type TableData = {
-  transaction: Transaction[];
-  category: Category[];
+  transaction: TransactionWithCategory[];
+  category: Tables<"Category">[];
   user: User | null;
 };
 
 async function getData(): Promise<TableData> {
   const supabase = await createClient();
-
 
   const {
     data: { user },
@@ -33,16 +38,16 @@ async function getData(): Promise<TableData> {
     .from("Category")
     .select("*");
 
-  console.log("Transaction Data:", transactionData);
-
   if (transactionError || categoryError) {
-    throw new Error("Error fetching data from supabase: " +
-      (transactionError?.message || categoryError?.message));
+    throw new Error(
+      "Error fetching data from supabase: " +
+        (transactionError?.message || categoryError?.message)
+    );
   }
 
   return {
-    transaction: transactionData as Transaction[],
-    category: categoryData as Category[],
+    transaction: transactionData ?? [],
+    category: categoryData,
     user,
   };
 }

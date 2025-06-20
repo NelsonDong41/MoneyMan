@@ -1,3 +1,5 @@
+import { Database } from "./types";
+
 export type Entry = {
   id: string;
   created_at?: string;
