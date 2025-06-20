@@ -13,15 +13,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DataTableColumnHeader } from "@/components/ui/table";
-import { Receipt } from "@/utils/supabase/supabase";
 import { SheetAction } from "./data-table";
 import DeleteAlert from "./deleteAlert";
 import { useState } from "react";
+import { Transaction } from "@/utils/schemas/transactionSchema";
 
 export const columns = (
   loadingRows: Set<string>,
   sheetActions: SheetAction
-): ColumnDef<Receipt>[] => [
+): ColumnDef<Transaction>[] => [
     {
       id: "select",
       header: ({ table }) => (
@@ -62,9 +62,9 @@ export const columns = (
       ),
     },
     {
-      accessorKey: "receipt",
+      accessorKey: "transaction",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Receipt" />
+        <DataTableColumnHeader column={column} title="transaction" />
       ),
     },
     {
@@ -159,7 +159,7 @@ export const columns = (
     {
       id: "actions",
       cell: ({ row }) => {
-        const receipt = row.original;
+        const transaction = row.original;
         const [deleteOpen, setDeleteOpen] = useState(false);
 
         return (
@@ -178,13 +178,13 @@ export const columns = (
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                 <DropdownMenuItem
                   onClick={() =>
-                    navigator.clipboard.writeText(JSON.stringify(receipt))
+                    navigator.clipboard.writeText(JSON.stringify(transaction))
                   }
                 >
-                  Copy Receipt info
+                  Copy Transaction info
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>View Receipt Image</DropdownMenuItem>
+                <DropdownMenuItem>View Transaction Image</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setDeleteOpen((prev) => !prev)}>
                   Delete
                 </DropdownMenuItem>
@@ -194,7 +194,7 @@ export const columns = (
               showTrigger={false}
               onOpenChange={setDeleteOpen}
               open={deleteOpen}
-              action={() => sheetActions.deleteRows([receipt.id], receipt.user_id)}
+              action={() => sheetActions.deleteRows([transaction.id], transaction.userId)}
             />
           </div>
         );

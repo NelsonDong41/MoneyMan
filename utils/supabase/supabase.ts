@@ -13,21 +13,6 @@ export enum CategoryEnum {
   Subscription = "Subscription",
 }
 
-export type Receipt = {
-  id: string;
-  created_at: string;
-  merchant: string;
-  receipt: string;
-  notes?: string;
-  date?: string;
-  subtotal?: number;
-  tax?: number;
-  tip?: number;
-  total: number;
-  user_id?: string;
-  category: { category: CategoryEnum | null };
-};
-
 export type ReceiptToEntries = {
   entry_id: string;
   receipt_id: string;

@@ -25,103 +25,56 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Receipt } from "@/utils/supabase/supabase";
-import { Row } from "@tanstack/react-table";
 import { SheetAction, SheetContext } from "./data-table";
 import { useEffect } from "react";
 import CurrencyInput from "@/components/ui/currencyInput";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { createClient } from "@/utils/supabase/client";
-import { useRouter } from "next/navigation";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import DeleteAlert from "./deleteAlert";
+import { Transaction, TRANSACTION_TYPE, transactionSchema } from "@/utils/schemas/transactionSchema";
 
-const upsertReceipt = async (receiptData: z.infer<typeof tableSheetSchema>) => {
-  const { data, error } = await createClient()
-    .from("Receipt")
-    .upsert(receiptData);
 
-  if (error) {
-    console.error("Error upserting receipt:", error);
-    return null;
-  }
-
-  return data;
-};
-
-export const tableSheetSchema = z.object({
-  id: z.string().min(1, "Id is required"),
-  user_id: z.string().min(1, "UserId is required"),
-  receipt: z.string().min(1, "Receipt is required"),
-  merchant: z.string().min(1, "Merchant is required"),
-  category: z.string().min(1, "Category ID must be an int"),
-  date: z
-    .string()
-    .min(1, "Date is required")
-    .refine((val) => !isNaN(Date.parse(val)), {
-      message: "Invalid date format",
-    }),
-  subtotal: z.string().refine((val) => !isNaN(Number(val)), {
-    message: "Subtotal must be a number",
-  }),
-  tax: z
-    .string()
-    .refine((val) => !isNaN(Number(val)), { message: "Tax must be a number" }),
-  tip: z
-    .string()
-    .refine((val) => !isNaN(Number(val)), { message: "Tip must be a number" }),
-  total: z.string().refine((val) => !isNaN(Number(val)), {
-    message: "Total must be a number",
-  }),
-  image: z.any().optional(),
-});
-
-type TableSheetType = {
+type TableSheetProps = {
   isNewSheet: boolean;
-  activeSheetData: Receipt | null;
-  setActiveSheetData: (value: React.SetStateAction<Receipt | null>) => void;
+  sheetOpen: boolean;
+  setSheetOpen: (value: React.SetStateAction<boolean>) => void;
+  activeSheetData: Transaction | null;
+  setActiveSheetData: (value: React.SetStateAction<Transaction | null>) => void;
   sheetContext: SheetContext;
   sheetActions: SheetAction;
 };
+
 export default function TableSheet({
   isNewSheet,
+  sheetOpen,
+  setSheetOpen,
   activeSheetData,
   setActiveSheetData,
   sheetContext,
   sheetActions
-}: TableSheetType) {
-  const form = useForm<z.infer<typeof tableSheetSchema>>({
-    resolver: zodResolver(tableSheetSchema),
+}: TableSheetProps) {
+  const form = useForm<Transaction>({
+    resolver: zodResolver(transactionSchema),
     defaultValues: {
       id: "",
-      user_id: "",
-      receipt: "",
-      category: "",
+      userId: sheetContext.user,
+      description: "",
       merchant: "",
+      category: { category: "" },
       date: "",
-      subtotal: "",
-      tax: "",
-      tip: "",
-      total: "",
+      amount: "0.00",
+      notes: "",
+      image: null,
+      status: "Complete",
+      type: "Expense",
     },
   });
+
 
   const { reset } = form;
 
   useEffect(() => {
-    if (activeSheetData) {
+    if (sheetOpen && activeSheetData) {
       const categoryId = activeSheetData.category.category
         ? sheetContext.categories[activeSheetData.category.category]
         : null;
@@ -143,15 +96,15 @@ export default function TableSheet({
 
   return (
     <Sheet
-      open={!!activeSheetData}
-      onOpenChange={() => setActiveSheetData(null)}
+      open={sheetOpen}
+      onOpenChange={() => { setActiveSheetData(null); setSheetOpen(false) }}
     >
       <SheetContent side="right" className="flex flex-col">
         {!!activeSheetData && (
           <>
             <SheetHeader className="gap-1">
               <SheetTitle>Editor</SheetTitle>
-              <SheetDescription>Edit receipt values</SheetDescription>
+              <SheetDescription>Edit Transaction values</SheetDescription>
             </SheetHeader>
             <div className="flex flex-1 flex-col gap-4 overflow-y-auto py-4 text-sm">
               <Form {...form}>

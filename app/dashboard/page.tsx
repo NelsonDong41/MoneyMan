@@ -1,13 +1,13 @@
 import { createClient } from "@/utils/supabase/server";
 import { columns } from "./columns";
 import { DataTable } from "./data-table";
-import { Category, Receipt } from "@/utils/supabase/supabase";
+import { Category } from "@/utils/supabase/supabase";
 import { User } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
+import { Transaction } from "@/utils/schemas/transactionSchema";
 
 export type TableData = {
-  receipt: Receipt[];
+  transaction: Transaction[];
   category: Category[];
   user: User | null;
 };
@@ -20,26 +20,28 @@ async function getData(): Promise<TableData> {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // if (!user) {
-  //   return redirect("/sign-in");
-  // }
+  if (!user) {
+    return redirect("/sign-in");
+  }
 
-  const { data: receiptData, error: receiptError } = await supabase
-    .from("Receipt")
+  const { data: transactionData, error: transactionError } = await supabase
+    .from("Transaction")
     .select("*, category(category)")
-    .eq("user_id", user!.id);
+    .eq("userId", user.id);
 
   const { data: categoryData, error: categoryError } = await supabase
     .from("Category")
     .select("*");
 
-  if (receiptError || categoryError) {
+  console.log("Transaction Data:", transactionData);
+
+  if (transactionError || categoryError) {
     throw new Error("Error fetching data from supabase: " +
-      (receiptError?.message || categoryError?.message));
+      (transactionError?.message || categoryError?.message));
   }
 
   return {
-    receipt: receiptData as Receipt[],
+    transaction: transactionData as Transaction[],
     category: categoryData as Category[],
     user,
   };
