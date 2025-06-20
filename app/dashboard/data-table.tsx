@@ -79,7 +79,6 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
 
   const upsertRow = async (values: FormTransaction) => {
-    console.log("enter upsert row", values);
     setLoadingRows((prev) => {
       if (activeSheetData?.id) {
         return new Set(prev).add(activeSheetData.id);
@@ -98,8 +97,6 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
       .from("Transaction")
       .upsert(transactionInsert)
       .select();
-
-    console.log(transactionData);
 
     if (error) {
       console.error("Error upserting transaction:", error);
