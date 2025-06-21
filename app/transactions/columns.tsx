@@ -17,6 +17,7 @@ import { SheetAction } from "./data-table";
 import DeleteAlert from "./deleteAlert";
 import { useState } from "react";
 import { TransactionWithCategory } from "./page";
+import { copyObjectToClipboard } from "@/utils/utils";
 
 export const columns = (
   loadingRows: Set<number>,
@@ -207,9 +208,7 @@ export const columns = (
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuItem
-                onClick={() =>
-                  navigator.clipboard.writeText(JSON.stringify(transaction))
-                }
+                onClick={() => copyObjectToClipboard(transaction)}
               >
                 Copy Transaction info
               </DropdownMenuItem>
