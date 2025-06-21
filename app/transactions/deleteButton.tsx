@@ -11,7 +11,8 @@ export default function DeleteButton({
   sheetContext,
   sheetActions,
 }: DeleteButtonProps) {
-  const selectedRows = sheetContext.table.getSelectedRowModel().rows;
+  const totalRowCount = sheetContext.table.getFilteredRowModel().rows.length;
+  const selectedRows = sheetContext.table.getFilteredSelectedRowModel().rows;
   const selectedRowIds = selectedRows.map((row) => row.original.id);
   const [deleteAlertOpen, setDeleteAlertOpen] = React.useState(false);
   return (
@@ -20,6 +21,7 @@ export default function DeleteButton({
       open={deleteAlertOpen}
       onOpenChange={setDeleteAlertOpen}
       action={() => sheetActions.deleteRows(selectedRowIds, sheetContext.user)}
+      additionalMessage={`${selectedRows.length} of ${totalRowCount} transactions`}
     />
   );
 }

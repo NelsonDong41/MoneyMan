@@ -65,7 +65,9 @@ const hiddenColumns = ["subtotal", "tip", "tax", "type", "status"];
 export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
   const router = useRouter();
   const [loadingRows, setLoadingRows] = React.useState<Set<number>>(new Set());
-  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [sorting, setSorting] = React.useState<SortingState>([
+    { id: "date", desc: true },
+  ]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   );
@@ -88,9 +90,14 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
 
     const transactionInsert: TransactionInsert = {
       ...values,
+      id: values.id || undefined,
       date: new Date(values.date).toISOString(),
-      userId: data.user!.id,
+      userId: data.user.id,
       updated_at: new Date().toISOString(),
+      amount: parseFloat(values.amount.replace(",", "")),
+      subtotal: parseFloat(values.subtotal?.replace(",", "") || "0"),
+      tip: parseFloat(values.tip?.replace(",", "") || "0"),
+      tax: parseFloat(values.tax?.replace(",", "") || "0"),
     };
 
     const { data: transactionData, error } = await createClient()
@@ -125,7 +132,7 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
     const { error } = await createClient()
       .from("Transaction")
       .delete()
-      .match({ userId: data.user!.id })
+      .match({ userId: data.user.id })
       .in("id", ids);
 
     if (error) {
@@ -184,7 +191,7 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
     categories: Object.fromEntries(
       data.category.map((c) => [c.category, c.id])
     ) as SheetContext["categories"],
-    user: data.user!.id,
+    user: data.user.id,
     table,
   };
 

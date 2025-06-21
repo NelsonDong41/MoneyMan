@@ -17,6 +17,7 @@ type DeleteAlertProps = {
   open?: boolean;
   onOpenChange?: Dispatch<SetStateAction<boolean>>;
   showTrigger: boolean;
+  additionalMessage?: string;
 };
 
 export default function DeleteAlert({
@@ -24,24 +25,25 @@ export default function DeleteAlert({
   open,
   showTrigger,
   onOpenChange,
+  additionalMessage,
 }: DeleteAlertProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      {showTrigger &&
+      {showTrigger && (
         <AlertDialogTrigger asChild>
-          <Button variant={'destructive'} className="w-full">
+          <Button variant={"destructive"} className="w-full">
             Delete
           </Button>
         </AlertDialogTrigger>
-
-      }
+      )}
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete your
-            account and remove your data from our servers.
+            This action cannot be undone. This will permanently delete this data
+            from the servers.
           </AlertDialogDescription>
+          <AlertDialogDescription>{additionalMessage}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -55,6 +57,6 @@ export default function DeleteAlert({
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
-    </AlertDialog >
+    </AlertDialog>
   );
 }

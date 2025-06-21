@@ -35,9 +35,10 @@ import {
   FormTransaction,
   transactionFormSchema,
 } from "@/utils/schemas/transactionFormSchema";
-import { z } from "zod";
 import { TransactionWithCategory } from "./page";
 import { Title } from "@radix-ui/react-dialog";
+import { Database } from "@/utils/supabase/types";
+import { Textarea } from "@/components/ui/textarea";
 
 type TableSheetProps = {
   isNewSheet: boolean;
@@ -52,18 +53,25 @@ type TableSheetProps = {
 };
 
 const defaultFormValues: FormTransaction = {
-  amount: 0.0,
+  amount: "0.00",
   category: "",
   date: "",
   description: "",
   merchant: "",
   notes: "",
   status: "Complete",
-  subtotal: 0.0,
-  tax: 0.0,
-  tip: 0.0,
-  type: "Income",
+  type: "Expense",
 };
+
+const STATUS_OPTIONS: Database["public"]["Enums"]["TransactionStatus"][] = [
+  "Complete",
+  "Pending",
+  "Canceled",
+] as const;
+const TYPE_OPTIONS: Database["public"]["Enums"]["TransactionType"][] = [
+  "Expense",
+  "Income",
+];
 
 export default function TableSheet({
   isNewSheet,
@@ -92,8 +100,14 @@ export default function TableSheet({
 
       reset({
         ...activeSheetData,
+        id: activeSheetData.id,
         category: activeSheetData.category.category,
         date: formattedDate,
+        amount: activeSheetData.amount.toFixed(2),
+        subtotal: activeSheetData.subtotal?.toFixed(2),
+        tax: activeSheetData.tax?.toFixed(2),
+        tip: activeSheetData.tip?.toFixed(2),
+        notes: activeSheetData.notes ?? "",
       });
       return;
     }
@@ -119,6 +133,11 @@ export default function TableSheet({
               onSubmit={form.handleSubmit(sheetActions.upsertRow)}
               className="flex flex-col gap-4 p-1"
             >
+              <FormField
+                control={form.control}
+                name="id"
+                render={() => <></>}
+              />
               <FormField
                 control={form.control}
                 name="description"
@@ -198,6 +217,65 @@ export default function TableSheet({
                   )}
                 />
               </div>
+              <div className="grid grid-cols-2 gap-5">
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Label htmlFor="type">Status</Label>
+                      <FormControl>
+                        <Select
+                          value={field.value.toString()}
+                          onValueChange={field.onChange}
+                        >
+                          <SelectTrigger id="status" className="w-full">
+                            <SelectValue placeholder="Select a Status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {STATUS_OPTIONS.map((status) => (
+                              <SelectItem
+                                key={status + "-select"}
+                                value={status}
+                              >
+                                {status}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Label htmlFor="type">Type</Label>
+                      <FormControl>
+                        <Select
+                          value={field.value.toString()}
+                          onValueChange={field.onChange}
+                        >
+                          <SelectTrigger id="type" className="w-full">
+                            <SelectValue placeholder="Select a type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {TYPE_OPTIONS.map((type) => (
+                              <SelectItem key={type + "-select"} value={type}>
+                                {type}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               <div className="flex flex-col gap-3 border-10 border-red-100">
                 <Title>Pay</Title>
                 <FormField
@@ -208,11 +286,7 @@ export default function TableSheet({
                       <div className="grid grid-cols-3 items-center">
                         <FormLabel htmlFor="subtotal">subtotal</FormLabel>
                         <FormControl>
-                          <CurrencyInput
-                            id="subtotal"
-                            className="col-span-2 text-right"
-                            {...field}
-                          />
+                          <CurrencyInput id="subtotal" {...field} />
                         </FormControl>
                       </div>
                       <FormMessage />
@@ -227,11 +301,7 @@ export default function TableSheet({
                       <FormControl>
                         <div className="grid grid-cols-3 items-center">
                           <FormLabel htmlFor="tax">tax</FormLabel>
-                          <CurrencyInput
-                            id="tax"
-                            className="col-span-2 text-right"
-                            {...field}
-                          />
+                          <CurrencyInput id="tax" {...field} />
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -245,11 +315,7 @@ export default function TableSheet({
                     <FormItem>
                       <div className="grid grid-cols-3 items-center">
                         <FormLabel htmlFor="tip">tip</FormLabel>
-                        <CurrencyInput
-                          id="tip"
-                          className="col-span-2 text-right"
-                          {...field}
-                        />
+                        <CurrencyInput id="tip" {...field} />
                       </div>
                       <FormMessage />
                     </FormItem>
@@ -262,11 +328,7 @@ export default function TableSheet({
                     <FormItem>
                       <div className="grid grid-cols-3 items-center">
                         <FormLabel htmlFor="amount">Amount</FormLabel>
-                        <CurrencyInput
-                          id="amount"
-                          className="col-span-2 text-right"
-                          {...field}
-                        />
+                        <CurrencyInput id="amount" {...field} />
                       </div>
                       <FormMessage />
                     </FormItem>
@@ -276,6 +338,26 @@ export default function TableSheet({
               <div className="grid w-full max-w-sm items-center gap-1.5">
                 <Label htmlFor="image">Image</Label>
                 <Input id="image" type="file" />
+              </div>
+              <div className="grid w-full max-w-sm items-center gap-1.5">
+                <FormField
+                  control={form.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Notes</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Notes for the transaction"
+                          className="resize-y w-full"
+                          {...field}
+                          value={field.value ?? ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
             </form>
           </Form>

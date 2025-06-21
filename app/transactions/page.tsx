@@ -15,7 +15,7 @@ export type TransactionWithCategory = Omit<
 export type TableData = {
   transaction: TransactionWithCategory[];
   category: Tables<"Category">[];
-  user: User | null;
+  user: User;
 };
 
 async function getData(): Promise<TableData> {
