@@ -60,10 +60,10 @@ interface DataTableProps<TValue> {
   data: TableData;
 }
 
-const hiddenColumns = ["subtotal", "tip", "tax", "type", "status"];
+const hiddenColumns = ["subtotal", "tip", "tax"];
 
 export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
-  const router = useRouter();
+  const [tableData, setTableData] = React.useState<TransactionWithCategory[]>(data.transaction);
   const [loadingRows, setLoadingRows] = React.useState<Set<number>>(new Set());
   const [sorting, setSorting] = React.useState<SortingState>([
     { id: "date", desc: true },
@@ -95,12 +95,12 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
       userId: data.user.id,
       updated_at: new Date().toISOString(),
       amount: parseFloat(values.amount.replace(",", "")),
-      subtotal: parseFloat(values.subtotal?.replace(",", "") || "0"),
-      tip: parseFloat(values.tip?.replace(",", "") || "0"),
-      tax: parseFloat(values.tax?.replace(",", "") || "0"),
+      subtotal: values.subtotal ? parseFloat(values.subtotal.replace(",", "")) : undefined,
+      tip: values.tip ? parseFloat(values.tip.replace(",", "")) : undefined,
+      tax: values.tax ? parseFloat(values.tax.replace(",", "")) : undefined,
     };
 
-    const { data: transactionData, error } = await createClient()
+    const { data: insertedData, error } = await createClient()
       .from("Transaction")
       .upsert(transactionInsert)
       .select();
@@ -111,7 +111,15 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
     }
     setActiveSheetData(null);
     setIsSheetOpen(false);
-    router.refresh();
+    setTableData((prev) => {
+      const insertedDataWithNestedCategory = { ...insertedData[0], category: { category: insertedData[0].category } };
+      if (values.id) {
+        return prev.map((transaction) =>
+          transaction.id === values.id ? insertedDataWithNestedCategory : transaction
+        );
+      }
+      return [...prev, insertedDataWithNestedCategory];
+    });
     setLoadingRows((prev) => {
       if (activeSheetData?.id) {
         const newSet = new Set(prev);
@@ -141,7 +149,9 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
     }
 
     setActiveSheetData(null);
-    router.refresh();
+    setTableData((prev) => prev.filter(
+      (transaction) => !ids.includes(transaction.id)
+    ));
     setLoadingRows((prev) => {
       if (activeSheetData?.id) {
         const newSet = new Set(prev);
@@ -169,7 +179,7 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
   );
 
   const table = useReactTable({
-    data: data.transaction,
+    data: tableData,
     columns: memoizedColumns,
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
@@ -236,9 +246,9 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                     </TableHead>
                   );
                 })}

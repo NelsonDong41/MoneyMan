@@ -10,7 +10,7 @@ export const transactionFormSchema = z.object({
     .string()
     .regex(
       /^(\d{1,3}(,\d{3})*|\d+)(\.\d{2})?$/,
-      "Must be a valid currency format (e.g., 1,234.56)"
+      "Must be a valid currency format (e.g., 1,234.56) or empty"
     ),
   category: z.string().min(1, "Category is required"),
   date: z.string().min(1, "Date is required"),
@@ -19,28 +19,40 @@ export const transactionFormSchema = z.object({
   notes: z.string().nullable().optional(),
   status: z.enum(transactionStatusEnum),
   subtotal: z
-    .string()
-    .regex(
-      /^(\d{1,3}(,\d{3})*|\d+)(\.\d{2})?$/,
-      "Must be a valid currency format (e.g., 1,234.56)"
-    )
-    .nullable()
+    .union([
+      z.literal(""),
+      z
+        .string()
+        .regex(
+          /^(\d{1,3}(,\d{3})*|\d+)(\.\d{2})?$/,
+          "Must be a valid currency format (e.g., 1,234.56) or empty"
+        ),
+      z.null(),
+    ])
     .optional(),
   tax: z
-    .string()
-    .regex(
-      /^(\d{1,3}(,\d{3})*|\d+)(\.\d{2})?$/,
-      "Must be a valid currency format (e.g., 1,234.56)"
-    )
-    .nullable()
+    .union([
+      z.literal(""),
+      z
+        .string()
+        .regex(
+          /^(\d{1,3}(,\d{3})*|\d+)(\.\d{2})?$/,
+          "Must be a valid currency format (e.g., 1,234.56) or empty"
+        ),
+      z.null(),
+    ])
     .optional(),
   tip: z
-    .string()
-    .regex(
-      /^(\d{1,3}(,\d{3})*|\d+)(\.\d{2})?$/,
-      "Must be a valid currency format (e.g., 1,234.56)"
-    )
-    .nullable()
+    .union([
+      z.literal(""),
+      z
+        .string()
+        .regex(
+          /^(\d{1,3}(,\d{3})*|\d+)(\.\d{2})?$/,
+          "Must be a valid currency format (e.g., 1,234.56) or empty"
+        ),
+      z.null(),
+    ])
     .optional(),
   type: z.enum(transactionTypeEnum),
   updated_at: z.string().nullable().optional(),

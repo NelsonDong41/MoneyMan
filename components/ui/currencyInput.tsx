@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Input, InputProps } from "@/components/ui/input";
+import { Input } from "@/components/ui/input";
 import { ControllerRenderProps } from "react-hook-form";
 
 function formatCurrency(value: string | number) {
@@ -38,7 +38,9 @@ export default function CurrencyInput({
 
   const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
-    onChange(e.target.value);
+    if (/^[0-9]*\.?[0-9]*$/.test(e.target.value)) {
+      onChange(e.target.value);
+    }
   };
 
   return (

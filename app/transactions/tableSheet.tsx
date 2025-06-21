@@ -39,6 +39,7 @@ import { TransactionWithCategory } from "./page";
 import { Title } from "@radix-ui/react-dialog";
 import { Database } from "@/utils/supabase/types";
 import { Textarea } from "@/components/ui/textarea";
+import { NaturalLanguageCalender } from "@/components/ui/naturalLanguageCalender";
 
 type TableSheetProps = {
   isNewSheet: boolean;
@@ -107,7 +108,7 @@ export default function TableSheet({
         subtotal: activeSheetData.subtotal?.toFixed(2),
         tax: activeSheetData.tax?.toFixed(2),
         tip: activeSheetData.tip?.toFixed(2),
-        notes: activeSheetData.notes ?? "",
+        notes: activeSheetData.notes,
       });
       return;
     }
@@ -164,59 +165,61 @@ export default function TableSheet({
                   </FormItem>
                 )}
               />
-              <div className="grid grid-cols-2 gap-5">
-                <FormField
-                  control={form.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <Label htmlFor="category">Category</Label>
-                      <FormControl>
-                        <Select
-                          value={field.value.toString()}
-                          onValueChange={field.onChange}
-                        >
-                          <SelectTrigger id="category" className="w-full">
-                            <SelectValue placeholder="Select a category" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Object.entries(sheetContext.categories).map(
-                              ([category, _id]) => (
-                                <SelectItem
-                                  key={category + "-select"}
-                                  value={category.toString()}
-                                >
-                                  {category}
-                                </SelectItem>
-                              )
-                            )}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel htmlFor="date">Date</FormLabel>
-                      <FormControl>
-                        <Input
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <Label htmlFor="category">Category</Label>
+                    <FormControl>
+                      <Select
+                        value={field.value.toString()}
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger id="category" className="w-full">
+                          <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(sheetContext.categories).map(
+                            ([category, _id]) => (
+                              <SelectItem
+                                key={category + "-select"}
+                                value={category.toString()}
+                              >
+                                {category}
+                              </SelectItem>
+                            )
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel htmlFor="date">Date</FormLabel>
+                    <FormControl>
+                      <NaturalLanguageCalender
+                        id="date"
+                        // className="max-w-fit"
+                        {...field} />
+                      {/* <Input
                           id="date"
                           type="date"
                           className="max-w-fit"
                           {...field}
                           value={field.value ?? ""}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                        /> */}
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <div className="grid grid-cols-2 gap-5">
                 <FormField
                   control={form.control}
