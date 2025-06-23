@@ -1,52 +1,43 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { parseDate } from "chrono-node"
-import { CalendarIcon } from "lucide-react"
+import * as React from "react";
+import { parseDate } from "chrono-node";
+import { CalendarIcon } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
-import { ControllerRenderProps } from "react-hook-form"
+} from "@/components/ui/popover";
+import { ControllerRenderProps } from "react-hook-form";
+import { formatDate } from "@/utils/utils";
 
-function formatDate(date: Date | undefined) {
-  if (!date) {
-    return ""
-  }
-
-  return date.toLocaleDateString("en-US", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  })
-}
-
-export function NaturalLanguageCalender({ value,
+export function NaturalLanguageCalender({
+  value,
   onChange,
-  ...props }: ControllerRenderProps & { id: string }) {
-  const [open, setOpen] = React.useState(false)
-  const [month, setMonth] = React.useState<Date | undefined>(value)
+  ...props
+}: ControllerRenderProps & { id: string }) {
+  const [open, setOpen] = React.useState(false);
+  const [month, setMonth] = React.useState<Date | undefined>(value);
 
   const handleOnBlur = (e: React.FocusEvent<HTMLInputElement, Element>) => {
-    e.preventDefault()
-    const parsedDate = parseDate(e.target.value)
+    e.preventDefault();
+    const parsedDate = parseDate(e.target.value);
     if (parsedDate) {
-      onChange(formatDate(parsedDate))
+      onChange(formatDate(parsedDate));
     } else {
-      onChange(undefined)
+      onChange(undefined);
     }
-  }
+  };
 
   const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.preventDefault()
-    onChange(e.target.value)
-  }
+    e.preventDefault();
+    onChange(e.target.value);
+  };
 
   return (
     <div className="relative flex gap-2" {...props}>
@@ -59,8 +50,8 @@ export function NaturalLanguageCalender({ value,
         onBlur={handleOnBlur}
         onKeyDown={(e) => {
           if (e.key === "ArrowDown") {
-            e.preventDefault()
-            setOpen(true)
+            e.preventDefault();
+            setOpen(true);
           }
         }}
       />
@@ -75,7 +66,10 @@ export function NaturalLanguageCalender({ value,
             <span className="sr-only">Select date</span>
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto overflow-hidden p-0 z-50 pointer-events-auto" align="end">
+        <PopoverContent
+          className="w-auto overflow-hidden p-0 z-50 pointer-events-auto"
+          align="end"
+        >
           <Calendar
             mode="single"
             selected={value}
@@ -83,12 +77,12 @@ export function NaturalLanguageCalender({ value,
             month={month}
             onMonthChange={setMonth}
             onSelect={(date) => {
-              onChange(formatDate(date))
-              setOpen(false)
+              onChange(formatDate(date));
+              setOpen(false);
             }}
           />
         </PopoverContent>
       </Popover>
     </div>
-  )
+  );
 }

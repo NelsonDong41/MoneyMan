@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { TableData } from "../transactions/page";
 import { createClient } from "@/utils/supabase/server";
+import ChartAreaInteractive from "./chart";
 
 async function getData(): Promise<TableData> {
   const supabase = await createClient();
@@ -25,20 +26,19 @@ async function getData(): Promise<TableData> {
   if (transactionError || categoryError) {
     throw new Error(
       "Error fetching data from supabase: " +
-      (transactionError?.message || categoryError?.message)
+        (transactionError?.message || categoryError?.message)
     );
   }
 
   return {
-    transaction: transactionData ?? [],
+    transactions: transactionData ?? [],
     category: categoryData,
     user,
   };
 }
 
 export default async function Dashboard() {
-
-
+  const { transactions, category, user } = await getData();
 
   return (
     <div className="container mx-auto py-10 max-w-8xl">
@@ -46,7 +46,7 @@ export default async function Dashboard() {
       <p className="text-gray-700">
         This is the dashboard page. You can add your components here.
       </p>
+      <ChartAreaInteractive data={transactions} />
     </div>
   );
-
 }

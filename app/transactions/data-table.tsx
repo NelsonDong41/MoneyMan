@@ -28,14 +28,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { DataTableViewOptions } from "@/components/ui/dataTableViewOptions";
 import TableSheet from "./tableSheet";
-import { TableData, TransactionWithCategory } from "./page";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
+import { TableData } from "./page";
 import DeleteButton from "./deleteButton";
 import { Database } from "@/utils/supabase/types";
 import { FormTransaction } from "@/utils/schemas/transactionFormSchema";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
+import { TransactionWithCategory } from "@/utils/supabase/supabase";
+import useTableStates from "@/hooks/useTableStates";
 
 export type TransactionInsert =
   Database["public"]["Tables"]["Transaction"]["Insert"];
@@ -63,8 +63,6 @@ interface DataTableProps<TValue> {
 const hiddenColumns = ["subtotal", "tip", "tax"];
 
 export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
-  const [tableData, setTableData] = React.useState<TransactionWithCategory[]>(data.transaction);
-  const [loadingRows, setLoadingRows] = React.useState<Set<number>>(new Set());
   const [sorting, setSorting] = React.useState<SortingState>([
     { id: "date", desc: true },
   ]);
@@ -76,97 +74,18 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
       Object.fromEntries(hiddenColumns.map((key) => [key, false]))
     );
   const [rowSelection, setRowSelection] = React.useState({});
-  const [activeSheetData, setActiveSheetData] =
-    React.useState<TransactionWithCategory | null>(null);
-  const [isSheetOpen, setIsSheetOpen] = React.useState(false);
 
-  const upsertRow = async (values: FormTransaction) => {
-    setLoadingRows((prev) => {
-      if (activeSheetData?.id) {
-        return new Set(prev).add(activeSheetData.id);
-      }
-      return prev;
-    });
-
-    const transactionInsert: TransactionInsert = {
-      ...values,
-      id: values.id || undefined,
-      date: new Date(values.date).toISOString(),
-      userId: data.user.id,
-      updated_at: new Date().toISOString(),
-      amount: parseFloat(values.amount.replace(",", "")),
-      subtotal: values.subtotal ? parseFloat(values.subtotal.replace(",", "")) : undefined,
-      tip: values.tip ? parseFloat(values.tip.replace(",", "")) : undefined,
-      tax: values.tax ? parseFloat(values.tax.replace(",", "")) : undefined,
-    };
-
-    const { data: insertedData, error } = await createClient()
-      .from("Transaction")
-      .upsert(transactionInsert)
-      .select();
-
-    if (error) {
-      console.error("Error upserting transaction:", error);
-      return null;
-    }
-    setActiveSheetData(null);
-    setIsSheetOpen(false);
-    setTableData((prev) => {
-      const insertedDataWithNestedCategory = { ...insertedData[0], category: { category: insertedData[0].category } };
-      if (values.id) {
-        return prev.map((transaction) =>
-          transaction.id === values.id ? insertedDataWithNestedCategory : transaction
-        );
-      }
-      return [...prev, insertedDataWithNestedCategory];
-    });
-    setLoadingRows((prev) => {
-      if (activeSheetData?.id) {
-        const newSet = new Set(prev);
-        newSet.delete(activeSheetData.id);
-        return newSet;
-      }
-      return prev;
-    });
-  };
-
-  const deleteRows = async (ids: number[]) => {
-    setLoadingRows((prev) => {
-      if (activeSheetData?.id) {
-        return new Set(prev).add(activeSheetData.id);
-      }
-      return prev;
-    });
-    const { error } = await createClient()
-      .from("Transaction")
-      .delete()
-      .match({ userId: data.user.id })
-      .in("id", ids);
-
-    if (error) {
-      console.error("Error upserting transaction:", error);
-      return null;
-    }
-
-    setActiveSheetData(null);
-    setTableData((prev) => prev.filter(
-      (transaction) => !ids.includes(transaction.id)
-    ));
-    setLoadingRows((prev) => {
-      if (activeSheetData?.id) {
-        const newSet = new Set(prev);
-        newSet.delete(activeSheetData.id);
-        return newSet;
-      }
-      return prev;
-    });
-    table.resetRowSelection();
-  };
-
-  const handleTableCellClick = (row: Row<TransactionWithCategory>) => {
-    setActiveSheetData(row.original);
-    setIsSheetOpen(true);
-  };
+  const {
+    tableData,
+    loadingRows,
+    activeSheetData,
+    setActiveSheetData,
+    isSheetOpen,
+    setIsSheetOpen,
+    upsertRow,
+    deleteRows,
+    handleTableCellClick,
+  } = useTableStates(data);
 
   const sheetActions = {
     upsertRow,
@@ -246,9 +165,9 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
                     </TableHead>
                   );
                 })}
@@ -290,13 +209,13 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
       </div>
       <DataTablePagination table={table} />
       <TableSheet
+        sheetContext={sheetContext}
         isNewSheet={!activeSheetData}
         sheetOpen={isSheetOpen}
         setSheetOpen={setIsSheetOpen}
         activeSheetData={activeSheetData}
         setActiveSheetData={setActiveSheetData}
-        sheetContext={sheetContext}
-        sheetActions={sheetActions}
+        sheetActions={{ upsertRow, deleteRows }}
       />
     </div>
   );

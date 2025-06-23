@@ -48,89 +48,6 @@ export type Database = {
         }
         Relationships: []
       }
-      Receipt: {
-        Row: {
-          category: number
-          created_at: string
-          date: string | null
-          id: string
-          merchant: string
-          notes: string | null
-          receipt: string
-          subtotal: number | null
-          tax: number | null
-          tip: number | null
-          total: number
-          user_id: string | null
-        }
-        Insert: {
-          category: number
-          created_at?: string
-          date?: string | null
-          id?: string
-          merchant: string
-          notes?: string | null
-          receipt: string
-          subtotal?: number | null
-          tax?: number | null
-          tip?: number | null
-          total: number
-          user_id?: string | null
-        }
-        Update: {
-          category?: number
-          created_at?: string
-          date?: string | null
-          id?: string
-          merchant?: string
-          notes?: string | null
-          receipt?: string
-          subtotal?: number | null
-          tax?: number | null
-          tip?: number | null
-          total?: number
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "Receipt_category_fkey"
-            columns: ["category"]
-            isOneToOne: false
-            referencedRelation: "Category"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      ReceiptToEntries: {
-        Row: {
-          entry_id: string
-          receipt_id: string
-        }
-        Insert: {
-          entry_id?: string
-          receipt_id?: string
-        }
-        Update: {
-          entry_id?: string
-          receipt_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ReceiptToEntries_entry_id_fkey"
-            columns: ["entry_id"]
-            isOneToOne: false
-            referencedRelation: "Entry"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ReceiptToEntries_receipt_id_fkey"
-            columns: ["receipt_id"]
-            isOneToOne: false
-            referencedRelation: "Receipt"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       Transaction: {
         Row: {
           amount: number
@@ -153,7 +70,7 @@ export type Database = {
           amount?: number
           category: string
           created_at?: string
-          date?: string
+          date: string
           description?: string
           id?: number
           merchant?: string

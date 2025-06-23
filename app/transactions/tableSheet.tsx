@@ -35,11 +35,11 @@ import {
   FormTransaction,
   transactionFormSchema,
 } from "@/utils/schemas/transactionFormSchema";
-import { TransactionWithCategory } from "./page";
 import { Title } from "@radix-ui/react-dialog";
 import { Database } from "@/utils/supabase/types";
 import { Textarea } from "@/components/ui/textarea";
 import { NaturalLanguageCalender } from "@/components/ui/naturalLanguageCalender";
+import { TransactionWithCategory } from "@/utils/supabase/supabase";
 
 type TableSheetProps = {
   isNewSheet: boolean;
@@ -119,6 +119,10 @@ export default function TableSheet({
     <Sheet
       open={sheetOpen}
       onOpenChange={() => {
+        if (form.formState.isDirty) {
+          if (!window.confirm("You have unsaved changes. Close anyway?"))
+            return;
+        }
         setActiveSheetData(null);
         setSheetOpen(false);
       }}
@@ -204,17 +208,7 @@ export default function TableSheet({
                   <FormItem>
                     <FormLabel htmlFor="date">Date</FormLabel>
                     <FormControl>
-                      <NaturalLanguageCalender
-                        id="date"
-                        // className="max-w-fit"
-                        {...field} />
-                      {/* <Input
-                          id="date"
-                          type="date"
-                          className="max-w-fit"
-                          {...field}
-                          value={field.value ?? ""}
-                        /> */}
+                      <NaturalLanguageCalender id="date" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -382,6 +376,7 @@ export default function TableSheet({
           <Button
             className="w-full"
             onClick={form.handleSubmit(sheetActions.upsertRow)}
+            disabled={!form.formState.isDirty}
           >
             {isNewSheet ? "Create" : "Update"}
           </Button>

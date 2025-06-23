@@ -32,7 +32,9 @@ export default function CurrencyInput({
 
   const handleOnFocus = (e: React.FocusEvent<HTMLInputElement, Element>) => {
     e.preventDefault();
-    onChange(unformatCurrency(e.target.value));
+    if (e.target.value) {
+      onChange(unformatCurrency(e.target.value));
+    }
     setFocused(true);
   };
 

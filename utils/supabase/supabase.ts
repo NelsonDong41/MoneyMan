@@ -1,4 +1,4 @@
-import { Database } from "./types";
+import { Database, Tables } from "./types";
 
 export type Entry = {
   id: string;
@@ -18,4 +18,11 @@ export enum CategoryEnum {
 export type ReceiptToEntries = {
   entry_id: string;
   receipt_id: string;
+};
+
+export type TransactionWithCategory = Omit<
+  Tables<"Transaction">,
+  "category"
+> & {
+  category: { category: Tables<"Category">["category"] };
 };
