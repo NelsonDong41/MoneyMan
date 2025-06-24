@@ -45,6 +45,12 @@ export default function CurrencyInput({
     }
   };
 
+  const controlledValue = focused
+    ? value === undefined || value === null
+      ? ""
+      : String(value)
+    : displayedValue;
+
   return (
     <Input
       className="col-span-2 text-right"
@@ -52,7 +58,7 @@ export default function CurrencyInput({
       placeholder="0.00"
       autoComplete="off"
       {...props}
-      value={focused ? value : displayedValue}
+      value={controlledValue}
       onChange={handleOnChange}
       onFocus={handleOnFocus}
       onBlur={handleOnBlur}

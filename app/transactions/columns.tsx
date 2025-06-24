@@ -180,7 +180,9 @@ export const columns = (
         currency: "USD",
       }).format(amount);
 
-      return <div className="text-right font-medium">{formatted}</div>;
+      return (
+        <div className="text-right font-medium">{amount ? formatted : ""}</div>
+      );
     },
   },
   {
@@ -199,7 +201,7 @@ export const columns = (
         currency: "USD",
       }).format(amount);
 
-      return <div className="text-right font-medium">{formatted}</div>;
+      <div className="text-right font-medium">{amount ? formatted : ""}</div>;
     },
   },
   {
@@ -218,7 +220,7 @@ export const columns = (
         currency: "USD",
       }).format(amount);
 
-      return <div className="text-right font-medium">{formatted}</div>;
+      <div className="text-right font-medium">{amount ? formatted : ""}</div>;
     },
   },
   {

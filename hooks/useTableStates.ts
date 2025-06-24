@@ -99,17 +99,14 @@ export default function useTableStates(data: TableData) {
       return null;
     }
 
-    const deletedDataWithNestedCategory = deletedData.map((data) => {
-      return {
+    deletedData.forEach((data) => {
+      const formatted = {
         ...data,
         category: { category: data.category },
       };
-    });
-
-    deletedDataWithNestedCategory.forEach((data) => {
       transactionEventBus.emit("transaction:deleted", {
-        prev: activeSheetData,
-        current: data,
+        prev: tableData.find((d) => d.id === formatted.id)!,
+        current: formatted,
       });
     });
 

@@ -67,7 +67,7 @@ export function NaturalLanguageCalender({
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          className="w-auto overflow-hidden p-0 z-50 pointer-events-auto"
+          className="w-auto overflow-hidden p-0 pointer-events-auto"
           align="end"
         >
           <Calendar

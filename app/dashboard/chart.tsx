@@ -53,17 +53,6 @@ export default function ChartAreaInteractive({
   const [timeRange, setTimeRange] = React.useState("90d");
 
   const [dataByType] = useChartData(data);
-  // const dataByType: Map<string, ChartAreaDataEntry> = new Map();
-
-  // data.forEach(({ date, type, amount }) => {
-  //   const dataEntry = dataByType.get(date) || { date };
-  //   if (type === "Expense") {
-  //     dataEntry.expense = (dataEntry.expense || 0) + amount;
-  //   } else {
-  //     dataEntry.income = (dataEntry.income || 0) + amount;
-  //   }
-  //   dataByType.set(date, dataEntry);
-  // });
 
   React.useEffect(() => {
     if (isMobile) {

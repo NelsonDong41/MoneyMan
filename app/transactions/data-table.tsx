@@ -30,12 +30,23 @@ import { DataTableViewOptions } from "@/components/ui/dataTableViewOptions";
 import TableSheet from "./tableSheet";
 import { TableData } from "./page";
 import DeleteButton from "./deleteButton";
-import { Database } from "@/utils/supabase/types";
+import { Database, Tables } from "@/utils/supabase/types";
 import { FormTransaction } from "@/utils/schemas/transactionFormSchema";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
-import { TransactionWithCategory } from "@/utils/supabase/supabase";
+import {
+  STATUS_OPTIONS,
+  TransactionWithCategory,
+  TYPE_OPTIONS,
+} from "@/utils/supabase/supabase";
 import useTableStates from "@/hooks/useTableStates";
+import {
+  formatDate,
+  generateRandomString,
+  getDaysInDateRange,
+  getRandomDate,
+  getRandomFloatTwoDecimalPlaces,
+} from "@/utils/utils";
 
 export type TransactionInsert =
   Database["public"]["Tables"]["Transaction"]["Insert"];
@@ -43,7 +54,7 @@ export type TransactionUpdate =
   Database["public"]["Tables"]["Transaction"]["Update"];
 
 export type SheetContext = {
-  categories: { [x in string]: number };
+  categories: Tables<"Category">[];
   user: string;
   table: ReactTable<TransactionWithCategory>;
 };
@@ -117,15 +128,46 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
   });
 
   const sheetContext: SheetContext = {
-    categories: Object.fromEntries(
-      data.category.map((c) => [c.category, c.id])
-    ) as SheetContext["categories"],
+    categories: data.category,
     user: data.user.id,
     table,
   };
 
+  const handleMassImport = async () => {
+    const start = new Date("06/01/2025");
+    const end = new Date("07/01/2025");
+    const days = getDaysInDateRange(start, end);
+    days.forEach(async (day) => {
+      const testRowExpense: FormTransaction = {
+        category: sheetContext.categories.map(({ category }) => category)[
+          Math.floor(sheetContext.categories.length * Math.random())
+        ],
+        amount: getRandomFloatTwoDecimalPlaces(1, 80).toFixed(2),
+        date: formatDate(day),
+        description: generateRandomString(10),
+        status:
+          STATUS_OPTIONS[Math.floor(STATUS_OPTIONS.length * Math.random())],
+        type: "Expense",
+      };
+      const testRowIncome: FormTransaction = {
+        category: sheetContext.categories.map(({ category }) => category)[
+          Math.floor(sheetContext.categories.length * Math.random())
+        ],
+        amount: getRandomFloatTwoDecimalPlaces(1, 80).toFixed(2),
+        date: formatDate(day),
+        description: generateRandomString(10),
+        status:
+          STATUS_OPTIONS[Math.floor(STATUS_OPTIONS.length * Math.random())],
+        type: "Income",
+      };
+      await upsertRow(testRowExpense);
+      await upsertRow(testRowIncome);
+    });
+  };
+
   return (
     <div>
+      <Button onClick={handleMassImport}>MASS INPORT</Button>
       <div className="grid grid-cols-[7fr_1fr_1fr] items-center py-4 gap-4">
         <Input
           placeholder="Filter Transactions..."

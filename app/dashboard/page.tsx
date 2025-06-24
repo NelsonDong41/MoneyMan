@@ -1,9 +1,13 @@
 import { redirect } from "next/navigation";
-import { TableData } from "../transactions/page";
 import { createClient } from "@/utils/supabase/server";
 import ChartAreaInteractive from "./chart";
+import { TransactionWithCategory } from "@/utils/supabase/supabase";
 
-async function getData(): Promise<TableData> {
+export type ChartData = {
+  transactions: TransactionWithCategory[];
+};
+
+async function getData(): Promise<ChartData> {
   const supabase = await createClient();
 
   const {
@@ -19,26 +23,19 @@ async function getData(): Promise<TableData> {
     .select("*, category(category)")
     .eq("userId", user.id);
 
-  const { data: categoryData, error: categoryError } = await supabase
-    .from("Category")
-    .select("*");
-
-  if (transactionError || categoryError) {
+  if (transactionError) {
     throw new Error(
-      "Error fetching data from supabase: " +
-        (transactionError?.message || categoryError?.message)
+      "Error fetching data from supabase: " + transactionError?.message
     );
   }
 
   return {
     transactions: transactionData ?? [],
-    category: categoryData,
-    user,
   };
 }
 
 export default async function Dashboard() {
-  const { transactions, category, user } = await getData();
+  const { transactions } = await getData();
 
   return (
     <div className="container mx-auto py-10 max-w-8xl">

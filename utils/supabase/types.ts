@@ -12,17 +12,28 @@ export type Database = {
       Category: {
         Row: {
           category: string
-          id: number
+          ParentCategory: string | null
+          type: Database["public"]["Enums"]["TransactionType"]
         }
         Insert: {
           category: string
-          id?: number
+          ParentCategory?: string | null
+          type?: Database["public"]["Enums"]["TransactionType"]
         }
         Update: {
           category?: string
-          id?: number
+          ParentCategory?: string | null
+          type?: Database["public"]["Enums"]["TransactionType"]
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "Category_ParentCategory_fkey"
+            columns: ["ParentCategory"]
+            isOneToOne: false
+            referencedRelation: "Category"
+            referencedColumns: ["category"]
+          },
+        ]
       }
       Entry: {
         Row: {

@@ -2,13 +2,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Sheet,
   SheetContent,
   SheetHeader,
@@ -26,7 +19,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { SheetAction, SheetContext } from "./data-table";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import CurrencyInput from "@/components/ui/currencyInput";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -36,10 +29,28 @@ import {
   transactionFormSchema,
 } from "@/utils/schemas/transactionFormSchema";
 import { Title } from "@radix-ui/react-dialog";
-import { Database } from "@/utils/supabase/types";
 import { Textarea } from "@/components/ui/textarea";
 import { NaturalLanguageCalender } from "@/components/ui/naturalLanguageCalender";
-import { TransactionWithCategory } from "@/utils/supabase/supabase";
+import {
+  STATUS_OPTIONS,
+  TransactionWithCategory,
+  TYPE_OPTIONS,
+} from "@/utils/supabase/supabase";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { cn } from "@/lib/utils";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@radix-ui/react-popover";
+import { ChevronsUpDown, Check } from "lucide-react";
 
 type TableSheetProps = {
   isNewSheet: boolean;
@@ -63,16 +74,6 @@ const defaultFormValues: FormTransaction = {
   status: "Complete",
   type: "Expense",
 };
-
-const STATUS_OPTIONS: Database["public"]["Enums"]["TransactionStatus"][] = [
-  "Complete",
-  "Pending",
-  "Canceled",
-] as const;
-const TYPE_OPTIONS: Database["public"]["Enums"]["TransactionType"][] = [
-  "Expense",
-  "Income",
-];
 
 export default function TableSheet({
   isNewSheet,
@@ -169,37 +170,209 @@ export default function TableSheet({
                   </FormItem>
                 )}
               />
+              <div className="grid grid-cols-2 gap-5">
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => {
+                    const [open, setOpen] = useState(false);
+                    return (
+                      <FormItem className="flex flex-col w-full">
+                        <FormLabel>Status</FormLabel>
+                        <Popover open={open} onOpenChange={setOpen}>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                className={cn(
+                                  "w-full justify-between",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value
+                                  ? STATUS_OPTIONS.find(
+                                      (status) => status === field.value
+                                    )
+                                  : "Select status"}
+                                <ChevronsUpDown className="opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-full p-0 z-50 border border-accent rounded-lg">
+                            <Command>
+                              <CommandInput
+                                placeholder="Search category..."
+                                className="h-9"
+                              />
+                              <CommandList>
+                                <CommandEmpty>No category found.</CommandEmpty>
+                                <CommandGroup>
+                                  {STATUS_OPTIONS.map((status) => (
+                                    <CommandItem
+                                      value={status}
+                                      key={status}
+                                      onSelect={() => {
+                                        form.setValue("status", status);
+                                        setOpen(false);
+                                      }}
+                                    >
+                                      {status}
+                                      <Check
+                                        className={cn(
+                                          "ml-auto",
+                                          status === field.value
+                                            ? "opacity-100"
+                                            : "opacity-0"
+                                        )}
+                                      />
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
+                />
+                <FormField
+                  control={form.control}
+                  name="type"
+                  render={({ field }) => {
+                    const [open, setOpen] = useState(false);
+                    return (
+                      <FormItem className="flex flex-col w-full">
+                        <FormLabel>Type</FormLabel>
+                        <Popover open={open} onOpenChange={setOpen}>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                className={cn(
+                                  "w-full justify-between",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value
+                                  ? TYPE_OPTIONS.find(
+                                      (type) => type === field.value
+                                    )
+                                  : "Select Type"}
+                                <ChevronsUpDown className="opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-full p-0 z-50 border border-accent rounded-lg">
+                            <Command>
+                              <CommandInput
+                                placeholder="Search Type..."
+                                className="h-9"
+                              />
+                              <CommandList>
+                                <CommandEmpty>No category found.</CommandEmpty>
+                                <CommandGroup>
+                                  {TYPE_OPTIONS.map((type) => (
+                                    <CommandItem
+                                      value={type}
+                                      key={type}
+                                      onSelect={() => {
+                                        form.setValue("type", type);
+                                        setOpen(false);
+                                      }}
+                                    >
+                                      {type}
+                                      <Check
+                                        className={cn(
+                                          "ml-auto",
+                                          type === field.value
+                                            ? "opacity-100"
+                                            : "opacity-0"
+                                        )}
+                                      />
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
+                />
+              </div>
               <FormField
                 control={form.control}
                 name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label htmlFor="category">Category</Label>
-                    <FormControl>
-                      <Select
-                        value={field.value.toString()}
-                        onValueChange={field.onChange}
-                      >
-                        <SelectTrigger id="category" className="w-full">
-                          <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.entries(sheetContext.categories).map(
-                            ([category, _id]) => (
-                              <SelectItem
-                                key={category + "-select"}
-                                value={category.toString()}
-                              >
-                                {category}
-                              </SelectItem>
-                            )
-                          )}
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const [open, setOpen] = useState(false);
+                  return (
+                    <FormItem className="flex flex-col w-full">
+                      <FormLabel>Category</FormLabel>
+                      <Popover open={open} onOpenChange={setOpen}>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              className={cn(
+                                "w-full justify-between",
+                                !field.value && "text-muted-foreground"
+                              )}
+                              onClick={() => setOpen((prev) => !prev)}
+                            >
+                              {field.value
+                                ? sheetContext.categories.find(
+                                    ({ category }) => category === field.value
+                                  )?.category
+                                : "Select category"}
+                              <ChevronsUpDown className="opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0 z-50 border border-accent rounded-lg">
+                          <Command>
+                            <CommandInput
+                              placeholder="Search category..."
+                              className="h-9"
+                            />
+                            <CommandList>
+                              <CommandEmpty>No category found.</CommandEmpty>
+                              <CommandGroup>
+                                {sheetContext.categories.map(({ category }) => (
+                                  <CommandItem
+                                    value={category}
+                                    key={category}
+                                    onSelect={() => {
+                                      form.setValue("category", category);
+                                      setOpen(false);
+                                    }}
+                                  >
+                                    {category}
+                                    <Check
+                                      className={cn(
+                                        "ml-auto",
+                                        category === field.value
+                                          ? "opacity-100"
+                                          : "opacity-0"
+                                      )}
+                                    />
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
               <FormField
                 control={form.control}
@@ -214,65 +387,7 @@ export default function TableSheet({
                   </FormItem>
                 )}
               />
-              <div className="grid grid-cols-2 gap-5">
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <Label htmlFor="type">Status</Label>
-                      <FormControl>
-                        <Select
-                          value={field.value.toString()}
-                          onValueChange={field.onChange}
-                        >
-                          <SelectTrigger id="status" className="w-full">
-                            <SelectValue placeholder="Select a Status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {STATUS_OPTIONS.map((status) => (
-                              <SelectItem
-                                key={status + "-select"}
-                                value={status}
-                              >
-                                {status}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <Label htmlFor="type">Type</Label>
-                      <FormControl>
-                        <Select
-                          value={field.value.toString()}
-                          onValueChange={field.onChange}
-                        >
-                          <SelectTrigger id="type" className="w-full">
-                            <SelectValue placeholder="Select a type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {TYPE_OPTIONS.map((type) => (
-                              <SelectItem key={type + "-select"} value={type}>
-                                {type}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+
               <div className="flex flex-col gap-3 border-10 border-red-100">
                 <Title>Pay</Title>
                 <FormField
