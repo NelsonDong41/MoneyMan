@@ -162,6 +162,7 @@ export default function ChartAreaInteractive({
                 return date.toLocaleDateString("en-US", {
                   month: "short",
                   day: "numeric",
+                  timeZone: "UTC",
                 });
               }}
             />
@@ -180,6 +181,7 @@ export default function ChartAreaInteractive({
                     return new Date(value).toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",
+                      timeZone: "UTC",
                     });
                   }}
                   indicator="line"
@@ -196,7 +198,7 @@ export default function ChartAreaInteractive({
               dataKey="expense"
               type="linear"
               fill="url(#fillExpense)"
-              stroke="var(--color-expense)"
+              stroke="var(--chart-2)"
             />
           </AreaChart>
         </ChartContainer>
