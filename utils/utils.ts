@@ -39,6 +39,7 @@ export function formatDate(date: Date | undefined) {
     day: "2-digit",
     month: "long",
     year: "numeric",
+    timeZone: "UTC",
   });
 }
 

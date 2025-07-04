@@ -1,7 +1,10 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import ChartAreaInteractive from "./chart";
-import { TransactionWithCategory } from "@/utils/supabase/supabase";
+import {
+  STATUS_OPTIONS,
+  TransactionWithCategory,
+} from "@/utils/supabase/supabase";
 
 export type ChartData = {
   transactions: TransactionWithCategory[];
@@ -21,7 +24,8 @@ async function getData(): Promise<ChartData> {
   const { data: transactionData, error: transactionError } = await supabase
     .from("Transaction")
     .select("*, category(category)")
-    .eq("userId", user.id);
+    .eq("userId", user.id)
+    .neq("status", "Canceled");
 
   if (transactionError) {
     throw new Error(

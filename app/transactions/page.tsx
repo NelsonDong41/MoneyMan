@@ -42,8 +42,6 @@ async function getData(): Promise<TableData> {
     );
   }
 
-  console.log(categoryData);
-
   return {
     transactions: transactionData ?? [],
     category: categoryData,

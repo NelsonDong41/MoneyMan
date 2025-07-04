@@ -13,3 +13,5 @@ export const TYPE_OPTIONS: Database["public"]["Enums"]["TransactionType"][] = [
   "Expense",
   "Income",
 ];
+
+export type ColumnKeys = keyof TransactionWithCategory;

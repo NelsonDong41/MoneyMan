@@ -80,9 +80,9 @@ export default function ChartAreaInteractive({
         <CardTitle>Total Visitors</CardTitle>
         <CardDescription>
           <span className="hidden @[540px]/card:block">
-            Total for the last 3 months
+            Total for the last {timeRange}
           </span>
-          <span className="@[540px]/card:hidden">Last 3 months</span>
+          <span className="@[540px]/card:hidden">Last {timeRange}</span>
         </CardDescription>
         <CardContent>
           <ToggleGroup

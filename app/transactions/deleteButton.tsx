@@ -20,7 +20,10 @@ export default function DeleteButton({
       showTrigger={true}
       open={deleteAlertOpen}
       onOpenChange={setDeleteAlertOpen}
-      action={() => sheetActions.deleteRows(selectedRowIds, sheetContext.user)}
+      action={() => {
+        sheetActions.deleteRows(selectedRowIds, sheetContext.user);
+        setDeleteAlertOpen(false);
+      }}
       additionalMessage={`${selectedRows.length} of ${totalRowCount} transactions`}
     />
   );

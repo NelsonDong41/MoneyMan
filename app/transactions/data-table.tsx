@@ -34,19 +34,9 @@ import { Database, Tables } from "@/utils/supabase/types";
 import { FormTransaction } from "@/utils/schemas/transactionFormSchema";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
-import {
-  STATUS_OPTIONS,
-  TransactionWithCategory,
-  TYPE_OPTIONS,
-} from "@/utils/supabase/supabase";
+import { ColumnKeys, TransactionWithCategory } from "@/utils/supabase/supabase";
 import useTableStates from "@/hooks/useTableStates";
-import {
-  formatDate,
-  generateRandomString,
-  getDaysInDateRange,
-  getRandomDate,
-  getRandomFloatTwoDecimalPlaces,
-} from "@/utils/utils";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 export type TransactionInsert =
   Database["public"]["Tables"]["Transaction"]["Insert"];
@@ -71,9 +61,17 @@ interface DataTableProps<TValue> {
   data: TableData;
 }
 
-const hiddenColumns = ["subtotal", "tip", "tax"];
+const defaultHiddenColumns: ColumnKeys[] = ["subtotal", "tip", "tax"];
+const mobileHiddenColumns: ColumnKeys[] = defaultHiddenColumns.concat([
+  "category",
+  "created_at",
+  "merchant",
+  "status",
+  "notes",
+]);
 
 export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
+  const isMobile = useIsMobile();
   const [sorting, setSorting] = React.useState<SortingState>([
     { id: "date", desc: true },
   ]);
@@ -82,12 +80,19 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
   );
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>(
-      Object.fromEntries(hiddenColumns.map((key) => [key, false]))
+      Object.fromEntries(defaultHiddenColumns.map((key) => [key, false]))
     );
   const [rowSelection, setRowSelection] = React.useState({});
 
+  React.useEffect(() => {
+    const hiddenColumns = isMobile ? mobileHiddenColumns : defaultHiddenColumns;
+
+    setColumnVisibility(
+      Object.fromEntries(hiddenColumns.map((key) => [key, false]))
+    );
+  }, [isMobile]);
+
   const {
-    tableData,
     loadingRows,
     activeSheetData,
     setActiveSheetData,
@@ -109,7 +114,7 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
   );
 
   const table = useReactTable({
-    data: tableData,
+    data: data.transactions,
     columns: memoizedColumns,
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
@@ -133,41 +138,8 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
     table,
   };
 
-  const handleMassImport = async () => {
-    const start = new Date("06/01/2025");
-    const end = new Date("07/01/2025");
-    const days = getDaysInDateRange(start, end);
-    days.forEach(async (day) => {
-      const testRowExpense: FormTransaction = {
-        category: sheetContext.categories.map(({ category }) => category)[
-          Math.floor(sheetContext.categories.length * Math.random())
-        ],
-        amount: getRandomFloatTwoDecimalPlaces(1, 80).toFixed(2),
-        date: formatDate(day),
-        description: generateRandomString(10),
-        status:
-          STATUS_OPTIONS[Math.floor(STATUS_OPTIONS.length * Math.random())],
-        type: "Expense",
-      };
-      const testRowIncome: FormTransaction = {
-        category: sheetContext.categories.map(({ category }) => category)[
-          Math.floor(sheetContext.categories.length * Math.random())
-        ],
-        amount: getRandomFloatTwoDecimalPlaces(1, 80).toFixed(2),
-        date: formatDate(day),
-        description: generateRandomString(10),
-        status:
-          STATUS_OPTIONS[Math.floor(STATUS_OPTIONS.length * Math.random())],
-        type: "Income",
-      };
-      await upsertRow(testRowExpense);
-      await upsertRow(testRowIncome);
-    });
-  };
-
   return (
     <div>
-      <Button onClick={handleMassImport}>MASS INPORT</Button>
       <div className="grid grid-cols-[7fr_1fr_1fr] items-center py-4 gap-4">
         <Input
           placeholder="Filter Transactions..."

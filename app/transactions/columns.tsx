@@ -27,6 +27,7 @@ import { ReactElement, useState } from "react";
 import { copyObjectToClipboard } from "@/utils/utils";
 import { Badge } from "@/components/ui/badge";
 import { TransactionWithCategory } from "@/utils/supabase/supabase";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 export const columns = (
   loadingRows: Set<number>,
@@ -71,9 +72,11 @@ export const columns = (
       <DataTableColumnHeader column={column} title="Date" />
     ),
     cell: ({ row }) => {
+      const isMobile = useIsMobile();
+
       const date = new Date(row.getValue("date"));
       const formatted = new Intl.DateTimeFormat("en-US", {
-        year: "numeric",
+        year: isMobile ? undefined : "numeric",
         month: "2-digit",
         day: "2-digit",
         timeZone: "UTC",

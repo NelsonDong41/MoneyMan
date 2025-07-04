@@ -95,16 +95,11 @@ export default function TableSheet({
     if (!sheetOpen) return;
 
     if (activeSheetData) {
-      let date = new Date(activeSheetData.date);
-      const offset = date.getTimezoneOffset();
-      date = new Date(date.getTime() - offset * 60 * 1000);
-      const formattedDate = date.toISOString().split("T")[0];
-
       reset({
         ...activeSheetData,
         id: activeSheetData.id,
         category: activeSheetData.category.category,
-        date: formattedDate,
+        date: activeSheetData.date,
         amount: activeSheetData.amount.toFixed(2),
         subtotal: activeSheetData.subtotal?.toFixed(2),
         tax: activeSheetData.tax?.toFixed(2),
