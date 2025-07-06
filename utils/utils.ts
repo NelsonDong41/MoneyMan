@@ -1,4 +1,6 @@
+import tailwindConfig from "@/tailwind.config";
 import { redirect } from "next/navigation";
+import resolveConfig from "tailwindcss/resolveConfig";
 
 /**
  * Redirects to a specified path with an encoded message as a query parameter.

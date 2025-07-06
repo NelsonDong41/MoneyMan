@@ -51,6 +51,7 @@ import {
   PopoverContent,
 } from "@radix-ui/react-popover";
 import { ChevronsUpDown, Check } from "lucide-react";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 type TableSheetProps = {
   isNewSheet: boolean;
@@ -84,6 +85,7 @@ export default function TableSheet({
   sheetContext,
   sheetActions,
 }: TableSheetProps) {
+  const isMobile = useIsMobile();
   const form = useForm<FormTransaction>({
     resolver: zodResolver(transactionFormSchema),
     defaultValues: defaultFormValues,
@@ -123,7 +125,10 @@ export default function TableSheet({
         setSheetOpen(false);
       }}
     >
-      <SheetContent side="right" className="flex flex-col">
+      <SheetContent
+        side={isMobile ? "full" : "right"}
+        className="flex flex-col"
+      >
         <SheetHeader className="gap-1">
           <SheetTitle>Editor</SheetTitle>
           <SheetDescription>Edit Transaction values</SheetDescription>

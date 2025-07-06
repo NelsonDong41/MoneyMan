@@ -168,7 +168,7 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
           </Button>
         )}
       </div>
-      <div className="rounded-md border">
+      <div className="rounded-md border bg-popover">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
