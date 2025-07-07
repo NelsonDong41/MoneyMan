@@ -1,16 +1,19 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
-import ChartAreaInteractive from "./chart";
 import {
   STATUS_OPTIONS,
   TransactionWithCategory,
 } from "@/utils/supabase/supabase";
+import { Tables } from "@/utils/supabase/types";
+import { User } from "@supabase/supabase-js";
+import ChartAreaInteractive from "@/components/charts/chartAreaInteractive";
 
-export type ChartData = {
+export type DashboardPageProps = {
   transactions: TransactionWithCategory[];
+  category: Tables<"Category">[];
+  user: User;
 };
-
-async function getData(): Promise<ChartData> {
+async function getData(): Promise<DashboardPageProps> {
   const supabase = await createClient();
 
   const {
@@ -25,29 +28,35 @@ async function getData(): Promise<ChartData> {
     .from("Transaction")
     .select("*, category(category)")
     .eq("userId", user.id)
-    .neq("status", "Canceled");
+    .neq("status", "Canceled")
+    .order("date");
 
-  if (transactionError) {
+  const { data: categoryData, error: categoryError } = await supabase
+    .from("Category")
+    .select("*")
+    .order("category");
+
+  if (transactionError || categoryError) {
     throw new Error(
-      "Error fetching data from supabase: " + transactionError?.message
+      "Error fetching data from supabase: " +
+        (transactionError?.message || categoryError?.message)
     );
   }
 
   return {
     transactions: transactionData ?? [],
+    category: categoryData,
+    user,
   };
 }
 
 export default async function Dashboard() {
-  const { transactions } = await getData();
-
+  const data = await getData();
+  console.log(data);
   return (
     <div className="container mx-auto py-10 max-w-8xl">
       <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
-      <p className="text-gray-700">
-        This is the dashboard page. You can add your components here.
-      </p>
-      <ChartAreaInteractive data={transactions} />
+      <ChartAreaInteractive {...data} />
     </div>
   );
 }

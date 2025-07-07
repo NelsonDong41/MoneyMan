@@ -28,15 +28,25 @@ import {
 import { Input } from "@/components/ui/input";
 import { DataTableViewOptions } from "@/components/ui/dataTableViewOptions";
 import TableSheet from "./tableSheet";
-import { TableData } from "./page";
 import DeleteButton from "./deleteButton";
 import { Database, Tables } from "@/utils/supabase/types";
 import { FormTransaction } from "@/utils/schemas/transactionFormSchema";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
-import { ColumnKeys, TransactionWithCategory } from "@/utils/supabase/supabase";
+import {
+  ColumnKeys,
+  STATUS_OPTIONS,
+  TransactionWithCategory,
+} from "@/utils/supabase/supabase";
 import useTableStates from "@/hooks/useTableStates";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { User } from "@supabase/supabase-js";
+import {
+  formatDate,
+  generateRandomString,
+  getDaysInDateRange,
+  getRandomFloatTwoDecimalPlaces,
+} from "@/utils/utils";
 
 export type TransactionInsert =
   Database["public"]["Tables"]["Transaction"]["Insert"];
@@ -58,7 +68,10 @@ interface DataTableProps<TValue> {
     loadingRows: Set<number>,
     sheetActions: SheetAction
   ) => ColumnDef<TransactionWithCategory, TValue>[];
-  data: TableData;
+  transactions: TransactionWithCategory[];
+  category: Tables<"Category">[];
+  user: User;
+  date?: string;
 }
 
 const defaultHiddenColumns: ColumnKeys[] = ["subtotal", "tip", "tax"];
@@ -70,7 +83,13 @@ const mobileHiddenColumns: ColumnKeys[] = defaultHiddenColumns.concat([
   "notes",
 ]);
 
-export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
+export function DataTable<TValue>({
+  columns,
+  transactions,
+  category,
+  user,
+  date,
+}: DataTableProps<TValue>) {
   const isMobile = useIsMobile();
   const [sorting, setSorting] = React.useState<SortingState>([
     { id: "date", desc: true },
@@ -101,7 +120,7 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
     upsertRow,
     deleteRows,
     handleTableCellClick,
-  } = useTableStates(data);
+  } = useTableStates({ transactions, category, user });
 
   const sheetActions = {
     upsertRow,
@@ -114,7 +133,7 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
   );
 
   const table = useReactTable({
-    data: data.transactions,
+    data: transactions,
     columns: memoizedColumns,
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
@@ -133,13 +152,45 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
   });
 
   const sheetContext: SheetContext = {
-    categories: data.category,
-    user: data.user.id,
+    categories: category,
+    user: user.id,
     table,
+  };
+  const handleMassImport = async () => {
+    const start = new Date("06/01/2025");
+    const end = new Date("07/01/2025");
+    const days = getDaysInDateRange(start, end);
+    days.forEach(async (day) => {
+      const testRowExpense: FormTransaction = {
+        category: sheetContext.categories.map(({ category }) => category)[
+          Math.floor(sheetContext.categories.length * Math.random())
+        ],
+        amount: getRandomFloatTwoDecimalPlaces(1, 80).toFixed(2),
+        date: formatDate(day),
+        description: generateRandomString(10),
+        status:
+          STATUS_OPTIONS[Math.floor(STATUS_OPTIONS.length * Math.random())],
+        type: "Expense",
+      };
+      // const testRowIncome: FormTransaction = {
+      //   category: sheetContext.categories.map(({ category }) => category)[
+      //     Math.floor(sheetContext.categories.length * Math.random())
+      //   ],
+      //   amount: getRandomFloatTwoDecimalPlaces(1, 80).toFixed(2),
+      //   date: formatDate(day),
+      //   description: generateRandomString(10),
+      //   status:
+      //     STATUS_OPTIONS[Math.floor(STATUS_OPTIONS.length * Math.random())],
+      //   type: "Income",
+      // };
+      await upsertRow(testRowExpense);
+      // await upsertRow(testRowIncome);
+    });
   };
 
   return (
-    <div>
+    <div className="overflow-x-auto w-full">
+      <Button onClick={handleMassImport}>MASS INPORT</Button>
       <div className="grid grid-cols-[7fr_1fr_1fr] items-center py-4 gap-4">
         <Input
           placeholder="Filter Transactions..."
@@ -160,7 +211,10 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
         ) : (
           <Button
             variant="secondary"
-            onClick={() => setIsSheetOpen((prev) => !prev)}
+            onClick={() => {
+              if (date) setActiveSheetData({ date });
+              setIsSheetOpen((prev) => !prev);
+            }}
             size="sm"
           >
             <PlusCircle />
@@ -168,7 +222,7 @@ export function DataTable<TValue>({ columns, data }: DataTableProps<TValue>) {
           </Button>
         )}
       </div>
-      <div className="rounded-md border bg-popover">
+      <div className="rounded-md border bg-popover overflow-x-auto w-full">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (

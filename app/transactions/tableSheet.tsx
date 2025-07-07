@@ -57,9 +57,9 @@ type TableSheetProps = {
   isNewSheet: boolean;
   sheetOpen: boolean;
   setSheetOpen: (value: React.SetStateAction<boolean>) => void;
-  activeSheetData: TransactionWithCategory | null;
+  activeSheetData: Partial<TransactionWithCategory> | null;
   setActiveSheetData: (
-    value: React.SetStateAction<TransactionWithCategory | null>
+    value: React.SetStateAction<Partial<TransactionWithCategory> | null>
   ) => void;
   sheetContext: SheetContext;
   sheetActions: SheetAction;
@@ -100,9 +100,9 @@ export default function TableSheet({
       reset({
         ...activeSheetData,
         id: activeSheetData.id,
-        category: activeSheetData.category.category,
+        category: activeSheetData.category?.category,
         date: activeSheetData.date,
-        amount: activeSheetData.amount.toFixed(2),
+        amount: activeSheetData.amount?.toFixed(2),
         subtotal: activeSheetData.subtotal?.toFixed(2),
         tax: activeSheetData.tax?.toFixed(2),
         tip: activeSheetData.tip?.toFixed(2),
@@ -481,7 +481,7 @@ export default function TableSheet({
               action={() => {
                 if (activeSheetData) {
                   sheetActions.deleteRows(
-                    [activeSheetData.id],
+                    [activeSheetData.id!],
                     activeSheetData.userId
                   );
                 }

@@ -1,16 +1,23 @@
 import { TransactionInsert } from "@/app/transactions/data-table";
-import { TableData } from "@/app/transactions/page";
 import { FormTransaction } from "@/utils/schemas/transactionFormSchema";
 import { createClient } from "@/utils/supabase/client";
 import { TransactionWithCategory } from "@/utils/supabase/supabase";
 import { Row } from "@tanstack/react-table";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Tables } from "@/utils/supabase/types";
+import { User } from "@supabase/supabase-js";
 
-export default function useTableStates(data: TableData) {
+type TableStatesHookProps = {
+  transactions: TransactionWithCategory[];
+  category: Tables<"Category">[];
+  user: User;
+};
+
+export default function useTableStates(data: TableStatesHookProps) {
   const [loadingRows, setLoadingRows] = useState<Set<number>>(new Set());
   const [activeSheetData, setActiveSheetData] =
-    useState<TransactionWithCategory | null>(null);
+    useState<Partial<TransactionWithCategory> | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const router = useRouter();
 

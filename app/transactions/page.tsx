@@ -5,15 +5,15 @@ import { User } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { Tables } from "@/utils/supabase/types";
 import { TransactionWithCategory } from "@/utils/supabase/supabase";
-import ChartAreaInteractive from "../dashboard/chart";
+import ChartAreaInteractive from "@/components/charts/chartAreaInteractive";
 
-export type TableData = {
+export type TransactionPageProps = {
   transactions: TransactionWithCategory[];
   category: Tables<"Category">[];
   user: User;
 };
 
-async function getData(): Promise<TableData> {
+async function getData(): Promise<TransactionPageProps> {
   const supabase = await createClient();
 
   const {
@@ -54,8 +54,8 @@ export default async function Dashboard() {
 
   return (
     <div className="container mx-auto py-10 max-w-8xl">
-      <ChartAreaInteractive data={data.transactions} />
-      <DataTable columns={columns} data={data} />
+      <ChartAreaInteractive {...data} />
+      <DataTable columns={columns} {...data} />
     </div>
   );
 }
