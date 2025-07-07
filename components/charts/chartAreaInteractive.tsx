@@ -26,7 +26,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { TransactionWithCategory } from "@/utils/supabase/supabase";
 import useChartData, { ChartAreaDataEntry } from "@/hooks/useChartData";
 import {
@@ -40,6 +39,8 @@ import { Tables } from "@/utils/supabase/types";
 import { User } from "@supabase/supabase-js";
 import { DataTable } from "@/app/transactions/data-table";
 import { columns } from "@/app/transactions/columns";
+import ShinyText from "../ui/shinyText";
+import Particles from "../ui/particles";
 
 export const description = "An interactive area chart";
 
@@ -153,7 +154,22 @@ export default function ChartAreaInteractive({
 
   return (
     <>
-      <Card className="@container/card max-w-6xl mx-auto w-full">
+      <Card className="@container/card max-w-6xl mx-auto w-full bg-transparent relative">
+        <Particles
+          particleColors={["#ffffff", "#ffffff"]}
+          particleCount={2000}
+          particleSpread={50}
+          speed={0.05}
+          particleBaseSize={150}
+          moveParticlesOnHover={true}
+          alphaParticles={false}
+          disableRotation={false}
+          className="absolute w-full h-full z-50"
+        />
+        <ShinyText
+          className="absolute font-extrabold sm:text-2xl italic flex w-full h-full items-center justify-center "
+          text={`No Data this ${timeRange}`}
+        />
         <CardHeader>
           <CardTitle>Transactions</CardTitle>
           <CardDescription>
@@ -187,11 +203,16 @@ export default function ChartAreaInteractive({
             </Select>
           </CardContent>
         </CardHeader>
-        <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+        <CardContent className="p-0">
           {!filteredData.length && (
-            <div className="flex aspect-auto h-[250px] w-full text-center text-muted justify-center items-center border border-border rounded-xl">
-              No Data this year
-            </div>
+            <>
+              <div className="flex aspect-auto h-[250px] w-full text-center text-muted justify-center items-center mix-blend-lighten ">
+                {/* <ShinyText
+                  className="absolute z-50 font-extrabold sm:text-2xl italic"
+                  text={`No Data this ${timeRange}`}
+                /> */}
+              </div>
+            </>
           )}
 
           {!!filteredData.length && (
