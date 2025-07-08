@@ -52,7 +52,6 @@ async function getData(): Promise<DashboardPageProps> {
 
 export default async function Dashboard() {
   const data = await getData();
-  console.log(data);
   return (
     <div className="container mx-auto py-10 max-w-8xl">
       <h1 className="text-2xl font-bold mb-6">Dashboard</h1>

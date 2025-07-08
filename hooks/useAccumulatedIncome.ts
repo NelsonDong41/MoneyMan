@@ -57,9 +57,5 @@ export default function useAccumulatedIncome(
     getStartingIncome(start, user);
   }, [timeRange, data]);
 
-  useEffect(() => {
-    console.log(accumuatedIncome);
-  }, [accumuatedIncome]);
-
   return accumuatedIncome;
 }

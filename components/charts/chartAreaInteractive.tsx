@@ -35,7 +35,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { DialogDescription } from "@radix-ui/react-dialog";
-import { Tables } from "@/utils/supabase/types";
+import { Database, Tables } from "@/utils/supabase/types";
 import { User } from "@supabase/supabase-js";
 import { DataTable } from "@/app/transactions/data-table";
 import { columns } from "@/app/transactions/columns";
@@ -43,9 +43,7 @@ import ShinyText from "../ui/shinyText";
 import Particles from "../ui/particles";
 import { cn } from "@/lib/utils";
 import { NaturalLanguageCalendar } from "../ui/naturalLanguageCalendar";
-import { formatDateDash } from "@/utils/utils";
-
-export const description = "An interactive area chart";
+import { formatDateDash, formatDateHuman } from "@/utils/utils";
 
 const chartConfig = {
   expense: {
@@ -88,6 +86,8 @@ const convertSelectedTimeRange = (
   return [formatDateDash(pastDate), formatDateDash(today)];
 };
 
+export type EntryType = Database["public"]["Enums"]["TransactionType"];
+
 export default function ChartAreaInteractive({
   transactions,
   category,
@@ -97,7 +97,10 @@ export default function ChartAreaInteractive({
   const [activeIndex, setActiveIndex] = React.useState<number | null>(null);
   const [modalOpen, setModalOpen] = React.useState(false);
   const [selectedTimeRange, setSelectedTimeRange] = React.useState("year");
-
+  const [activeGraph, setActiveGraph] = React.useState<EntryType | "Both">(
+    "Expense"
+  );
+  const firstDate = transactions.length ? transactions[0] : null;
   const { timeRange, setTimeRange, filteredData } = useChartData(
     transactions,
     user
@@ -119,6 +122,10 @@ export default function ChartAreaInteractive({
   }, [filteredData]);
 
   React.useEffect(() => {
+    if (selectedTimeRange === "all" && firstDate) {
+      setTimeRange([firstDate.date, formatDateDash(new Date())]);
+      return;
+    }
     setTimeRange(convertSelectedTimeRange(selectedTimeRange));
   }, [selectedTimeRange]);
 
@@ -129,13 +136,7 @@ export default function ChartAreaInteractive({
 
   return (
     <>
-      <Card
-        className={cn(
-          "@container/card max-w-6xl mx-auto w-full relative bg-popover/80 backdrop-blur-3xl rounded-xl border border-white/25 shadow-lg",
-          !filteredData.length &&
-            "bg-transparent backdrop-blur-2xl rounded-xl border border-white/25 shadow-lg"
-        )}
-      >
+      <Card className="@container/card max-w-6xl mx-auto w-full relative bg-popover/80 backdrop-blur-3xl rounded-xl border border-white/25 shadow-lg">
         {!filteredData.length && (
           <div className="-z-50 pointer-events-none">
             <Particles
@@ -156,75 +157,50 @@ export default function ChartAreaInteractive({
           </div>
         )}
         <CardHeader>
-          <CardTitle>Transactions</CardTitle>
-          <CardDescription>
-            <span className="hidden @[540px]/card:block">
-              Transactions over {timeRange}
-            </span>
-            <span className="@[540px]/card:hidden">Last {timeRange}</span>
-          </CardDescription>
-          <CardContent className="flex justify-between">
+          <CardTitle className="flex justify-between items-center">
+            Transactions{" "}
             <Select
-              value={selectedTimeRange}
-              onValueChange={setSelectedTimeRange}
+              value={activeGraph}
+              onValueChange={(e) => setActiveGraph(e as EntryType)}
             >
               <SelectTrigger
                 className="flex w-40 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate @[767px]/card:hidden bg-popover"
                 aria-label="Select a value"
               >
-                <SelectValue placeholder="This Year" />
+                <SelectValue placeholder="Both" />
               </SelectTrigger>
               <SelectContent className="rounded-xl">
-                <SelectItem value="custom" className="rounded-lg">
-                  Custom
+                <SelectItem value="Both" className="rounded-lg">
+                  Both
                 </SelectItem>
-                <SelectItem value="year" className="rounded-lg">
-                  This Year
+                <SelectItem value="Income" className="rounded-lg">
+                  Income
                 </SelectItem>
-                <SelectItem value="90d" className="rounded-lg">
-                  Last 3 months
-                </SelectItem>
-                <SelectItem value="30d" className="rounded-lg">
-                  Last 30 days
-                </SelectItem>
-                <SelectItem value="7d" className="rounded-lg">
-                  Last 7 days
+                <SelectItem value="Expense" className="rounded-lg">
+                  Expense
                 </SelectItem>
               </SelectContent>
             </Select>
-            {selectedTimeRange === "custom" && (
-              <div className="flex">
-                <NaturalLanguageCalendar
-                  value={timeRange[0]}
-                  onChange={(e) =>
-                    setTimeRange((prev) => [
-                      formatDateDash(new Date(e)),
-                      prev[1],
-                    ])
-                  }
-                />
-                <NaturalLanguageCalendar
-                  value={timeRange[1]}
-                  onChange={(e) =>
-                    setTimeRange((prev) => [
-                      prev[0],
-                      formatDateDash(new Date(e)),
-                    ])
-                  }
-                />
-              </div>
-            )}
-          </CardContent>
+          </CardTitle>
+          <CardDescription className="grid">
+            <span className="hidden @[540px]/card:block">
+              From {timeRange[0]} - {timeRange[1]}
+            </span>
+            <span className="@[540px]/card:hidden">
+              From {formatDateHuman(new Date(timeRange[0]))} -{" "}
+              {formatDateHuman(new Date(timeRange[1]))}
+            </span>
+          </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           {!filteredData.length && (
-            <div className="aspect-auto h-[250px] w-full" />
+            <div className="aspect-auto h-[400px] w-full" />
           )}
 
           {!!filteredData.length && (
             <ChartContainer
               config={chartConfig}
-              className={"aspect-auto h-[250px] w-full p-6"}
+              className={"aspect-auto h-[400px] w-full p-6"}
             >
               <AreaChart
                 data={filteredData}
@@ -293,6 +269,7 @@ export default function ChartAreaInteractive({
                         return new Date(value).toLocaleDateString("en-US", {
                           month: "short",
                           day: "numeric",
+                          year: "numeric",
                           timeZone: "UTC",
                         });
                       }}
@@ -300,21 +277,74 @@ export default function ChartAreaInteractive({
                     />
                   }
                 />
-                <Area
-                  dataKey="income"
-                  type="linear"
-                  fill="url(#fillIncome)"
-                  stroke="var(--color-income)"
-                />
-                <Area
-                  dataKey="expense"
-                  type="linear"
-                  fill="url(#fillExpense)"
-                  stroke="var(--color-expense)"
-                />
+                {(activeGraph === "Both" || activeGraph === "Income") && (
+                  <Area
+                    dataKey="income"
+                    type="linear"
+                    fill="url(#fillIncome)"
+                    stroke="var(--color-income)"
+                  />
+                )}
+                {(activeGraph === "Both" || activeGraph === "Expense") && (
+                  <Area
+                    dataKey="expense"
+                    type="linear"
+                    fill="url(#fillExpense)"
+                    stroke="var(--color-expense)"
+                  />
+                )}
                 <ChartLegend content={<ChartLegendContent />} />
               </AreaChart>
             </ChartContainer>
+          )}
+        </CardContent>
+        <CardContent className="flex justify-between">
+          <Select
+            value={selectedTimeRange}
+            onValueChange={setSelectedTimeRange}
+          >
+            <SelectTrigger
+              className="flex w-40 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate @[767px]/card:hidden bg-popover"
+              aria-label="Select a value"
+            >
+              <SelectValue placeholder="This Year" />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl">
+              <SelectItem value="all" className="rounded-lg">
+                All time
+              </SelectItem>
+              <SelectItem value="custom" className="rounded-lg">
+                Custom
+              </SelectItem>
+              <SelectItem value="year" className="rounded-lg">
+                This Year
+              </SelectItem>
+              <SelectItem value="90d" className="rounded-lg">
+                Last 3 months
+              </SelectItem>
+              <SelectItem value="30d" className="rounded-lg">
+                Last 30 days
+              </SelectItem>
+              <SelectItem value="7d" className="rounded-lg">
+                Last 7 days
+              </SelectItem>
+            </SelectContent>
+          </Select>
+          {selectedTimeRange === "custom" && (
+            <div className="flex">
+              <NaturalLanguageCalendar
+                value={timeRange[0]}
+                onChange={(e) =>
+                  setTimeRange((prev) => [formatDateDash(new Date(e)), prev[1]])
+                }
+              />
+              <NaturalLanguageCalendar
+                value={timeRange[1]}
+                onChange={(e) =>
+                  setTimeRange((prev) => [prev[0], formatDateDash(new Date(e))])
+                }
+              />
+            </div>
           )}
         </CardContent>
       </Card>
@@ -333,19 +363,28 @@ export default function ChartAreaInteractive({
           }
         >
           <DialogHeader>
-            <DialogTitle>Transactions for {activeDataPoint?.date}</DialogTitle>
-            <DialogDescription>what</DialogDescription>
+            <DialogTitle>
+              Transactions for{" "}
+              {formatDateHuman(new Date(activeDataPoint?.date || ""))}
+            </DialogTitle>
+            <DialogDescription></DialogDescription>
           </DialogHeader>
           <div className="max-w-full w-full">
             {activeDataPoint && (
               <DataTable
                 columns={columns}
-                transactions={transactions.filter(
-                  (t) => t.date === activeDataPoint.date
-                )}
+                transactions={transactions.filter((t) => {
+                  return (
+                    (activeGraph === "Both" || t.type === activeGraph) &&
+                    t.date === activeDataPoint.date
+                  );
+                })}
                 category={category}
                 user={user}
-                date={activeDataPoint.date}
+                transactionFilters={{
+                  date: activeDataPoint.date,
+                  type: activeGraph === "Both" ? undefined : activeGraph,
+                }}
               />
             )}
           </div>

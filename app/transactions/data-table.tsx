@@ -47,6 +47,7 @@ import {
   getDaysInDateRange,
   getRandomFloatTwoDecimalPlaces,
 } from "@/utils/utils";
+import { EntryType } from "@/components/charts/chartAreaInteractive";
 
 export type TransactionInsert =
   Database["public"]["Tables"]["Transaction"]["Insert"];
@@ -71,7 +72,7 @@ interface DataTableProps<TValue> {
   transactions: TransactionWithCategory[];
   category: Tables<"Category">[];
   user: User;
-  date?: string;
+  transactionFilters?: { date?: string; type?: EntryType };
 }
 
 const defaultHiddenColumns: ColumnKeys[] = ["subtotal", "tip", "tax"];
@@ -88,7 +89,7 @@ export function DataTable<TValue>({
   transactions,
   category,
   user,
-  date,
+  transactionFilters,
 }: DataTableProps<TValue>) {
   const isMobile = useIsMobile();
   const [sorting, setSorting] = React.useState<SortingState>([
@@ -156,41 +157,9 @@ export function DataTable<TValue>({
     user: user.id,
     table,
   };
-  const handleMassImport = async () => {
-    const start = new Date("06/01/2025");
-    const end = new Date("07/01/2025");
-    const days = getDaysInDateRange(start, end);
-    days.forEach(async (day) => {
-      const testRowExpense: FormTransaction = {
-        category: sheetContext.categories.map(({ category }) => category)[
-          Math.floor(sheetContext.categories.length * Math.random())
-        ],
-        amount: getRandomFloatTwoDecimalPlaces(1, 80).toFixed(2),
-        date: formatDateDash(day),
-        description: generateRandomString(10),
-        status:
-          STATUS_OPTIONS[Math.floor(STATUS_OPTIONS.length * Math.random())],
-        type: "Expense",
-      };
-      // const testRowIncome: FormTransaction = {
-      //   category: sheetContext.categories.map(({ category }) => category)[
-      //     Math.floor(sheetContext.categories.length * Math.random())
-      //   ],
-      //   amount: getRandomFloatTwoDecimalPlaces(1, 80).toFixed(2),
-      //   date: formatDateDash(day),
-      //   description: generateRandomString(10),
-      //   status:
-      //     STATUS_OPTIONS[Math.floor(STATUS_OPTIONS.length * Math.random())],
-      //   type: "Income",
-      // };
-      await upsertRow(testRowExpense);
-      // await upsertRow(testRowIncome);
-    });
-  };
 
   return (
     <div className="overflow-x-auto w-full">
-      <Button>MASS INPORT</Button>
       <div className="grid grid-cols-[7fr_1fr_1fr] items-center py-4 gap-4">
         <Input
           placeholder="Filter Transactions..."
@@ -212,7 +181,7 @@ export function DataTable<TValue>({
           <Button
             variant="secondary"
             onClick={() => {
-              if (date) setActiveSheetData({ date });
+              if (transactionFilters) setActiveSheetData(transactionFilters);
               setIsSheetOpen((prev) => !prev);
             }}
             size="sm"
@@ -222,7 +191,7 @@ export function DataTable<TValue>({
           </Button>
         )}
       </div>
-      <div className="rounded-md border bg-popover overflow-x-auto w-full">
+      <div className="rounded-md border bg-popover/80 backdrop-blur-3xl border-white/25 shadow-lg overflow-x-auto w-full">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -278,7 +247,7 @@ export function DataTable<TValue>({
       <DataTablePagination table={table} />
       <TableSheet
         sheetContext={sheetContext}
-        isNewSheet={!activeSheetData}
+        isNewSheet={!activeSheetData?.id}
         sheetOpen={isSheetOpen}
         setSheetOpen={setIsSheetOpen}
         activeSheetData={activeSheetData}
