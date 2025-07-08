@@ -32,17 +32,29 @@ export function copyObjectToClipboard(obj: any) {
   }
 }
 
-export function formatDate(date: Date | undefined) {
+export function formatDateHuman(date: Date | undefined) {
   if (!date) {
-    return "";
+    return undefined;
   }
 
   return date.toLocaleDateString("en-US", {
     day: "2-digit",
     month: "long",
     year: "numeric",
-    timeZone: "UTC",
   });
+}
+
+export function formatDateDash(date: Date): string {
+  const [month, day, year] = date
+    .toLocaleDateString("en-US", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      timeZone: "UTC",
+    })
+    .split("/");
+
+  return `${year}-${month}-${day}`;
 }
 
 export function getRandomDate(startDate: Date, endDate: Date) {

@@ -41,6 +41,9 @@ import { DataTable } from "@/app/transactions/data-table";
 import { columns } from "@/app/transactions/columns";
 import ShinyText from "../ui/shinyText";
 import Particles from "../ui/particles";
+import { cn } from "@/lib/utils";
+import { NaturalLanguageCalendar } from "../ui/naturalLanguageCalendar";
+import { formatDateDash } from "@/utils/utils";
 
 export const description = "An interactive area chart";
 
@@ -61,24 +64,29 @@ export type ChartAreaInteractiveProps = {
   user: User;
 };
 
-function formatDate(date: Date): string {
-  const month = (date.getMonth() + 1).toString().padStart(2, "0");
-  const day = date.getDate().toString().padStart(2, "0");
-  return `${date.getFullYear()}-${month}-${day}`;
-}
+const convertSelectedTimeRange = (
+  selectedTimeRange: string
+): [string, string] => {
+  const today = new Date();
 
-function getAllDatesInRange(start: string, end: string): string[] {
-  const dates: string[] = [];
-  let startDate = new Date(start);
-  const endDate = new Date(end);
-  while (startDate <= endDate) {
-    dates.push(formatDate(startDate));
-    startDate = new Date(startDate.getTime() + 86400000);
+  if (selectedTimeRange === "year") {
+    return [
+      formatDateDash(new Date(today.getFullYear(), 0, 1)),
+      formatDateDash(today),
+    ];
   }
-  dates.push(formatDate(startDate));
 
-  return dates;
-}
+  let daysToSubtract = 90;
+  if (selectedTimeRange === "30d") {
+    daysToSubtract = 30;
+  }
+  if (selectedTimeRange === "7d") {
+    daysToSubtract = 7;
+  }
+  const pastDate = new Date(today);
+  pastDate.setDate(today.getDate() - daysToSubtract);
+  return [formatDateDash(pastDate), formatDateDash(today)];
+};
 
 export default function ChartAreaInteractive({
   transactions,
@@ -86,20 +94,21 @@ export default function ChartAreaInteractive({
   user,
 }: ChartAreaInteractiveProps) {
   const isMobile = useIsMobile();
-  const [timeRange, setTimeRange] = React.useState("year");
   const [activeIndex, setActiveIndex] = React.useState<number | null>(null);
   const [modalOpen, setModalOpen] = React.useState(false);
+  const [selectedTimeRange, setSelectedTimeRange] = React.useState("year");
 
-  const [dataByType] = useChartData(transactions);
-
-  const now = new Date();
+  const { timeRange, setTimeRange, filteredData } = useChartData(
+    transactions,
+    user
+  );
 
   React.useEffect(() => {
     if (isMobile) {
-      setTimeRange("7d");
+      setTimeRange(convertSelectedTimeRange("7d"));
     }
     if (!isMobile) {
-      setTimeRange("year");
+      setTimeRange(convertSelectedTimeRange("year"));
     }
     setActiveIndex(null);
     setModalOpen(false);
@@ -107,45 +116,11 @@ export default function ChartAreaInteractive({
 
   React.useEffect(() => {
     setActiveIndex(null);
-  }, [dataByType]);
+  }, [filteredData]);
 
-  let filteredData: ChartAreaDataEntry[] = [];
-
-  if (timeRange === "year") {
-    const yearFiltered = Array.from(dataByType.values()).filter((item) => {
-      return item.date.split("-")[0] === now.getFullYear().toString();
-    });
-
-    const yearFilteredLength = yearFiltered.length;
-    if (yearFilteredLength !== 0) {
-      const datesInYear = getAllDatesInRange(
-        yearFiltered[0].date,
-        yearFiltered[yearFilteredLength - 1].date
-      );
-
-      filteredData = datesInYear.map((dateStr) => {
-        return (
-          dataByType.get(dateStr) || {
-            date: dateStr,
-          }
-        );
-      });
-    }
-  } else {
-    filteredData = Array.from(dataByType.values()).filter((item) => {
-      const date = new Date(item.date);
-      const referenceDate = new Date();
-      let daysToSubtract = 90;
-      if (timeRange === "30d") {
-        daysToSubtract = 30;
-      } else if (timeRange === "7d") {
-        daysToSubtract = 7;
-      }
-      const startDate = new Date(referenceDate);
-      startDate.setDate(startDate.getDate() - daysToSubtract);
-      return date >= startDate;
-    });
-  }
+  React.useEffect(() => {
+    setTimeRange(convertSelectedTimeRange(selectedTimeRange));
+  }, [selectedTimeRange]);
 
   const activeDataPoint =
     activeIndex !== null && filteredData.length
@@ -154,22 +129,32 @@ export default function ChartAreaInteractive({
 
   return (
     <>
-      <Card className="@container/card max-w-6xl mx-auto w-full bg-transparent relative">
-        <Particles
-          particleColors={["#ffffff", "#ffffff"]}
-          particleCount={2000}
-          particleSpread={50}
-          speed={0.05}
-          particleBaseSize={150}
-          moveParticlesOnHover={true}
-          alphaParticles={false}
-          disableRotation={false}
-          className="absolute w-full h-full z-50"
-        />
-        <ShinyText
-          className="absolute font-extrabold sm:text-2xl italic flex w-full h-full items-center justify-center "
-          text={`No Data this ${timeRange}`}
-        />
+      <Card
+        className={cn(
+          "@container/card max-w-6xl mx-auto w-full relative bg-popover/80 backdrop-blur-3xl rounded-xl border border-white/25 shadow-lg",
+          !filteredData.length &&
+            "bg-transparent backdrop-blur-2xl rounded-xl border border-white/25 shadow-lg"
+        )}
+      >
+        {!filteredData.length && (
+          <div className="-z-50 pointer-events-none">
+            <Particles
+              particleColors={["#ffffff", "#ffffff"]}
+              particleCount={2000}
+              particleSpread={50}
+              speed={0.05}
+              particleBaseSize={150}
+              moveParticlesOnHover={true}
+              alphaParticles={false}
+              disableRotation={false}
+              className="absolute w-full h-full z-50"
+            />
+            <ShinyText
+              className="absolute font-extrabold sm:text-2xl italic flex w-full h-full items-center justify-center "
+              text={`No Data this ${timeRange}`}
+            />
+          </div>
+        )}
         <CardHeader>
           <CardTitle>Transactions</CardTitle>
           <CardDescription>
@@ -178,15 +163,21 @@ export default function ChartAreaInteractive({
             </span>
             <span className="@[540px]/card:hidden">Last {timeRange}</span>
           </CardDescription>
-          <CardContent>
-            <Select value={timeRange} onValueChange={setTimeRange}>
+          <CardContent className="flex justify-between">
+            <Select
+              value={selectedTimeRange}
+              onValueChange={setSelectedTimeRange}
+            >
               <SelectTrigger
-                className="flex w-40 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate @[767px]/card:hidden"
+                className="flex w-40 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate @[767px]/card:hidden bg-popover"
                 aria-label="Select a value"
               >
                 <SelectValue placeholder="This Year" />
               </SelectTrigger>
               <SelectContent className="rounded-xl">
+                <SelectItem value="custom" className="rounded-lg">
+                  Custom
+                </SelectItem>
                 <SelectItem value="year" className="rounded-lg">
                   This Year
                 </SelectItem>
@@ -201,24 +192,39 @@ export default function ChartAreaInteractive({
                 </SelectItem>
               </SelectContent>
             </Select>
+            {selectedTimeRange === "custom" && (
+              <div className="flex">
+                <NaturalLanguageCalendar
+                  value={timeRange[0]}
+                  onChange={(e) =>
+                    setTimeRange((prev) => [
+                      formatDateDash(new Date(e)),
+                      prev[1],
+                    ])
+                  }
+                />
+                <NaturalLanguageCalendar
+                  value={timeRange[1]}
+                  onChange={(e) =>
+                    setTimeRange((prev) => [
+                      prev[0],
+                      formatDateDash(new Date(e)),
+                    ])
+                  }
+                />
+              </div>
+            )}
           </CardContent>
         </CardHeader>
         <CardContent className="p-0">
           {!filteredData.length && (
-            <>
-              <div className="flex aspect-auto h-[250px] w-full text-center text-muted justify-center items-center mix-blend-lighten ">
-                {/* <ShinyText
-                  className="absolute z-50 font-extrabold sm:text-2xl italic"
-                  text={`No Data this ${timeRange}`}
-                /> */}
-              </div>
-            </>
+            <div className="aspect-auto h-[250px] w-full" />
           )}
 
           {!!filteredData.length && (
             <ChartContainer
               config={chartConfig}
-              className="aspect-auto h-[250px] w-full"
+              className={"aspect-auto h-[250px] w-full p-6"}
             >
               <AreaChart
                 data={filteredData}

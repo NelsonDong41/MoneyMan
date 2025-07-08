@@ -42,7 +42,7 @@ import useTableStates from "@/hooks/useTableStates";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { User } from "@supabase/supabase-js";
 import {
-  formatDate,
+  formatDateDash,
   generateRandomString,
   getDaysInDateRange,
   getRandomFloatTwoDecimalPlaces,
@@ -166,7 +166,7 @@ export function DataTable<TValue>({
           Math.floor(sheetContext.categories.length * Math.random())
         ],
         amount: getRandomFloatTwoDecimalPlaces(1, 80).toFixed(2),
-        date: formatDate(day),
+        date: formatDateDash(day),
         description: generateRandomString(10),
         status:
           STATUS_OPTIONS[Math.floor(STATUS_OPTIONS.length * Math.random())],
@@ -177,7 +177,7 @@ export function DataTable<TValue>({
       //     Math.floor(sheetContext.categories.length * Math.random())
       //   ],
       //   amount: getRandomFloatTwoDecimalPlaces(1, 80).toFixed(2),
-      //   date: formatDate(day),
+      //   date: formatDateDash(day),
       //   description: generateRandomString(10),
       //   status:
       //     STATUS_OPTIONS[Math.floor(STATUS_OPTIONS.length * Math.random())],
@@ -190,7 +190,7 @@ export function DataTable<TValue>({
 
   return (
     <div className="overflow-x-auto w-full">
-      <Button onClick={handleMassImport}>MASS INPORT</Button>
+      <Button>MASS INPORT</Button>
       <div className="grid grid-cols-[7fr_1fr_1fr] items-center py-4 gap-4">
         <Input
           placeholder="Filter Transactions..."

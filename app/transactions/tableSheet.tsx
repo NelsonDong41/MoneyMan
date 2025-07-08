@@ -30,7 +30,6 @@ import {
 } from "@/utils/schemas/transactionFormSchema";
 import { Title } from "@radix-ui/react-dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { NaturalLanguageCalender } from "@/components/ui/naturalLanguageCalender";
 import {
   STATUS_OPTIONS,
   TransactionWithCategory,
@@ -52,6 +51,7 @@ import {
 } from "@radix-ui/react-popover";
 import { ChevronsUpDown, Check } from "lucide-react";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { NaturalLanguageCalendar } from "@/components/ui/naturalLanguageCalendar";
 
 type TableSheetProps = {
   isNewSheet: boolean;
@@ -381,7 +381,7 @@ export default function TableSheet({
                   <FormItem>
                     <FormLabel htmlFor="date">Date</FormLabel>
                     <FormControl>
-                      <NaturalLanguageCalender id="date" {...field} />
+                      <NaturalLanguageCalendar {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
