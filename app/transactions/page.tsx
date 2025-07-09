@@ -1,10 +1,10 @@
 import { createClient } from "@/utils/supabase/server";
-import { columns } from "./columns";
-import { DataTable } from "./data-table";
+import { columns } from "@/components/dataTable/columns";
+import { DataTable } from "../../components/dataTable/data-table";
 import { User } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { TransactionWithCategory, Type } from "@/utils/supabase/supabase";
-import ChartAreaInteractive from "@/components/charts/chartAreaInteractive";
+import ChartAreaInteractive from "@/components/charts/InteractiveTransactionAreaChart";
 import { categoryDataToMap } from "@/utils/utils";
 import { UserProvider } from "@/context/UserContext";
 import { CategoryMap, CategoryMapProvider } from "@/context/CategoryMapContext";

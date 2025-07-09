@@ -35,8 +35,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { DialogDescription } from "@radix-ui/react-dialog";
-import { DataTable } from "@/app/transactions/data-table";
-import { columns } from "@/app/transactions/columns";
+import { DataTable } from "@/components/dataTable/data-table";
+import { columns } from "@/components/dataTable/columns";
 import ShinyText from "../ui/shinyText";
 import Particles from "../ui/particles";
 import { NaturalLanguageCalendar } from "../ui/naturalLanguageCalendar";
@@ -103,7 +103,7 @@ const convertSelectedTimeRange = (
   }
 };
 
-export default function ChartAreaInteractive() {
+export default function InteractiveTransactionAreaChart() {
   const { transactions } = useTransactions();
   const isMobile = useIsMobile();
   const [activeIndex, setActiveIndex] = React.useState<number | null>(null);

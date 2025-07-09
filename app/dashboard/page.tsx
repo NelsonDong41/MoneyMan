@@ -5,7 +5,7 @@ import {
   TransactionWithCategory,
 } from "@/utils/supabase/supabase";
 import { User } from "@supabase/supabase-js";
-import ChartAreaInteractive from "@/components/charts/chartAreaInteractive";
+import ChartAreaInteractive from "@/components/charts/InteractiveTransactionAreaChart";
 import { categoryDataToMap } from "@/utils/utils";
 import { UserProvider } from "@/context/UserContext";
 import { CategoryMap, CategoryMapProvider } from "@/context/CategoryMapContext";

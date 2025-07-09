@@ -1,4 +1,4 @@
-import { TransactionInsert } from "@/app/transactions/data-table";
+import { TransactionInsert } from "@/components/dataTable/data-table";
 import { FormTransaction } from "@/utils/schemas/transactionFormSchema";
 import { createClient } from "@/utils/supabase/client";
 import { TransactionWithCategory } from "@/utils/supabase/supabase";

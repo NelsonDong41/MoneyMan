@@ -21,7 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DataTableColumnHeader } from "@/components/ui/table";
-import { SheetAction } from "./data-table";
+import { SheetAction } from "../../components/dataTable/data-table";
 import DeleteAlert from "./deleteAlert";
 import { ReactElement, useState } from "react";
 import { copyObjectToClipboard } from "@/utils/utils";
