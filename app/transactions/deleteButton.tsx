@@ -1,18 +1,21 @@
-import { SheetAction, SheetContext } from "./data-table";
+import { SheetAction } from "./data-table";
 import React from "react";
 import DeleteAlert from "./deleteAlert";
+import { TransactionWithCategory } from "@/utils/supabase/supabase";
+import { Table } from "@tanstack/react-table";
+import { useUser } from "@/context/UserContext";
 
 type DeleteButtonProps = {
-  sheetContext: SheetContext;
+  table: Table<TransactionWithCategory>;
   sheetActions: SheetAction;
 };
 
 export default function DeleteButton({
-  sheetContext,
+  table,
   sheetActions,
 }: DeleteButtonProps) {
-  const totalRowCount = sheetContext.table.getFilteredRowModel().rows.length;
-  const selectedRows = sheetContext.table.getFilteredSelectedRowModel().rows;
+  const totalRowCount = table.getFilteredRowModel().rows.length;
+  const selectedRows = table.getFilteredSelectedRowModel().rows;
   const selectedRowIds = selectedRows.map((row) => row.original.id);
   const [deleteAlertOpen, setDeleteAlertOpen] = React.useState(false);
   return (
@@ -21,8 +24,8 @@ export default function DeleteButton({
       open={deleteAlertOpen}
       onOpenChange={setDeleteAlertOpen}
       action={() => {
-        sheetActions.deleteRows(selectedRowIds, sheetContext.user);
-        sheetContext.table.setRowSelection({});
+        sheetActions.deleteRows(selectedRowIds);
+        table.setRowSelection({});
         setDeleteAlertOpen(false);
       }}
       additionalMessage={`${selectedRows.length} of ${totalRowCount} transactions`}

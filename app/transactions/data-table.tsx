@@ -4,7 +4,6 @@ import * as React from "react";
 import {
   ColumnDef,
   ColumnFiltersState,
-  Row,
   SortingState,
   VisibilityState,
   flexRender,
@@ -29,31 +28,26 @@ import { Input } from "@/components/ui/input";
 import { DataTableViewOptions } from "@/components/ui/dataTableViewOptions";
 import TableSheet from "./tableSheet";
 import DeleteButton from "./deleteButton";
-import { Database, Tables } from "@/utils/supabase/types";
+import { Database } from "@/utils/supabase/types";
 import { FormTransaction } from "@/utils/schemas/transactionFormSchema";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import {
   ColumnKeys,
-  STATUS_OPTIONS,
   TransactionWithCategory,
   Type,
 } from "@/utils/supabase/supabase";
 import useTableStates from "@/hooks/useTableStates";
 import { useIsMobile } from "@/hooks/useIsMobile";
-import { User } from "@supabase/supabase-js";
-import { CategoryMap } from "./page";
+import { useUser } from "@/context/UserContext";
+import { CategoryMap } from "@/context/CategoryMapContext";
+import { useTransactions } from "@/context/TransactionsContext";
 
 export type TransactionInsert =
   Database["public"]["Tables"]["Transaction"]["Insert"];
 export type TransactionUpdate =
   Database["public"]["Tables"]["Transaction"]["Update"];
 
-export type SheetContext = {
-  categoryMap: CategoryMap;
-  user: string;
-  table: ReactTable<TransactionWithCategory>;
-};
 export type SheetAction = {
   upsertRow: (values: FormTransaction) => void;
   deleteRows: (ids: number[], user_Id?: string) => void;
@@ -64,9 +58,6 @@ interface DataTableProps<TValue> {
     loadingRows: Set<number>,
     sheetActions: SheetAction
   ) => ColumnDef<TransactionWithCategory, TValue>[];
-  transactions: TransactionWithCategory[];
-  categoryMap: CategoryMap;
-  user: User;
   transactionFilters?: { date?: string; type?: Type };
 }
 
@@ -81,11 +72,9 @@ const mobileHiddenColumns: ColumnKeys[] = defaultHiddenColumns.concat([
 
 export function DataTable<TValue>({
   columns,
-  transactions,
-  categoryMap,
-  user,
   transactionFilters,
 }: DataTableProps<TValue>) {
+  const { transactions } = useTransactions();
   const isMobile = useIsMobile();
   const [sorting, setSorting] = React.useState<SortingState>([
     { id: "date", desc: true },
@@ -98,6 +87,17 @@ export function DataTable<TValue>({
       Object.fromEntries(defaultHiddenColumns.map((key) => [key, false]))
     );
   const [rowSelection, setRowSelection] = React.useState({});
+
+  const filteredTransactions = React.useMemo(() => {
+    return transactions.filter((t) => {
+      if (!transactionFilters) return true;
+      const typeFilter =
+        !transactionFilters.type || transactionFilters.type === t.type;
+      const dateFilter =
+        !transactionFilters.date || transactionFilters.date === t.date;
+      return typeFilter && dateFilter;
+    });
+  }, [transactions, transactionFilters]);
 
   React.useEffect(() => {
     const hiddenColumns = isMobile ? mobileHiddenColumns : defaultHiddenColumns;
@@ -116,12 +116,12 @@ export function DataTable<TValue>({
     upsertRow,
     deleteRows,
     handleTableCellClick,
-  } = useTableStates(user);
+  } = useTableStates();
 
-  const sheetActions = {
-    upsertRow,
-    deleteRows,
-  };
+  const sheetActions = React.useMemo(
+    () => ({ upsertRow, deleteRows }),
+    [upsertRow, deleteRows]
+  );
 
   const memoizedColumns = React.useMemo(
     () => columns(loadingRows, sheetActions),
@@ -129,7 +129,7 @@ export function DataTable<TValue>({
   );
 
   const table = useReactTable({
-    data: transactions,
+    data: filteredTransactions,
     columns: memoizedColumns,
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
@@ -147,14 +147,8 @@ export function DataTable<TValue>({
     },
   });
 
-  const sheetContext: SheetContext = {
-    categoryMap,
-    user: user.id,
-    table,
-  };
-
   return (
-    <div className="overflow-x-auto w-full">
+    <div className="p-1 overflow-x-auto w-full">
       <div className="grid grid-cols-[7fr_1fr_1fr] items-center py-4 gap-4">
         <Input
           placeholder="Filter Transactions..."
@@ -164,14 +158,11 @@ export function DataTable<TValue>({
           onChange={(event) =>
             table.getColumn("description")?.setFilterValue(event.target.value)
           }
-          className="max-w-sm"
+          className="max-w-sm rounded-lg"
         />
         <DataTableViewOptions table={table} />
         {table.getIsSomeRowsSelected() || table.getIsAllRowsSelected() ? (
-          <DeleteButton
-            sheetContext={sheetContext}
-            sheetActions={sheetActions}
-          />
+          <DeleteButton table={table} sheetActions={sheetActions} />
         ) : (
           <Button
             variant="secondary"
@@ -241,13 +232,12 @@ export function DataTable<TValue>({
       </div>
       <DataTablePagination table={table} />
       <TableSheet
-        sheetContext={sheetContext}
         isNewSheet={!activeSheetData?.id}
         sheetOpen={isSheetOpen}
         setSheetOpen={setIsSheetOpen}
         activeSheetData={activeSheetData}
         setActiveSheetData={setActiveSheetData}
-        sheetActions={{ upsertRow, deleteRows }}
+        sheetActions={sheetActions}
       />
     </div>
   );

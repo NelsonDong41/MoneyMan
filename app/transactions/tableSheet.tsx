@@ -18,7 +18,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { SheetAction, SheetContext } from "./data-table";
+import { SheetAction } from "./data-table";
 import { useEffect, useState } from "react";
 import CurrencyInput from "@/components/ui/currencyInput";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -52,6 +52,7 @@ import {
 import { ChevronsUpDown, Check, ChevronsRight } from "lucide-react";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { NaturalLanguageCalendar } from "@/components/ui/naturalLanguageCalendar";
+import { useCategoryMap } from "@/context/CategoryMapContext";
 
 type TableSheetProps = {
   isNewSheet: boolean;
@@ -61,7 +62,6 @@ type TableSheetProps = {
   setActiveSheetData: (
     value: React.SetStateAction<Partial<TransactionWithCategory> | null>
   ) => void;
-  sheetContext: SheetContext;
   sheetActions: SheetAction;
 };
 
@@ -82,9 +82,9 @@ export default function TableSheet({
   setSheetOpen,
   activeSheetData,
   setActiveSheetData,
-  sheetContext,
   sheetActions,
 }: TableSheetProps) {
+  const { categoryMap } = useCategoryMap();
   const isMobile = useIsMobile();
   const form = useForm<FormTransaction>({
     resolver: zodResolver(transactionFormSchema),
@@ -341,9 +341,7 @@ export default function TableSheet({
                               <CommandEmpty>No category found.</CommandEmpty>
                               <CommandGroup>
                                 {Object.entries(
-                                  sheetContext.categoryMap[
-                                    form.getValues("type")
-                                  ]
+                                  categoryMap[form.getValues("type")]
                                 ).map(([parent, categoryList]) => {
                                   return categoryList.map((category, i) => (
                                     <CommandItem

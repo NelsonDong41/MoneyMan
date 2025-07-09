@@ -1,3 +1,4 @@
+import { useUser } from "@/context/UserContext";
 import { createClient } from "@/utils/supabase/client";
 import { TransactionWithCategory } from "@/utils/supabase/supabase";
 import { formatDateDash } from "@/utils/utils";
@@ -23,15 +24,15 @@ export const getStartDate = (timeRange: string) => {
 
 export default function useAccumulatedIncome(
   data: TransactionWithCategory[],
-  user: User,
   timeRange: [string, string]
 ) {
-  const [start] = timeRange;
+  const { user } = useUser();
   const [accumuatedIncome, setAccumulatedIncome] = useState(0);
+  const [start] = timeRange;
   const supabase = createClient();
 
   useEffect(() => {
-    const getStartingIncome = async (startDate: string, user: User) => {
+    const getStartingIncome = async (startDate: string) => {
       const { data, error } = await supabase
         .from("Transaction")
         .select("amount")
@@ -54,7 +55,7 @@ export default function useAccumulatedIncome(
       setAccumulatedIncome(sum);
     };
 
-    getStartingIncome(start, user);
+    getStartingIncome(start);
   }, [timeRange, data]);
 
   return accumuatedIncome;

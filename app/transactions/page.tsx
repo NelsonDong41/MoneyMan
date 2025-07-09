@@ -3,15 +3,13 @@ import { columns } from "./columns";
 import { DataTable } from "./data-table";
 import { User } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
-import { Tables } from "@/utils/supabase/types";
 import { TransactionWithCategory, Type } from "@/utils/supabase/supabase";
 import ChartAreaInteractive from "@/components/charts/chartAreaInteractive";
 import { categoryDataToMap } from "@/utils/utils";
+import { UserProvider } from "@/context/UserContext";
+import { CategoryMap, CategoryMapProvider } from "@/context/CategoryMapContext";
+import { TransactionProvider } from "@/context/TransactionsContext";
 
-export type CategoryMap = Record<
-  "Income" | "Expense",
-  Record<string, string[]>
->;
 export type TransactionPageProps = {
   transactions: TransactionWithCategory[];
   categoryMap: CategoryMap;
@@ -56,13 +54,19 @@ async function getData(): Promise<TransactionPageProps> {
   };
 }
 
-export default async function Dashboard() {
-  const data = await getData();
+export default async function Transactions() {
+  const { user, transactions, categoryMap } = await getData();
 
   return (
     <div className="container mx-auto py-10 max-w-8xl">
-      <ChartAreaInteractive {...data} />
-      <DataTable columns={columns} {...data} />
+      <UserProvider initial={user}>
+        <TransactionProvider initial={transactions}>
+          <CategoryMapProvider initial={categoryMap}>
+            <ChartAreaInteractive />
+            <DataTable columns={columns} />
+          </CategoryMapProvider>
+        </TransactionProvider>
+      </UserProvider>
     </div>
   );
 }

@@ -35,22 +35,24 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { DialogDescription } from "@radix-ui/react-dialog";
-import { User } from "@supabase/supabase-js";
 import { DataTable } from "@/app/transactions/data-table";
 import { columns } from "@/app/transactions/columns";
 import ShinyText from "../ui/shinyText";
 import Particles from "../ui/particles";
 import { NaturalLanguageCalendar } from "../ui/naturalLanguageCalendar";
 import { formatDateDash, formatDateHuman } from "@/utils/utils";
-import { CategoryMap } from "@/app/transactions/page";
+import { Label } from "../ui/label";
+import { ArrowRight } from "lucide-react";
+import { useTransactions } from "@/context/TransactionsContext";
+import { type CategoryMap, useCategoryMap } from "@/context/CategoryMapContext";
 
 const chartConfig = {
   expense: {
     label: "Expense",
     color: "var(--chart-1)",
   },
-  income: {
-    label: "Income",
+  balance: {
+    label: "Balance",
     color: "var(--chart-2)",
   },
 } satisfies ChartConfig satisfies ChartConfig;
@@ -58,7 +60,6 @@ const chartConfig = {
 export type ChartAreaInteractiveProps = {
   transactions: TransactionWithCategory[];
   categoryMap: CategoryMap;
-  user: User;
 };
 
 const convertSelectedTimeRange = (
@@ -85,23 +86,17 @@ const convertSelectedTimeRange = (
   return [formatDateDash(pastDate), formatDateDash(today)];
 };
 
-export default function ChartAreaInteractive({
-  transactions,
-  categoryMap,
-  user,
-}: ChartAreaInteractiveProps) {
+export type ChartOptions = "Balance" | "Expense" | "Both";
+export default function ChartAreaInteractive() {
+  const { transactions } = useTransactions();
   const isMobile = useIsMobile();
   const [activeIndex, setActiveIndex] = React.useState<number | null>(null);
   const [modalOpen, setModalOpen] = React.useState(false);
   const [selectedTimeRange, setSelectedTimeRange] = React.useState("year");
-  const [activeGraph, setActiveGraph] = React.useState<Type | "Both">(
-    "Expense"
-  );
+  const [activeGraph, setActiveGraph] = React.useState<ChartOptions>("Expense");
   const firstDate = transactions.length ? transactions[0] : null;
-  const { timeRange, setTimeRange, filteredData } = useChartData(
-    transactions,
-    user
-  );
+  const { timeRange, setTimeRange, dataTableEntries } =
+    useChartData(transactions);
 
   React.useEffect(() => {
     if (isMobile) {
@@ -114,9 +109,17 @@ export default function ChartAreaInteractive({
     setModalOpen(false);
   }, [isMobile]);
 
+  const activeDataPoint = React.useMemo(() => {
+    return activeIndex !== null && dataTableEntries.length
+      ? dataTableEntries[activeIndex]
+      : null;
+  }, [activeIndex, dataTableEntries]);
+
   React.useEffect(() => {
-    setActiveIndex(null);
-  }, [filteredData]);
+    if (!activeDataPoint) {
+      setActiveIndex(null);
+    }
+  }, [dataTableEntries, activeDataPoint]);
 
   React.useEffect(() => {
     if (selectedTimeRange === "all" && firstDate) {
@@ -126,15 +129,10 @@ export default function ChartAreaInteractive({
     setTimeRange(convertSelectedTimeRange(selectedTimeRange));
   }, [selectedTimeRange]);
 
-  const activeDataPoint =
-    activeIndex !== null && filteredData.length
-      ? filteredData[activeIndex]
-      : null;
-
   return (
     <>
-      <Card className="@container/card mx-auto w-full relative bg-popover/80 backdrop-blur-3xl rounded-xl border border-white/25 shadow-lg">
-        {!filteredData.length && (
+      <Card className="@container/card mx-auto w-full relative bg-popover/80 backdrop-blur-3xl rounded-xl border border-white/25 shadow-lg p-1">
+        {!dataTableEntries.length && (
           <div className="-z-50 pointer-events-none">
             <Particles
               particleColors={["#ffffff", "#ffffff"]}
@@ -158,7 +156,7 @@ export default function ChartAreaInteractive({
             Transactions{" "}
             <Select
               value={activeGraph}
-              onValueChange={(e) => setActiveGraph(e as Type)}
+              onValueChange={(e) => setActiveGraph(e as ChartOptions)}
             >
               <SelectTrigger
                 className="flex w-40 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate @[767px]/card:hidden bg-popover"
@@ -170,8 +168,8 @@ export default function ChartAreaInteractive({
                 <SelectItem value="Both" className="rounded-lg">
                   Both
                 </SelectItem>
-                <SelectItem value="Income" className="rounded-lg">
-                  Income
+                <SelectItem value="Balance" className="rounded-lg">
+                  Balance
                 </SelectItem>
                 <SelectItem value="Expense" className="rounded-lg">
                   Expense
@@ -190,34 +188,40 @@ export default function ChartAreaInteractive({
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          {!filteredData.length && (
+          {!dataTableEntries.length && (
             <div className="aspect-auto h-[400px] w-full" />
           )}
 
-          {!!filteredData.length && (
+          {!!dataTableEntries.length && (
             <ChartContainer
               config={chartConfig}
               className={"aspect-auto h-[400px] w-full p-6"}
             >
               <AreaChart
-                data={filteredData}
+                data={dataTableEntries}
                 onClick={(state) => {
-                  if (state && state.activeTooltipIndex !== undefined) {
+                  if (!state || !state.activeTooltipIndex) {
+                    return;
+                  }
+                  const { expense, balance } =
+                    dataTableEntries[state.activeTooltipIndex];
+                  const hasData = expense || balance;
+                  if (hasData) {
                     setActiveIndex(state.activeTooltipIndex);
                     setModalOpen(true);
                   }
                 }}
               >
                 <defs>
-                  <linearGradient id="fillIncome" x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient id="fillBalance" x1="0" y1="0" x2="0" y2="1">
                     <stop
                       offset="5%"
-                      stopColor="var(--color-income)"
+                      stopColor="var(--color-balance)"
                       stopOpacity={1.0}
                     />
                     <stop
                       offset="95%"
-                      stopColor="var(--color-income)"
+                      stopColor="var(--color-balance)"
                       stopOpacity={0.1}
                     />
                   </linearGradient>
@@ -274,12 +278,12 @@ export default function ChartAreaInteractive({
                     />
                   }
                 />
-                {(activeGraph === "Both" || activeGraph === "Income") && (
+                {(activeGraph === "Both" || activeGraph === "Balance") && (
                   <Area
-                    dataKey="income"
+                    dataKey="balance"
                     type="linear"
-                    fill="url(#fillIncome)"
-                    stroke="var(--color-income)"
+                    fill="url(#fillBalance)"
+                    stroke="var(--color-balance)"
                   />
                 )}
                 {(activeGraph === "Both" || activeGraph === "Expense") && (
@@ -295,7 +299,7 @@ export default function ChartAreaInteractive({
             </ChartContainer>
           )}
         </CardContent>
-        <CardContent className="flex justify-between">
+        <CardContent className="flex justify-between items-end">
           <Select
             value={selectedTimeRange}
             onValueChange={setSelectedTimeRange}
@@ -328,19 +332,32 @@ export default function ChartAreaInteractive({
             </SelectContent>
           </Select>
           {selectedTimeRange === "custom" && (
-            <div className="flex">
-              <NaturalLanguageCalendar
-                value={timeRange[0]}
-                onChange={(e) =>
-                  setTimeRange((prev) => [formatDateDash(new Date(e)), prev[1]])
-                }
-              />
-              <NaturalLanguageCalendar
-                value={timeRange[1]}
-                onChange={(e) =>
-                  setTimeRange((prev) => [prev[0], formatDateDash(new Date(e))])
-                }
-              />
+            <div className="flex gap-5 items-center">
+              <div className="flex flex-col gap-1">
+                <Label className="pl-2">Start Date</Label>
+                <NaturalLanguageCalendar
+                  value={timeRange[0]}
+                  onChange={(e) =>
+                    setTimeRange((prev) => [
+                      formatDateDash(new Date(e)),
+                      prev[1],
+                    ])
+                  }
+                />
+              </div>
+              <ArrowRight />
+              <div className="flex flex-col gap-1">
+                <Label className="pl-2">End Date</Label>
+                <NaturalLanguageCalendar
+                  value={timeRange[1]}
+                  onChange={(e) =>
+                    setTimeRange((prev) => [
+                      prev[0],
+                      formatDateDash(new Date(e)),
+                    ])
+                  }
+                />
+              </div>
             </div>
           )}
         </CardContent>
@@ -370,17 +387,9 @@ export default function ChartAreaInteractive({
             {activeDataPoint && (
               <DataTable
                 columns={columns}
-                transactions={transactions.filter((t) => {
-                  return (
-                    (activeGraph === "Both" || t.type === activeGraph) &&
-                    t.date === activeDataPoint.date
-                  );
-                })}
-                categoryMap={categoryMap}
-                user={user}
                 transactionFilters={{
                   date: activeDataPoint.date,
-                  type: activeGraph === "Both" ? undefined : activeGraph,
+                  type: chartOptionToType(activeGraph),
                 }}
               />
             )}
@@ -389,4 +398,20 @@ export default function ChartAreaInteractive({
       </Dialog>
     </>
   );
+}
+
+export function chartOptionToType(chartOption: ChartOptions) {
+  let type: Type | undefined;
+
+  switch (chartOption) {
+    case "Balance":
+      type = "Income";
+      break;
+    case "Expense":
+      type = "Expense";
+      break;
+    default:
+      type = undefined;
+  }
+  return type;
 }
