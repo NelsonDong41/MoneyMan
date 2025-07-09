@@ -62,37 +62,54 @@ export type ChartAreaInteractiveProps = {
   categoryMap: CategoryMap;
 };
 
+export type ChartOptions = "Balance" | "Expense" | "Both";
+export type InteractiveChartTimeRanges =
+  | "all"
+  | "custom"
+  | "year"
+  | "3m"
+  | "1m"
+  | "7d";
+
 const convertSelectedTimeRange = (
-  selectedTimeRange: string
+  selectedTimeRange: Exclude<InteractiveChartTimeRanges, "all" | "custom">
 ): [string, string] => {
   const today = new Date();
 
-  if (selectedTimeRange === "year") {
-    return [
-      formatDateDash(new Date(today.getFullYear(), 0, 1)),
-      formatDateDash(today),
-    ];
+  switch (selectedTimeRange) {
+    case "year":
+      return [
+        formatDateDash(new Date(today.getFullYear(), 0, 1)),
+        formatDateDash(today),
+      ];
+    case "3m": {
+      const start = new Date(today.getFullYear(), today.getMonth() - 2, 1);
+      const end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      return [formatDateDash(start), formatDateDash(end)];
+    }
+    case "1m": {
+      const start = new Date(today.getFullYear(), today.getMonth(), 1);
+      const end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      return [formatDateDash(start), formatDateDash(end)];
+    }
+    case "7d": {
+      const start = new Date(today);
+      start.setDate(today.getDate() - 6);
+      const end = today;
+      return [formatDateDash(start), formatDateDash(end)];
+    }
+    default:
+      throw new Error("Converting Invalid time range", selectedTimeRange);
   }
-
-  let daysToSubtract = 90;
-  if (selectedTimeRange === "30d") {
-    daysToSubtract = 30;
-  }
-  if (selectedTimeRange === "7d") {
-    daysToSubtract = 7;
-  }
-  const pastDate = new Date(today);
-  pastDate.setDate(today.getDate() - daysToSubtract);
-  return [formatDateDash(pastDate), formatDateDash(today)];
 };
 
-export type ChartOptions = "Balance" | "Expense" | "Both";
 export default function ChartAreaInteractive() {
   const { transactions } = useTransactions();
   const isMobile = useIsMobile();
   const [activeIndex, setActiveIndex] = React.useState<number | null>(null);
   const [modalOpen, setModalOpen] = React.useState(false);
-  const [selectedTimeRange, setSelectedTimeRange] = React.useState("year");
+  const [selectedTimeRange, setSelectedTimeRange] =
+    React.useState<InteractiveChartTimeRanges>("year");
   const [activeGraph, setActiveGraph] = React.useState<ChartOptions>("Expense");
   const firstDate = transactions.length ? transactions[0] : null;
   const { timeRange, setTimeRange, dataTableEntries } =
@@ -126,7 +143,14 @@ export default function ChartAreaInteractive() {
       setTimeRange([firstDate.date, formatDateDash(new Date())]);
       return;
     }
-    setTimeRange(convertSelectedTimeRange(selectedTimeRange));
+    setTimeRange(
+      convertSelectedTimeRange(
+        selectedTimeRange as Exclude<
+          InteractiveChartTimeRanges,
+          "all" | "custom"
+        >
+      )
+    );
   }, [selectedTimeRange]);
 
   return (
@@ -211,6 +235,7 @@ export default function ChartAreaInteractive() {
                     setModalOpen(true);
                   }
                 }}
+                syncId="chart"
               >
                 <defs>
                   <linearGradient id="fillBalance" x1="0" y1="0" x2="0" y2="1">
@@ -302,7 +327,9 @@ export default function ChartAreaInteractive() {
         <CardContent className="flex justify-between items-end">
           <Select
             value={selectedTimeRange}
-            onValueChange={setSelectedTimeRange}
+            onValueChange={(e) =>
+              setSelectedTimeRange(e as InteractiveChartTimeRanges)
+            }
           >
             <SelectTrigger
               className="flex w-40 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate @[767px]/card:hidden bg-popover"
@@ -320,11 +347,11 @@ export default function ChartAreaInteractive() {
               <SelectItem value="year" className="rounded-lg">
                 This Year
               </SelectItem>
-              <SelectItem value="90d" className="rounded-lg">
+              <SelectItem value="3m" className="rounded-lg">
                 Last 3 months
               </SelectItem>
-              <SelectItem value="30d" className="rounded-lg">
-                Last 30 days
+              <SelectItem value="1m" className="rounded-lg">
+                This Month
               </SelectItem>
               <SelectItem value="7d" className="rounded-lg">
                 Last 7 days
