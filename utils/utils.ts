@@ -1,6 +1,8 @@
 import tailwindConfig from "@/tailwind.config";
 import { redirect } from "next/navigation";
 import resolveConfig from "tailwindcss/resolveConfig";
+import { Type } from "./supabase/supabase";
+import { Tables } from "./supabase/types";
 
 /**
  * Redirects to a specified path with an encoded message as a query parameter.
@@ -92,4 +94,29 @@ export function generateRandomString(length: number) {
     .toString(36)
     .substring(2, 2 + length);
   return result;
+}
+
+export function categoryDataToMap(categoryData: Tables<"Category">[]) {
+  const categoryMap: Record<Type, Record<string, any[]>> = {
+    Expense: {},
+    Income: {},
+  };
+
+  categoryData.forEach(({ category, ParentCategory, type }) => {
+    const parentId = ParentCategory;
+
+    if (parentId) {
+      if (categoryMap[type][parentId]) {
+        categoryMap[type][parentId].push(category);
+      } else {
+        categoryMap[type][parentId] = [parentId, category];
+      }
+    }
+
+    if (!parentId && !categoryMap[type][category]) {
+      categoryMap[type][category] = [category];
+    }
+  });
+
+  return categoryMap;
 }

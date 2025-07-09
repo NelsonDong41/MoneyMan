@@ -5,16 +5,9 @@ import { TransactionWithCategory } from "@/utils/supabase/supabase";
 import { Row } from "@tanstack/react-table";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Tables } from "@/utils/supabase/types";
 import { User } from "@supabase/supabase-js";
 
-type TableStatesHookProps = {
-  transactions: TransactionWithCategory[];
-  category: Tables<"Category">[];
-  user: User;
-};
-
-export default function useTableStates(data: TableStatesHookProps) {
+export default function useTableStates(user: User) {
   const [loadingRows, setLoadingRows] = useState<Set<number>>(new Set());
   const [activeSheetData, setActiveSheetData] =
     useState<Partial<TransactionWithCategory> | null>(null);
@@ -29,11 +22,12 @@ export default function useTableStates(data: TableStatesHookProps) {
       return prev;
     });
 
+    console.log("upserting", values);
     const transactionInsert: TransactionInsert = {
       ...values,
       id: values.id || undefined,
       date: values.date,
-      userId: data.user.id,
+      userId: user.id,
       updated_at: new Date().toUTCString(),
       amount: parseFloat(values.amount.replace(",", "")),
       subtotal: values.subtotal
@@ -74,7 +68,7 @@ export default function useTableStates(data: TableStatesHookProps) {
     const { error } = await createClient()
       .from("Transaction")
       .delete()
-      .match({ userId: data.user.id })
+      .match({ userId: user.id })
       .in("id", ids);
 
     if (error) {

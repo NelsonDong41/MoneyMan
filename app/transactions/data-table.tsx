@@ -37,17 +37,12 @@ import {
   ColumnKeys,
   STATUS_OPTIONS,
   TransactionWithCategory,
+  Type,
 } from "@/utils/supabase/supabase";
 import useTableStates from "@/hooks/useTableStates";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { User } from "@supabase/supabase-js";
-import {
-  formatDateDash,
-  generateRandomString,
-  getDaysInDateRange,
-  getRandomFloatTwoDecimalPlaces,
-} from "@/utils/utils";
-import { EntryType } from "@/components/charts/chartAreaInteractive";
+import { CategoryMap } from "./page";
 
 export type TransactionInsert =
   Database["public"]["Tables"]["Transaction"]["Insert"];
@@ -55,7 +50,7 @@ export type TransactionUpdate =
   Database["public"]["Tables"]["Transaction"]["Update"];
 
 export type SheetContext = {
-  categories: Tables<"Category">[];
+  categoryMap: CategoryMap;
   user: string;
   table: ReactTable<TransactionWithCategory>;
 };
@@ -70,9 +65,9 @@ interface DataTableProps<TValue> {
     sheetActions: SheetAction
   ) => ColumnDef<TransactionWithCategory, TValue>[];
   transactions: TransactionWithCategory[];
-  category: Tables<"Category">[];
+  categoryMap: CategoryMap;
   user: User;
-  transactionFilters?: { date?: string; type?: EntryType };
+  transactionFilters?: { date?: string; type?: Type };
 }
 
 const defaultHiddenColumns: ColumnKeys[] = ["subtotal", "tip", "tax"];
@@ -87,7 +82,7 @@ const mobileHiddenColumns: ColumnKeys[] = defaultHiddenColumns.concat([
 export function DataTable<TValue>({
   columns,
   transactions,
-  category,
+  categoryMap,
   user,
   transactionFilters,
 }: DataTableProps<TValue>) {
@@ -121,7 +116,7 @@ export function DataTable<TValue>({
     upsertRow,
     deleteRows,
     handleTableCellClick,
-  } = useTableStates({ transactions, category, user });
+  } = useTableStates(user);
 
   const sheetActions = {
     upsertRow,
@@ -153,7 +148,7 @@ export function DataTable<TValue>({
   });
 
   const sheetContext: SheetContext = {
-    categories: category,
+    categoryMap,
     user: user.id,
     table,
   };

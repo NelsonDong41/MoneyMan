@@ -9,9 +9,8 @@ export type TransactionWithCategory = Omit<
 
 export const STATUS_OPTIONS: Database["public"]["Enums"]["TransactionStatus"][] =
   ["Complete", "Pending", "Canceled"] as const;
-export const TYPE_OPTIONS: Database["public"]["Enums"]["TransactionType"][] = [
-  "Expense",
-  "Income",
-];
+
+export type Type = Database["public"]["Enums"]["TransactionType"];
+export const TYPE_OPTIONS: Type[] = ["Expense", "Income"];
 
 export type ColumnKeys = keyof TransactionWithCategory;

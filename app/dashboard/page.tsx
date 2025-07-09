@@ -4,13 +4,14 @@ import {
   STATUS_OPTIONS,
   TransactionWithCategory,
 } from "@/utils/supabase/supabase";
-import { Tables } from "@/utils/supabase/types";
 import { User } from "@supabase/supabase-js";
 import ChartAreaInteractive from "@/components/charts/chartAreaInteractive";
+import { categoryDataToMap } from "@/utils/utils";
+import { CategoryMap } from "../transactions/page";
 
 export type DashboardPageProps = {
   transactions: TransactionWithCategory[];
-  category: Tables<"Category">[];
+  categoryMap: CategoryMap;
   user: User;
 };
 async function getData(): Promise<DashboardPageProps> {
@@ -43,9 +44,11 @@ async function getData(): Promise<DashboardPageProps> {
     );
   }
 
+  const categoryMap = categoryDataToMap(categoryData);
+
   return {
     transactions: transactionData ?? [],
-    category: categoryData,
+    categoryMap,
     user,
   };
 }

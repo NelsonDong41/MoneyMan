@@ -4,12 +4,17 @@ import { DataTable } from "./data-table";
 import { User } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { Tables } from "@/utils/supabase/types";
-import { TransactionWithCategory } from "@/utils/supabase/supabase";
+import { TransactionWithCategory, Type } from "@/utils/supabase/supabase";
 import ChartAreaInteractive from "@/components/charts/chartAreaInteractive";
+import { categoryDataToMap } from "@/utils/utils";
 
+export type CategoryMap = Record<
+  "Income" | "Expense",
+  Record<string, string[]>
+>;
 export type TransactionPageProps = {
   transactions: TransactionWithCategory[];
-  category: Tables<"Category">[];
+  categoryMap: CategoryMap;
   user: User;
 };
 
@@ -42,9 +47,11 @@ async function getData(): Promise<TransactionPageProps> {
     );
   }
 
+  const categoryMap = categoryDataToMap(categoryData);
+
   return {
     transactions: transactionData ?? [],
-    category: categoryData,
+    categoryMap,
     user,
   };
 }

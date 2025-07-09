@@ -49,7 +49,7 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from "@radix-ui/react-popover";
-import { ChevronsUpDown, Check } from "lucide-react";
+import { ChevronsUpDown, Check, ChevronsRight } from "lucide-react";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { NaturalLanguageCalendar } from "@/components/ui/naturalLanguageCalendar";
 
@@ -202,11 +202,11 @@ export default function TableSheet({
                           <PopoverContent className="w-full p-0 z-50 border border-accent rounded-lg">
                             <Command>
                               <CommandInput
-                                placeholder="Search category..."
+                                placeholder="Search status..."
                                 className="h-9"
                               />
                               <CommandList>
-                                <CommandEmpty>No category found.</CommandEmpty>
+                                <CommandEmpty>No status found.</CommandEmpty>
                                 <CommandGroup>
                                   {STATUS_OPTIONS.map((status) => (
                                     <CommandItem
@@ -273,7 +273,7 @@ export default function TableSheet({
                                 className="h-9"
                               />
                               <CommandList>
-                                <CommandEmpty>No category found.</CommandEmpty>
+                                <CommandEmpty>No type found.</CommandEmpty>
                                 <CommandGroup>
                                   {TYPE_OPTIONS.map((type) => (
                                     <CommandItem
@@ -326,11 +326,7 @@ export default function TableSheet({
                               )}
                               onClick={() => setOpen((prev) => !prev)}
                             >
-                              {field.value
-                                ? sheetContext.categories.find(
-                                    ({ category }) => category === field.value
-                                  )?.category
-                                : "Select category"}
+                              {field.value || "Select category"}
                               <ChevronsUpDown className="opacity-50" />
                             </Button>
                           </FormControl>
@@ -344,26 +340,34 @@ export default function TableSheet({
                             <CommandList>
                               <CommandEmpty>No category found.</CommandEmpty>
                               <CommandGroup>
-                                {sheetContext.categories.map(({ category }) => (
-                                  <CommandItem
-                                    value={category}
-                                    key={category}
-                                    onSelect={() => {
-                                      form.setValue("category", category);
-                                      setOpen(false);
-                                    }}
-                                  >
-                                    {category}
-                                    <Check
-                                      className={cn(
-                                        "ml-auto",
-                                        category === field.value
-                                          ? "opacity-100"
-                                          : "opacity-0"
-                                      )}
-                                    />
-                                  </CommandItem>
-                                ))}
+                                {Object.entries(
+                                  sheetContext.categoryMap[
+                                    form.getValues("type")
+                                  ]
+                                ).map(([parent, categoryList]) => {
+                                  return categoryList.map((category, i) => (
+                                    <CommandItem
+                                      value={`${parent}:${category}`}
+                                      key={category}
+                                      onSelect={() => {
+                                        form.setValue("category", category);
+                                        setOpen(false);
+                                      }}
+                                      className={i === 0 ? "font-bold" : ""}
+                                    >
+                                      {i !== 0 && <span className="px-1.5" />}
+                                      {category}
+                                      <Check
+                                        className={cn(
+                                          "ml-auto",
+                                          category === field.value
+                                            ? "opacity-100"
+                                            : "opacity-0"
+                                        )}
+                                      />
+                                    </CommandItem>
+                                  ));
+                                })}
                               </CommandGroup>
                             </CommandList>
                           </Command>

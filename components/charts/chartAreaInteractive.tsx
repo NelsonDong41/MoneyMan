@@ -26,8 +26,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TransactionWithCategory } from "@/utils/supabase/supabase";
-import useChartData, { ChartAreaDataEntry } from "@/hooks/useChartData";
+import { TransactionWithCategory, Type } from "@/utils/supabase/supabase";
+import useChartData from "@/hooks/useChartData";
 import {
   Dialog,
   DialogContent,
@@ -35,15 +35,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { DialogDescription } from "@radix-ui/react-dialog";
-import { Database, Tables } from "@/utils/supabase/types";
 import { User } from "@supabase/supabase-js";
 import { DataTable } from "@/app/transactions/data-table";
 import { columns } from "@/app/transactions/columns";
 import ShinyText from "../ui/shinyText";
 import Particles from "../ui/particles";
-import { cn } from "@/lib/utils";
 import { NaturalLanguageCalendar } from "../ui/naturalLanguageCalendar";
 import { formatDateDash, formatDateHuman } from "@/utils/utils";
+import { CategoryMap } from "@/app/transactions/page";
 
 const chartConfig = {
   expense: {
@@ -58,7 +57,7 @@ const chartConfig = {
 
 export type ChartAreaInteractiveProps = {
   transactions: TransactionWithCategory[];
-  category: Tables<"Category">[];
+  categoryMap: CategoryMap;
   user: User;
 };
 
@@ -86,18 +85,16 @@ const convertSelectedTimeRange = (
   return [formatDateDash(pastDate), formatDateDash(today)];
 };
 
-export type EntryType = Database["public"]["Enums"]["TransactionType"];
-
 export default function ChartAreaInteractive({
   transactions,
-  category,
+  categoryMap,
   user,
 }: ChartAreaInteractiveProps) {
   const isMobile = useIsMobile();
   const [activeIndex, setActiveIndex] = React.useState<number | null>(null);
   const [modalOpen, setModalOpen] = React.useState(false);
   const [selectedTimeRange, setSelectedTimeRange] = React.useState("year");
-  const [activeGraph, setActiveGraph] = React.useState<EntryType | "Both">(
+  const [activeGraph, setActiveGraph] = React.useState<Type | "Both">(
     "Expense"
   );
   const firstDate = transactions.length ? transactions[0] : null;
@@ -136,7 +133,7 @@ export default function ChartAreaInteractive({
 
   return (
     <>
-      <Card className="@container/card max-w-6xl mx-auto w-full relative bg-popover/80 backdrop-blur-3xl rounded-xl border border-white/25 shadow-lg">
+      <Card className="@container/card mx-auto w-full relative bg-popover/80 backdrop-blur-3xl rounded-xl border border-white/25 shadow-lg">
         {!filteredData.length && (
           <div className="-z-50 pointer-events-none">
             <Particles
@@ -161,7 +158,7 @@ export default function ChartAreaInteractive({
             Transactions{" "}
             <Select
               value={activeGraph}
-              onValueChange={(e) => setActiveGraph(e as EntryType)}
+              onValueChange={(e) => setActiveGraph(e as Type)}
             >
               <SelectTrigger
                 className="flex w-40 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate @[767px]/card:hidden bg-popover"
@@ -379,7 +376,7 @@ export default function ChartAreaInteractive({
                     t.date === activeDataPoint.date
                   );
                 })}
-                category={category}
+                categoryMap={categoryMap}
                 user={user}
                 transactionFilters={{
                   date: activeDataPoint.date,
