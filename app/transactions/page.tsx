@@ -4,7 +4,7 @@ import { DataTable } from "../../components/dataTable/data-table";
 import { User } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { TransactionWithCategory, Type } from "@/utils/supabase/supabase";
-import ChartAreaInteractive from "@/components/charts/InteractiveTransactionAreaChart";
+import InteractiveTransactionAreaChart from "@/components/charts/InteractiveTransactionAreaChart";
 import { categoryDataToMap } from "@/utils/utils";
 import { UserProvider } from "@/context/UserContext";
 import { CategoryMap, CategoryMapProvider } from "@/context/CategoryMapContext";
@@ -31,6 +31,7 @@ async function getData(): Promise<TransactionPageProps> {
     .from("Transaction")
     .select("*, category(category)")
     .eq("userId", user.id)
+    .neq("status", "Canceled")
     .order("date");
 
   const { data: categoryData, error: categoryError } = await supabase
@@ -58,11 +59,11 @@ export default async function Transactions() {
   const { user, transactions, categoryMap } = await getData();
 
   return (
-    <div className="container mx-auto py-10 max-w-8xl">
+    <div className="sm:py-10 max-w-full sm:max-w-screen-2xl w-full">
       <UserProvider initial={user}>
         <TransactionProvider initial={transactions}>
           <CategoryMapProvider initial={categoryMap}>
-            <ChartAreaInteractive />
+            <InteractiveTransactionAreaChart />
             <DataTable columns={columns} />
           </CategoryMapProvider>
         </TransactionProvider>

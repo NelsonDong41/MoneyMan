@@ -148,7 +148,7 @@ export function DataTable<TValue>({
   });
 
   return (
-    <div className="p-1 overflow-x-auto w-full">
+    <div className="p-1 overflow-x-auto">
       <div className="grid grid-cols-[7fr_1fr_1fr] items-center py-4 gap-4">
         <Input
           placeholder="Filter Transactions..."
@@ -177,7 +177,7 @@ export function DataTable<TValue>({
           </Button>
         )}
       </div>
-      <div className="rounded-md border bg-popover/80 backdrop-blur-3xl border-white/25 shadow-lg overflow-x-auto w-full">
+      <div className="rounded-md border bg-popover/80 backdrop-blur-3xl border-white/25 shadow-lg overflow-x-auto w-full h-full">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (

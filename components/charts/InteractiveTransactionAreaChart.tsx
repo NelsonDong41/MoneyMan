@@ -1,7 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import {
+  ResponsiveContainer,
+  Area,
+  AreaChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 import { useIsMobile } from "@/hooks/useIsMobile";
 import {
@@ -27,7 +34,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TransactionWithCategory, Type } from "@/utils/supabase/supabase";
-import useChartData from "@/hooks/useChartData";
 import {
   Dialog,
   DialogContent,
@@ -44,7 +50,9 @@ import { formatDateDash, formatDateHuman } from "@/utils/utils";
 import { Label } from "../ui/label";
 import { ArrowRight } from "lucide-react";
 import { useTransactions } from "@/context/TransactionsContext";
-import { type CategoryMap, useCategoryMap } from "@/context/CategoryMapContext";
+import { type CategoryMap } from "@/context/CategoryMapContext";
+import useInteractiveTransactionAreaChartData from "@/hooks/chart/useInteractiveTransactionAreaChartData";
+import TransparentCard from "../ui/transparentCard";
 
 const chartConfig = {
   expense: {
@@ -113,14 +121,16 @@ export default function InteractiveTransactionAreaChart() {
   const [activeGraph, setActiveGraph] = React.useState<ChartOptions>("Expense");
   const firstDate = transactions.length ? transactions[0] : null;
   const { timeRange, setTimeRange, dataTableEntries } =
-    useChartData(transactions);
+    useInteractiveTransactionAreaChartData(transactions);
 
   React.useEffect(() => {
     if (isMobile) {
       setTimeRange(convertSelectedTimeRange("7d"));
+      setSelectedTimeRange("7d");
     }
     if (!isMobile) {
       setTimeRange(convertSelectedTimeRange("year"));
+      setSelectedTimeRange("year");
     }
     setActiveIndex(null);
     setModalOpen(false);
@@ -154,8 +164,8 @@ export default function InteractiveTransactionAreaChart() {
   }, [selectedTimeRange]);
 
   return (
-    <>
-      <Card className="@container/card mx-auto w-full relative bg-popover/80 backdrop-blur-3xl rounded-xl border border-white/25 shadow-lg p-1">
+    <div className="h-full w-full">
+      <TransparentCard>
         {!dataTableEntries.length && (
           <div className="-z-50 pointer-events-none">
             <Particles
@@ -211,7 +221,7 @@ export default function InteractiveTransactionAreaChart() {
             </span>
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="flex-1 min-h-0 p-0 w-full">
           {!dataTableEntries.length && (
             <div className="aspect-auto h-[400px] w-full" />
           )}
@@ -219,108 +229,126 @@ export default function InteractiveTransactionAreaChart() {
           {!!dataTableEntries.length && (
             <ChartContainer
               config={chartConfig}
-              className={"aspect-auto h-[400px] w-full p-6"}
+              className="h-full w-full sm:p-6 aspect-[5/2]"
             >
-              <AreaChart
-                data={dataTableEntries}
-                onClick={(state) => {
-                  if (!state || !state.activeTooltipIndex) {
-                    return;
-                  }
-                  const { expense, balance } =
-                    dataTableEntries[state.activeTooltipIndex];
-                  const hasData = expense || balance;
-                  if (hasData) {
-                    setActiveIndex(state.activeTooltipIndex);
-                    setModalOpen(true);
-                  }
-                }}
-                syncId="chart"
-              >
-                <defs>
-                  <linearGradient id="fillBalance" x1="0" y1="0" x2="0" y2="1">
-                    <stop
-                      offset="5%"
-                      stopColor="var(--color-balance)"
-                      stopOpacity={1.0}
-                    />
-                    <stop
-                      offset="95%"
-                      stopColor="var(--color-balance)"
-                      stopOpacity={0.1}
-                    />
-                  </linearGradient>
-                  <linearGradient id="fillExpense" x1="0" y1="0" x2="0" y2="1">
-                    <stop
-                      offset="5%"
-                      stopColor="var(--color-expense)"
-                      stopOpacity={0.8}
-                    />
-                    <stop
-                      offset="95%"
-                      stopColor="var(--color-expense)"
-                      stopOpacity={0.1}
-                    />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid vertical={false} />
-
-                <XAxis
-                  dataKey="date"
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={8}
-                  minTickGap={32}
-                  tickFormatter={(value) => {
-                    const date = new Date(value);
-                    return date.toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      timeZone: "UTC",
-                    });
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={dataTableEntries}
+                  onClick={(state) => {
+                    if (!state || !state.activeTooltipIndex) {
+                      return;
+                    }
+                    const { expense, balance } =
+                      dataTableEntries[state.activeTooltipIndex];
+                    const hasData = expense || balance;
+                    if (hasData) {
+                      setActiveIndex(state.activeTooltipIndex);
+                      setModalOpen(true);
+                    }
                   }}
-                />
-                <YAxis
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={8}
-                  tickCount={3}
-                />
-                <ChartTooltip
-                  cursor={true}
-                  defaultIndex={isMobile ? -1 : 10}
-                  content={
-                    <ChartTooltipContent
-                      labelFormatter={(value) => {
-                        return new Date(value).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                          timeZone: "UTC",
-                        });
-                      }}
-                      indicator="line"
+                  syncId="chart"
+                >
+                  <defs>
+                    <linearGradient
+                      id="fillBalance"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop
+                        offset="5%"
+                        stopColor="var(--color-balance)"
+                        stopOpacity={1.0}
+                      />
+                      <stop
+                        offset="95%"
+                        stopColor="var(--color-balance)"
+                        stopOpacity={0.1}
+                      />
+                    </linearGradient>
+                    <linearGradient
+                      id="fillExpense"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop
+                        offset="5%"
+                        stopColor="var(--color-expense)"
+                        stopOpacity={0.8}
+                      />
+                      <stop
+                        offset="95%"
+                        stopColor="var(--color-expense)"
+                        stopOpacity={0.1}
+                      />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid vertical={false} />
+
+                  <XAxis
+                    dataKey="date"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    minTickGap={32}
+                    tickFormatter={(value) => {
+                      const date = new Date(value);
+                      return date.toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        timeZone: "UTC",
+                      });
+                    }}
+                  />
+                  <YAxis
+                    tickFormatter={(value) => {
+                      if (value >= 1000) return `${value / 1000}k`;
+                      return value;
+                    }}
+                    width={isMobile ? 10 : 40} // or whatever fits your labels
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    tickCount={3}
+                  />
+                  <ChartTooltip
+                    cursor={true}
+                    content={
+                      <ChartTooltipContent
+                        labelFormatter={(value) => {
+                          return new Date(value).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                            timeZone: "UTC",
+                          });
+                        }}
+                        indicator="line"
+                      />
+                    }
+                  />
+                  {(activeGraph === "Both" || activeGraph === "Balance") && (
+                    <Area
+                      dataKey="balance"
+                      type="linear"
+                      fill="url(#fillBalance)"
+                      stroke="var(--color-balance)"
                     />
-                  }
-                />
-                {(activeGraph === "Both" || activeGraph === "Balance") && (
-                  <Area
-                    dataKey="balance"
-                    type="linear"
-                    fill="url(#fillBalance)"
-                    stroke="var(--color-balance)"
-                  />
-                )}
-                {(activeGraph === "Both" || activeGraph === "Expense") && (
-                  <Area
-                    dataKey="expense"
-                    type="linear"
-                    fill="url(#fillExpense)"
-                    stroke="var(--color-expense)"
-                  />
-                )}
-                <ChartLegend content={<ChartLegendContent />} />
-              </AreaChart>
+                  )}
+                  {(activeGraph === "Both" || activeGraph === "Expense") && (
+                    <Area
+                      dataKey="expense"
+                      type="linear"
+                      fill="url(#fillExpense)"
+                      stroke="var(--color-expense)"
+                    />
+                  )}
+                  <ChartLegend content={<ChartLegendContent />} />
+                </AreaChart>
+              </ResponsiveContainer>
             </ChartContainer>
           )}
         </CardContent>
@@ -388,7 +416,7 @@ export default function InteractiveTransactionAreaChart() {
             </div>
           )}
         </CardContent>
-      </Card>
+      </TransparentCard>
       <Dialog
         open={modalOpen}
         onOpenChange={(open) => {
@@ -423,7 +451,7 @@ export default function InteractiveTransactionAreaChart() {
           </div>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }
 

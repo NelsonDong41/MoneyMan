@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { formatDateDash } from "@/utils/utils";
-import useAccumulatedIncome from "./useAccumulatedIncome";
+import useAccumulatedIncome from "../useAccumulatedIncome";
 import { TransactionWithCategory } from "@/utils/supabase/supabase";
 import { User } from "@supabase/supabase-js";
 
@@ -41,40 +41,39 @@ export default function useChartData(data: TransactionWithCategory[]) {
   const accumulatedBalance = useAccumulatedIncome(data, timeRange);
 
   const dataTableEntries = useMemo(() => {
-    const dateMap = new Map<string, ChartAreaDataEntry>();
+    const transactionsByDate = new Map<
+      string,
+      { income: number; expense: number }
+    >();
 
-    let cumulativeBalance = accumulatedBalance;
-
-    data.forEach(({ date, type, amount }) => {
+    data.forEach(({ date, type, amount, status }) => {
       if (date < timeRange[0] || date > timeRange[1]) return;
-
-      let entry = dateMap.get(date);
-      if (!entry) {
-        entry = { date, balance: cumulativeBalance, expense: 0 };
+      if (!transactionsByDate.has(date)) {
+        transactionsByDate.set(date, { income: 0, expense: 0 });
       }
-
+      const entry = transactionsByDate.get(date)!;
       if (type === "Income") {
-        cumulativeBalance += amount;
-        entry.balance = cumulativeBalance;
-      } else if (type === "Expense") {
+        entry.income += amount;
+      } else if (type === "Expense" && status !== "Canceled") {
         entry.expense += amount;
       }
-      dateMap.set(date, entry);
     });
-
     const allDates = getAllDatesInRange(...timeRange);
-    let lastBalance = accumulatedBalance;
+    let balance = accumulatedBalance;
+    const result: ChartAreaDataEntry[] = [];
 
-    const dataMap = allDates.map((date) => {
-      const entry = dateMap.get(date);
-      if (entry) {
-        lastBalance = entry.balance;
-        return entry;
-      }
-      return { date, balance: lastBalance, expense: 0 };
-    });
+    for (const date of allDates) {
+      const entry = transactionsByDate.get(date) || { income: 0, expense: 0 };
+      balance += entry.income;
+      balance -= entry.expense;
+      result.push({
+        date,
+        balance,
+        expense: entry.expense,
+      });
+    }
 
-    return dataMap;
+    return result;
   }, [data, accumulatedBalance, timeRange]);
 
   return { timeRange, setTimeRange, dataTableEntries };

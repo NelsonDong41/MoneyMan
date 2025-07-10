@@ -5,11 +5,11 @@ import {
   TransactionWithCategory,
 } from "@/utils/supabase/supabase";
 import { User } from "@supabase/supabase-js";
-import ChartAreaInteractive from "@/components/charts/InteractiveTransactionAreaChart";
 import { categoryDataToMap } from "@/utils/utils";
 import { UserProvider } from "@/context/UserContext";
 import { CategoryMap, CategoryMapProvider } from "@/context/CategoryMapContext";
 import { TransactionProvider } from "@/context/TransactionsContext";
+import DashboardGrid from "./DashboardGrid";
 
 export type DashboardPageProps = {
   transactions: TransactionWithCategory[];
@@ -54,16 +54,15 @@ async function getData(): Promise<DashboardPageProps> {
     user,
   };
 }
-
 export default async function Dashboard() {
   const { user, transactions, categoryMap } = await getData();
   return (
-    <div className="container mx-auto py-10 max-w-8xl">
+    <div className="container mx-auto py-10 max-w-">
       <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
       <UserProvider initial={user}>
         <TransactionProvider initial={transactions}>
           <CategoryMapProvider initial={categoryMap}>
-            <ChartAreaInteractive />
+            <DashboardGrid />
           </CategoryMapProvider>
         </TransactionProvider>
       </UserProvider>
