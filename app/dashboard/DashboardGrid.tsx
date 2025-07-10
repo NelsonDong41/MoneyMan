@@ -11,16 +11,16 @@ import { CategoryRadialChart } from "@/components/charts/CategoryRadialChart";
 
 const layouts: Layouts = {
   lg: [
-    { i: "a", x: 0, y: 0, w: 3, h: 6, static: true },
-    { i: "b", x: 0, y: 1, w: 1, h: 4 },
+    { i: "a", x: 0, y: 0, w: 3, h: 2, static: true },
+    { i: "b", x: 0, y: 1, w: 1, h: 2 },
     { i: "c", x: 1, y: 1, w: 1, h: 1 },
     { i: "d", x: 2, y: 1, w: 1, h: 1 },
   ],
   xs: [
-    { i: "a", x: 0, y: 0, w: 1, h: 1, static: true },
-    { i: "b", x: 0, y: 1, w: 1, h: 1 },
-    { i: "c", x: 0, y: 2, w: 1, h: 1 },
-    { i: "d", x: 0, y: 3, w: 1, h: 1 },
+    { i: "a", x: 0, y: 0, w: 1, h: 2, static: true },
+    { i: "b", x: 0, y: 1, w: 1, h: 2 },
+    { i: "c", x: 0, y: 2, w: 1, h: 2 },
+    { i: "d", x: 0, y: 3, w: 1, h: 2 },
   ],
 };
 const breakpoints = { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 };
@@ -35,7 +35,7 @@ export default function DashboardGrid() {
         className="layout w-full"
         layouts={layouts}
         cols={cols}
-        rowHeight={100}
+        rowHeight={200}
         draggableHandle=".drag-handle"
         isResizable={false}
       >

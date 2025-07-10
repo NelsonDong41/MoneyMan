@@ -1,65 +1,16 @@
-import { createClient } from "@/utils/supabase/server";
 import { columns } from "@/components/dataTable/columns";
 import { DataTable } from "../../components/dataTable/data-table";
-import { User } from "@supabase/supabase-js";
-import { redirect } from "next/navigation";
-import { TransactionWithCategory, Type } from "@/utils/supabase/supabase";
 import InteractiveTransactionAreaChart from "@/components/charts/InteractiveTransactionAreaChart";
-import { categoryDataToMap } from "@/utils/utils";
 import { UserProvider } from "@/context/UserContext";
-import { CategoryMap, CategoryMapProvider } from "@/context/CategoryMapContext";
+import { CategoryMapProvider } from "@/context/CategoryMapContext";
 import { TransactionProvider } from "@/context/TransactionsContext";
-
-export type TransactionPageProps = {
-  transactions: TransactionWithCategory[];
-  categoryMap: CategoryMap;
-  user: User;
-};
-
-async function getData(): Promise<TransactionPageProps> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return redirect("/sign-in");
-  }
-
-  const { data: transactionData, error: transactionError } = await supabase
-    .from("Transaction")
-    .select("*, category(category)")
-    .eq("userId", user.id)
-    .neq("status", "Canceled")
-    .order("date");
-
-  const { data: categoryData, error: categoryError } = await supabase
-    .from("Category")
-    .select("*")
-    .order("category");
-
-  if (transactionError || categoryError) {
-    throw new Error(
-      "Error fetching data from supabase: " +
-        (transactionError?.message || categoryError?.message)
-    );
-  }
-
-  const categoryMap = categoryDataToMap(categoryData);
-
-  return {
-    transactions: transactionData ?? [],
-    categoryMap,
-    user,
-  };
-}
+import { getDashboardData } from "@/lib/server/utils";
 
 export default async function Transactions() {
-  const { user, transactions, categoryMap } = await getData();
+  const { user, transactions, categoryMap } = await getDashboardData();
 
   return (
-    <div className="sm:py-10 max-w-full sm:max-w-screen-2xl w-full">
+    <div className="sm:py-10 max-w-full sm:max-w-screen-2xl w-full sm:max-h-screen-2xl">
       <UserProvider initial={user}>
         <TransactionProvider initial={transactions}>
           <CategoryMapProvider initial={categoryMap}>

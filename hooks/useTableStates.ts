@@ -24,25 +24,14 @@ export default function useTableStates() {
         return prev;
       });
 
-      const transactionInsert: TransactionInsert = {
-        ...values,
-        id: values.id || undefined,
-        date: values.date,
-        userId: user.id,
-        updated_at: new Date().toUTCString(),
-        amount: parseFloat(values.amount.replace(",", "")),
-        subtotal: values.subtotal
-          ? parseFloat(values.subtotal.replace(",", ""))
-          : undefined,
-        tip: values.tip ? parseFloat(values.tip.replace(",", "")) : undefined,
-        tax: values.tax ? parseFloat(values.tax.replace(",", "")) : undefined,
-      };
+      const response = await fetch("/api/transactions/upsert", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
 
-      const { error } = await createClient()
-        .from("Transaction")
-        .upsert(transactionInsert);
-
-      if (error) {
+      if (!response.ok) {
+        const { error } = await response.json();
         console.error("Error upserting transaction:", error);
         return null;
       }
@@ -60,7 +49,7 @@ export default function useTableStates() {
         return prev;
       });
     },
-    [user, activeSheetData, router]
+    [activeSheetData, router]
   );
 
   const deleteRows = useCallback(
@@ -69,14 +58,15 @@ export default function useTableStates() {
       setLoadingRows((prev) => {
         return new Set(prev).union(idSet);
       });
-      const { error } = await createClient()
-        .from("Transaction")
-        .delete()
-        .match({ userId: user.id })
-        .in("id", ids);
+      const response = await fetch("/api/transactions/upsert", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(ids),
+      });
 
-      if (error) {
-        console.error("Error upserting transaction:", error);
+      if (!response.ok) {
+        const { error } = await response.json();
+        console.error("Error deleting transaction:", error);
         return null;
       }
 

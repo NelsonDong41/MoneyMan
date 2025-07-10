@@ -1,61 +1,11 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/utils/supabase/server";
-import {
-  STATUS_OPTIONS,
-  TransactionWithCategory,
-} from "@/utils/supabase/supabase";
-import { User } from "@supabase/supabase-js";
-import { categoryDataToMap } from "@/utils/utils";
 import { UserProvider } from "@/context/UserContext";
-import { CategoryMap, CategoryMapProvider } from "@/context/CategoryMapContext";
+import { CategoryMapProvider } from "@/context/CategoryMapContext";
 import { TransactionProvider } from "@/context/TransactionsContext";
 import DashboardGrid from "./DashboardGrid";
+import { getDashboardData } from "@/lib/server/utils";
 
-export type DashboardPageProps = {
-  transactions: TransactionWithCategory[];
-  categoryMap: CategoryMap;
-  user: User;
-};
-async function getData(): Promise<DashboardPageProps> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return redirect("/sign-in");
-  }
-
-  const { data: transactionData, error: transactionError } = await supabase
-    .from("Transaction")
-    .select("*, category(category)")
-    .eq("userId", user.id)
-    .neq("status", "Canceled")
-    .order("date");
-
-  const { data: categoryData, error: categoryError } = await supabase
-    .from("Category")
-    .select("*")
-    .order("category");
-
-  if (transactionError || categoryError) {
-    throw new Error(
-      "Error fetching data from supabase: " +
-        (transactionError?.message || categoryError?.message)
-    );
-  }
-
-  const categoryMap = categoryDataToMap(categoryData);
-
-  return {
-    transactions: transactionData ?? [],
-    categoryMap,
-    user,
-  };
-}
 export default async function Dashboard() {
-  const { user, transactions, categoryMap } = await getData();
+  const { user, transactions, categoryMap } = await getDashboardData();
   return (
     <div className="container mx-auto py-10 max-w-">
       <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
