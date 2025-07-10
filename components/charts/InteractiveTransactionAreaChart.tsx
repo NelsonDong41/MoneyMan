@@ -79,38 +79,6 @@ export type InteractiveChartTimeRanges =
   | "1m"
   | "7d";
 
-const convertSelectedTimeRange = (
-  selectedTimeRange: Exclude<InteractiveChartTimeRanges, "all" | "custom">
-): [string, string] => {
-  const today = new Date();
-
-  switch (selectedTimeRange) {
-    case "year":
-      return [
-        formatDateDash(new Date(today.getFullYear(), 0, 1)),
-        formatDateDash(today),
-      ];
-    case "3m": {
-      const start = new Date(today.getFullYear(), today.getMonth() - 2, 1);
-      const end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-      return [formatDateDash(start), formatDateDash(end)];
-    }
-    case "1m": {
-      const start = new Date(today.getFullYear(), today.getMonth(), 1);
-      const end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-      return [formatDateDash(start), formatDateDash(end)];
-    }
-    case "7d": {
-      const start = new Date(today);
-      start.setDate(today.getDate() - 6);
-      const end = today;
-      return [formatDateDash(start), formatDateDash(end)];
-    }
-    default:
-      throw new Error("Converting Invalid time range", selectedTimeRange);
-  }
-};
-
 export default function InteractiveTransactionAreaChart() {
   const { transactions } = useTransactions();
   const isMobile = useIsMobile();
@@ -119,22 +87,8 @@ export default function InteractiveTransactionAreaChart() {
   const [selectedTimeRange, setSelectedTimeRange] =
     React.useState<InteractiveChartTimeRanges>("year");
   const [activeGraph, setActiveGraph] = React.useState<ChartOptions>("Expense");
-  const firstDate = transactions.length ? transactions[0] : null;
   const { timeRange, setTimeRange, dataTableEntries } =
-    useInteractiveTransactionAreaChartData(transactions);
-
-  React.useEffect(() => {
-    if (isMobile) {
-      setTimeRange(convertSelectedTimeRange("7d"));
-      setSelectedTimeRange("7d");
-    }
-    if (!isMobile) {
-      setTimeRange(convertSelectedTimeRange("year"));
-      setSelectedTimeRange("year");
-    }
-    setActiveIndex(null);
-    setModalOpen(false);
-  }, [isMobile]);
+    useInteractiveTransactionAreaChartData(transactions, selectedTimeRange);
 
   const activeDataPoint = React.useMemo(() => {
     return activeIndex !== null && dataTableEntries.length
@@ -147,21 +101,6 @@ export default function InteractiveTransactionAreaChart() {
       setActiveIndex(null);
     }
   }, [dataTableEntries, activeDataPoint]);
-
-  React.useEffect(() => {
-    if (selectedTimeRange === "all" && firstDate) {
-      setTimeRange([firstDate.date, formatDateDash(new Date())]);
-      return;
-    }
-    setTimeRange(
-      convertSelectedTimeRange(
-        selectedTimeRange as Exclude<
-          InteractiveChartTimeRanges,
-          "all" | "custom"
-        >
-      )
-    );
-  }, [selectedTimeRange]);
 
   return (
     <div className="h-full w-full">
