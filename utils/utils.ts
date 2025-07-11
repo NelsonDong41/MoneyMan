@@ -120,3 +120,20 @@ export function categoryDataToMap(categoryData: Tables<"Category">[]) {
 
   return categoryMap;
 }
+
+export function getAllDatesInRange(start: string, end: string): string[] {
+  if (start === end) return [start];
+  const dates: string[] = [];
+  const [startYear, startMonth, startDay] = start.split("-").map(Number);
+  const [endYear, endMonth, endDay] = end.split("-").map(Number);
+
+  let startDate = new Date(startYear, startMonth - 1, startDay);
+  const endDate = new Date(endYear, endMonth - 1, endDay);
+
+  while (startDate <= endDate) {
+    dates.push(formatDateDash(startDate));
+    startDate.setDate(startDate.getDate() + 1);
+  }
+
+  return dates;
+}

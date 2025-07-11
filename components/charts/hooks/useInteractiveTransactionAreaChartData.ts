@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { formatDateDash } from "@/utils/utils";
-import useAccumulatedIncome from "../useAccumulatedIncome";
+import { formatDateDash, getAllDatesInRange } from "@/utils/utils";
 import { TransactionWithCategory } from "@/utils/supabase/supabase";
-import { User } from "@supabase/supabase-js";
 import { InteractiveChartTimeRanges } from "@/components/charts/InteractiveTransactionAreaChart";
+import useAccumulatedIncome from "@/hooks/useAccumulatedIncome";
 
-export type ChartAreaDataEntry = {
+export type InteractiveChartDataEntry = {
   date: string;
   balance: number;
   expense: number;
@@ -64,7 +63,7 @@ export default function useChartData(
     });
     const allDates = getAllDatesInRange(...timeRange);
     let balance = accumulatedBalance;
-    const result: ChartAreaDataEntry[] = [];
+    const result: InteractiveChartDataEntry[] = [];
 
     for (const date of allDates) {
       const entry = transactionsByDate.get(date) || { income: 0, expense: 0 };
@@ -114,20 +113,3 @@ const convertSelectedTimeRange = (
       throw new Error("Converting Invalid time range", selectedTimeRange);
   }
 };
-
-function getAllDatesInRange(start: string, end: string): string[] {
-  if (start === end) return [start];
-  const dates: string[] = [];
-  const [startYear, startMonth, startDay] = start.split("-").map(Number);
-  const [endYear, endMonth, endDay] = end.split("-").map(Number);
-
-  let startDate = new Date(startYear, startMonth - 1, startDay);
-  const endDate = new Date(endYear, endMonth - 1, endDay);
-
-  while (startDate <= endDate) {
-    dates.push(formatDateDash(startDate));
-    startDate.setDate(startDate.getDate() + 1);
-  }
-
-  return dates;
-}

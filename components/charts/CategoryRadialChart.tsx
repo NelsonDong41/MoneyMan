@@ -2,19 +2,15 @@
 
 import { TrendingUp } from "lucide-react";
 import {
-  Legend,
   PolarAngleAxis,
   PolarGrid,
   PolarRadiusAxis,
   Radar,
   RadarChart,
-  RadialBar,
-  RadialBarChart,
   ResponsiveContainer,
 } from "recharts";
 
 import {
-  Card,
   CardContent,
   CardDescription,
   CardFooter,
@@ -28,29 +24,31 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import TransparentCard from "../ui/transparentCard";
-import { data } from "autoprefixer";
 
 export const description = "A radar chart with a custom grid";
 
-const chartData = [
-  { month: "January", desktop: 186 },
-  { month: "February", desktop: 305 },
-  { month: "March", desktop: 237 },
-  { month: "April", desktop: 273 },
-  { month: "May", desktop: 209 },
-  { month: "June", desktop: 214 },
+export type CategoryRadialChartDataEntry = {
+  category: string;
+  percentSpent: number;
+};
+
+const chartData: CategoryRadialChartDataEntry[] = [
+  { category: "Food", percentSpent: 10 },
+  { category: "Gym", percentSpent: 30 },
+  { category: "Clothes", percentSpent: 80 },
+  { category: "Rent", percentSpent: 110 },
 ];
 
 const chartConfig = {
-  desktop: {
-    label: "Desktop",
+  category: {
+    label: "Cateogry",
     color: "var(--chart-1)",
   },
 } satisfies ChartConfig;
 
 export function CategoryRadialChart() {
   return (
-    <div className="w-full h-full">
+    <div className="w-full h-full ">
       <TransparentCard>
         <CardHeader className="items-center">
           <CardTitle>Radar Chart - Grid Custom</CardTitle>
@@ -66,35 +64,33 @@ export function CategoryRadialChart() {
             >
               <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData}>
                 <PolarGrid />
-                <PolarAngleAxis dataKey="month" />
+                <PolarAngleAxis dataKey="category" />
                 <PolarRadiusAxis />
                 <Radar
-                  name="Mike"
-                  dataKey="desktop"
+                  name="category"
+                  dataKey="percentSpent"
                   stroke="#8884d8"
                   fill="#8884d8"
                   fillOpacity={0.6}
                 />
-              </RadarChart>
-              {/* <RadarChart data={chartData}>
                 <ChartTooltip
-                  cursor={false}
-                  content={<ChartTooltipContent hideLabel />}
+                  cursor={true}
+                  content={
+                    <ChartTooltipContent
+                      labelFormatter={(value) => {
+                        console.log(value);
+                        return new Date(value).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                          timeZone: "UTC",
+                        });
+                      }}
+                      indicator="line"
+                    />
+                  }
                 />
-                <PolarGrid
-                  radialLines={true}
-                  //   polarRadius={[90]}
-                  innerRadius={5}
-                  outerRadius={500}
-                  strokeWidth={1}
-                />
-                <PolarAngleAxis dataKey="month" />
-                <Radar
-                  dataKey="desktop"
-                  fill="var(--color-desktop)"
-                  fillOpacity={0.6}
-                />
-              </RadarChart> */}
+              </RadarChart>
             </ChartContainer>
           </ResponsiveContainer>
         </CardContent>

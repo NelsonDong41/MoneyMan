@@ -41,13 +41,13 @@ export default function DashboardGrid() {
       >
         <div
           key="a"
-          className="rounded shadow flex items-center justify-center drag-handle cursor-default col-span-3"
+          className="rounded shadow flex items-center justify-center col-span-3"
         >
           <InteractiveTransactionAreaChart />
         </div>
         <div
           key="b"
-          className="rounded shadow flex items-center justify-center drag-handle cursor-default "
+          className="rounded shadow flex items-center justify-center drag-handle"
         >
           <CategoryRadialChart />
         </div>

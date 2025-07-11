@@ -51,8 +51,8 @@ import { Label } from "../ui/label";
 import { ArrowRight } from "lucide-react";
 import { useTransactions } from "@/context/TransactionsContext";
 import { type CategoryMap } from "@/context/CategoryMapContext";
-import useInteractiveTransactionAreaChartData from "@/hooks/chart/useInteractiveTransactionAreaChartData";
 import TransparentCard from "../ui/transparentCard";
+import useInteractiveTransactionAreaChartData from "./hooks/useInteractiveTransactionAreaChartData";
 
 const chartConfig = {
   expense: {
@@ -63,7 +63,7 @@ const chartConfig = {
     label: "Balance",
     color: "var(--chart-2)",
   },
-} satisfies ChartConfig satisfies ChartConfig;
+} satisfies ChartConfig;
 
 export type ChartAreaInteractiveProps = {
   transactions: TransactionWithCategory[];
