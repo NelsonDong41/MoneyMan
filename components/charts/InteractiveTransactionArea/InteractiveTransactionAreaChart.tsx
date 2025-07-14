@@ -50,16 +50,10 @@ import { formatDateDash, formatDateHuman } from "@/utils/utils";
 import { Label } from "@/components/ui/label";
 import { ArrowRight } from "lucide-react";
 import { useTransactions } from "@/context/TransactionsContext";
-import { type CategoryMap } from "@/context/CategoryMapContext";
 import TransparentCard from "@/components/ui/transparentCard";
 import useInteractiveTransactionAreaChartData from "./hooks/useInteractiveTransactionAreaChartData";
 import { CategoryDropdown } from "./CategoryDropdown";
 import TransactionComposedChart from "./TransactionComposedChart";
-
-export type ChartAreaInteractiveProps = {
-  transactions: TransactionWithCategory[];
-  categoryMap: CategoryMap;
-};
 
 export type ChartTypeOptions = "Balance" | "Expense" | "Both";
 const CHART_TYPE_OPTIONS: ChartTypeOptions[] = [

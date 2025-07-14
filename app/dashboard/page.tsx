@@ -1,21 +1,41 @@
 import { UserProvider } from "@/context/UserContext";
-import { CategoryMapProvider } from "@/context/CategoryMapContext";
+import { CategoryMap, CategoryMapProvider } from "@/context/CategoryMapContext";
 import { TransactionProvider } from "@/context/TransactionsContext";
 import DashboardGrid from "./DashboardGrid";
 import { getDashboardData } from "@/lib/server/utils";
+import { User } from "@supabase/supabase-js";
+import { TransactionWithCategory } from "@/utils/supabase/supabase";
 
 export default async function Dashboard() {
-  const { user, transactions, categoryMap } = await getDashboardData();
+  const data = await getDashboardData();
   return (
     <div className="container mx-auto py-10 max-w-">
       <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
-      <UserProvider initial={user}>
-        <TransactionProvider initial={transactions}>
-          <CategoryMapProvider initial={categoryMap}>
-            <DashboardGrid />
-          </CategoryMapProvider>
-        </TransactionProvider>
-      </UserProvider>
+      <Providers {...data}>
+        <DashboardGrid />
+      </Providers>
     </div>
+  );
+}
+
+function Providers({
+  user,
+  transactions,
+  categoryMap,
+  children,
+}: {
+  user: User;
+  transactions: TransactionWithCategory[];
+  categoryMap: CategoryMap;
+  children: React.ReactNode;
+}) {
+  return (
+    <UserProvider initial={user}>
+      <TransactionProvider initial={transactions}>
+        <CategoryMapProvider initial={categoryMap}>
+          {children}
+        </CategoryMapProvider>
+      </TransactionProvider>
+    </UserProvider>
   );
 }

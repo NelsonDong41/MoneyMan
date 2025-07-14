@@ -8,13 +8,14 @@ import GridLayout, {
 } from "react-grid-layout";
 import InteractiveTransactionAreaChart from "@/components/charts/InteractiveTransactionArea/InteractiveTransactionAreaChart";
 import { CategoryRadialChart } from "@/components/charts/CategoryRadialChart/CategoryRadialChart";
+import { SpendPieChart } from "@/components/charts/SpendPieChart/SpendPieChart";
 
 const layouts: Layouts = {
   lg: [
     { i: "a", x: 0, y: 0, w: 3, h: 2, static: true },
     { i: "b", x: 0, y: 1, w: 1, h: 2 },
-    { i: "c", x: 1, y: 1, w: 1, h: 1 },
-    { i: "d", x: 2, y: 1, w: 1, h: 1 },
+    { i: "c", x: 1, y: 1, w: 1, h: 2 },
+    { i: "d", x: 2, y: 1, w: 1, h: 2 },
   ],
   xs: [
     { i: "a", x: 0, y: 0, w: 1, h: 2, static: true },
@@ -55,7 +56,7 @@ export default function DashboardGrid() {
           key="c"
           className="bg-purple-500 rounded shadow flex items-center justify-center drag-handle cursor-default "
         >
-          <span className="drag-handle cursor-move pr-2">⠿</span>C
+          <SpendPieChart />
         </div>
         <div
           key="d"
