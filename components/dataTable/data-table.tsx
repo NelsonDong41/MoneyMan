@@ -56,7 +56,8 @@ export type SheetAction = {
 interface DataTableProps<TValue> {
   columns: (
     loadingRows: Set<number>,
-    sheetActions: SheetAction
+    sheetActions: SheetAction,
+    isMobile: boolean
   ) => ColumnDef<TransactionWithCategory, TValue>[];
   transactionFilters?: { date?: string; type?: Type };
 }
@@ -69,6 +70,20 @@ const mobileHiddenColumns: ColumnKeys[] = defaultHiddenColumns.concat([
   "status",
   "notes",
 ]);
+const defaultColumnOrder = [
+  "select",
+  "date",
+  "description",
+  "subtotal",
+  "tax",
+  "tip",
+  "amount",
+  "type",
+  "merchant",
+  "category",
+  "status",
+  "notes",
+];
 
 export function DataTable<TValue>({
   columns,
@@ -87,6 +102,8 @@ export function DataTable<TValue>({
       Object.fromEntries(defaultHiddenColumns.map((key) => [key, false]))
     );
   const [rowSelection, setRowSelection] = React.useState({});
+  const [columnOrder, setColumnOrder] =
+    React.useState<string[]>(defaultColumnOrder);
 
   const filteredTransactions = React.useMemo(() => {
     return transactions.filter((t) => {
@@ -124,8 +141,8 @@ export function DataTable<TValue>({
   );
 
   const memoizedColumns = React.useMemo(
-    () => columns(loadingRows, sheetActions),
-    [loadingRows, sheetActions]
+    () => columns(loadingRows, sheetActions, isMobile),
+    [loadingRows, sheetActions, isMobile]
   );
 
   const table = useReactTable({
@@ -139,17 +156,19 @@ export function DataTable<TValue>({
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    onColumnOrderChange: setColumnOrder,
     state: {
       sorting,
       columnFilters,
       columnVisibility,
       rowSelection,
+      columnOrder,
     },
   });
 
   return (
     <div className="p-1 overflow-x-auto">
-      <div className="grid grid-cols-[7fr_1fr_1fr] items-center py-4 gap-4">
+      <div className="flex justify-between items-center py-4 gap-4">
         <Input
           placeholder="Filter Transactions..."
           value={
@@ -160,26 +179,28 @@ export function DataTable<TValue>({
           }
           className="max-w-sm rounded-lg"
         />
-        <DataTableViewOptions table={table} />
-        {table.getIsSomeRowsSelected() || table.getIsAllRowsSelected() ? (
-          <DeleteButton table={table} sheetActions={sheetActions} />
-        ) : (
-          <Button
-            variant="secondary"
-            onClick={() => {
-              if (transactionFilters) setActiveSheetData(transactionFilters);
-              setIsSheetOpen((prev) => !prev);
-            }}
-            size="sm"
-          >
-            <PlusCircle />
-            Add
-          </Button>
-        )}
+        <div className="flex gap-4">
+          <DataTableViewOptions table={table} />
+          {table.getIsSomeRowsSelected() || table.getIsAllRowsSelected() ? (
+            <DeleteButton table={table} sheetActions={sheetActions} />
+          ) : (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                if (transactionFilters) setActiveSheetData(transactionFilters);
+                setIsSheetOpen((prev) => !prev);
+              }}
+              size="sm"
+            >
+              <PlusCircle />
+              Add
+            </Button>
+          )}
+        </div>
       </div>
       <div className="rounded-md border bg-popover/80 backdrop-blur-3xl border-white/25 shadow-lg overflow-x-auto w-full h-full">
         <Table>
-          <TableHeader>
+          <TableHeader className="hidden sm:table-header-group">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
@@ -208,6 +229,7 @@ export function DataTable<TValue>({
                     <TableCell
                       key={cell.id}
                       onClick={() => handleTableCellClick(row)}
+                      className="py-3"
                     >
                       {flexRender(
                         cell.column.columnDef.cell,

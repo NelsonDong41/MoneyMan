@@ -2,17 +2,17 @@
 
 import * as React from "react";
 import {
-  ResponsiveContainer,
   Area,
-  AreaChart,
   CartesianGrid,
+  ComposedChart,
+  Line,
+  ResponsiveContainer,
   XAxis,
   YAxis,
 } from "recharts";
 
 import { useIsMobile } from "@/hooks/useIsMobile";
 import {
-  Card,
   CardContent,
   CardDescription,
   CardHeader,
@@ -43,34 +43,35 @@ import {
 import { DialogDescription } from "@radix-ui/react-dialog";
 import { DataTable } from "@/components/dataTable/data-table";
 import { columns } from "@/components/dataTable/columns";
-import ShinyText from "../ui/shinyText";
-import Particles from "../ui/particles";
-import { NaturalLanguageCalendar } from "../ui/naturalLanguageCalendar";
+import ShinyText from "@/components/ui/shinyText";
+import Particles from "@/components/ui/particles";
+import { NaturalLanguageCalendar } from "@/components/ui/naturalLanguageCalendar";
 import { formatDateDash, formatDateHuman } from "@/utils/utils";
-import { Label } from "../ui/label";
+import { Label } from "@/components/ui/label";
 import { ArrowRight } from "lucide-react";
 import { useTransactions } from "@/context/TransactionsContext";
 import { type CategoryMap } from "@/context/CategoryMapContext";
-import TransparentCard from "../ui/transparentCard";
+import TransparentCard from "@/components/ui/transparentCard";
 import useInteractiveTransactionAreaChartData from "./hooks/useInteractiveTransactionAreaChartData";
-
-const chartConfig = {
-  expense: {
-    label: "Expense",
-    color: "var(--chart-1)",
-  },
-  balance: {
-    label: "Balance",
-    color: "var(--chart-2)",
-  },
-} satisfies ChartConfig;
+import { CategoryDropdown } from "./CategoryDropdown";
+import TransactionComposedChart from "./TransactionComposedChart";
 
 export type ChartAreaInteractiveProps = {
   transactions: TransactionWithCategory[];
   categoryMap: CategoryMap;
 };
 
-export type ChartOptions = "Balance" | "Expense" | "Both";
+export type ChartTypeOptions = "Balance" | "Expense" | "Both";
+const CHART_TYPE_OPTIONS: ChartTypeOptions[] = [
+  "Both",
+  "Balance",
+  "Expense",
+] as const;
+export type ChartOptions = {
+  type: ChartTypeOptions;
+  categories: string[];
+};
+
 export type InteractiveChartTimeRanges =
   | "all"
   | "custom"
@@ -79,32 +80,36 @@ export type InteractiveChartTimeRanges =
   | "1m"
   | "7d";
 
+const DEFAULT_CHART_OPTION: ChartOptions = {
+  type: "Expense",
+  categories: [],
+};
+
 export default function InteractiveTransactionAreaChart() {
   const { transactions } = useTransactions();
   const isMobile = useIsMobile();
   const [activeIndex, setActiveIndex] = React.useState<number | null>(null);
-  const [modalOpen, setModalOpen] = React.useState(false);
+  const [dataTableModalOpen, setDataTableModalOpen] = React.useState(false);
   const [selectedTimeRange, setSelectedTimeRange] =
     React.useState<InteractiveChartTimeRanges>("year");
-  const [activeGraph, setActiveGraph] = React.useState<ChartOptions>("Expense");
-  const { timeRange, setTimeRange, dataTableEntries } =
-    useInteractiveTransactionAreaChartData(transactions, selectedTimeRange);
+  const [activeGraph, setActiveGraph] =
+    React.useState<ChartOptions>(DEFAULT_CHART_OPTION);
 
-  const activeDataPoint = React.useMemo(() => {
-    return activeIndex !== null && dataTableEntries.length
+  const { timeRange, setTimeRange, dataTableEntries } =
+    useInteractiveTransactionAreaChartData(
+      transactions,
+      selectedTimeRange,
+      activeGraph
+    );
+
+  const activeDataPoint =
+    activeIndex !== null && dataTableEntries.length
       ? dataTableEntries[activeIndex]
       : null;
-  }, [activeIndex, dataTableEntries]);
-
-  React.useEffect(() => {
-    if (!activeDataPoint) {
-      setActiveIndex(null);
-    }
-  }, [dataTableEntries, activeDataPoint]);
 
   return (
     <div className="h-full w-full">
-      <TransparentCard>
+      <TransparentCard transparent={!dataTableEntries.length}>
         {!dataTableEntries.length && (
           <div className="-z-50 pointer-events-none">
             <Particles
@@ -125,30 +130,41 @@ export default function InteractiveTransactionAreaChart() {
           </div>
         )}
         <CardHeader>
-          <CardTitle className="flex justify-between items-center">
+          <CardTitle className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             Transactions{" "}
-            <Select
-              value={activeGraph}
-              onValueChange={(e) => setActiveGraph(e as ChartOptions)}
-            >
-              <SelectTrigger
-                className="flex w-40 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate @[767px]/card:hidden bg-popover"
-                aria-label="Select a value"
+            <div className="flex items-center gap-4 justify-between">
+              <Select
+                value={activeGraph.type}
+                onValueChange={(e) =>
+                  setActiveGraph({
+                    type: e as ChartTypeOptions,
+                    categories: [],
+                  })
+                }
               >
-                <SelectValue placeholder="Both" />
-              </SelectTrigger>
-              <SelectContent className="rounded-xl">
-                <SelectItem value="Both" className="rounded-lg">
-                  Both
-                </SelectItem>
-                <SelectItem value="Balance" className="rounded-lg">
-                  Balance
-                </SelectItem>
-                <SelectItem value="Expense" className="rounded-lg">
-                  Expense
-                </SelectItem>
-              </SelectContent>
-            </Select>
+                <SelectTrigger
+                  className="flex w-40 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate @[767px]/card:hidden bg-popover"
+                  aria-label="Select a value"
+                >
+                  <SelectValue placeholder="Both" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  {CHART_TYPE_OPTIONS.map((option) => (
+                    <SelectItem
+                      key={option + "-select"}
+                      value={option}
+                      className="rounded-lg"
+                    >
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <CategoryDropdown
+                activeGraph={activeGraph}
+                setActiveGraph={setActiveGraph}
+              />
+            </div>
           </CardTitle>
           <CardDescription className="grid">
             <span className="hidden @[540px]/card:block">
@@ -162,119 +178,16 @@ export default function InteractiveTransactionAreaChart() {
         </CardHeader>
         <CardContent className="flex-1 min-h-0 p-0 w-full">
           {!dataTableEntries.length && (
-            <div className="aspect-auto h-[400px] w-full" />
+            <div className="h-full w-full sm:p-6 aspect-[5/2]" />
           )}
 
           {!!dataTableEntries.length && (
-            <ChartContainer
-              config={chartConfig}
-              className="h-full w-full sm:p-6 aspect-[5/2]"
-            >
-              <AreaChart
-                data={dataTableEntries}
-                onClick={(state) => {
-                  if (!state || !state.activeTooltipIndex) {
-                    return;
-                  }
-                  const { expense, balance } =
-                    dataTableEntries[state.activeTooltipIndex];
-                  const hasData = expense || balance;
-                  if (hasData) {
-                    setActiveIndex(state.activeTooltipIndex);
-                    setModalOpen(true);
-                  }
-                }}
-                syncId="chart"
-              >
-                <defs>
-                  <linearGradient id="fillBalance" x1="0" y1="0" x2="0" y2="1">
-                    <stop
-                      offset="5%"
-                      stopColor="var(--color-balance)"
-                      stopOpacity={1.0}
-                    />
-                    <stop
-                      offset="95%"
-                      stopColor="var(--color-balance)"
-                      stopOpacity={0.1}
-                    />
-                  </linearGradient>
-                  <linearGradient id="fillExpense" x1="0" y1="0" x2="0" y2="1">
-                    <stop
-                      offset="5%"
-                      stopColor="var(--color-expense)"
-                      stopOpacity={0.8}
-                    />
-                    <stop
-                      offset="95%"
-                      stopColor="var(--color-expense)"
-                      stopOpacity={0.1}
-                    />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid vertical={false} />
-
-                <XAxis
-                  dataKey="date"
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={8}
-                  minTickGap={32}
-                  tickFormatter={(value) => {
-                    const date = new Date(value);
-                    return date.toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      timeZone: "UTC",
-                    });
-                  }}
-                />
-                <YAxis
-                  tickFormatter={(value) => {
-                    if (value >= 1000) return `${value / 1000}k`;
-                    return value;
-                  }}
-                  width={isMobile ? 10 : 40} // or whatever fits your labels
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={8}
-                  tickCount={3}
-                />
-                <ChartTooltip
-                  cursor={true}
-                  content={
-                    <ChartTooltipContent
-                      labelFormatter={(value) => {
-                        return new Date(value).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                          timeZone: "UTC",
-                        });
-                      }}
-                      indicator="line"
-                    />
-                  }
-                />
-                {(activeGraph === "Both" || activeGraph === "Balance") && (
-                  <Area
-                    dataKey="balance"
-                    type="linear"
-                    fill="url(#fillBalance)"
-                    stroke="var(--color-balance)"
-                  />
-                )}
-                {(activeGraph === "Both" || activeGraph === "Expense") && (
-                  <Area
-                    dataKey="expense"
-                    type="linear"
-                    fill="url(#fillExpense)"
-                    stroke="var(--color-expense)"
-                  />
-                )}
-                <ChartLegend content={<ChartLegendContent />} />
-              </AreaChart>
-            </ChartContainer>
+            <TransactionComposedChart
+              dataTableEntries={dataTableEntries}
+              activeGraph={activeGraph}
+              setActiveIndex={setActiveIndex}
+              setDataTableModalOpen={setDataTableModalOpen}
+            />
           )}
         </CardContent>
         <CardContent className="flex justify-between items-end">
@@ -343,10 +256,10 @@ export default function InteractiveTransactionAreaChart() {
         </CardContent>
       </TransparentCard>
       <Dialog
-        open={modalOpen}
+        open={dataTableModalOpen}
         onOpenChange={(open) => {
           setActiveIndex(null);
-          setModalOpen(open);
+          setDataTableModalOpen(open);
         }}
       >
         <DialogContent
@@ -369,7 +282,7 @@ export default function InteractiveTransactionAreaChart() {
                 columns={columns}
                 transactionFilters={{
                   date: activeDataPoint.date,
-                  type: chartOptionToType(activeGraph),
+                  type: chartOptionToType(activeGraph.type),
                 }}
               />
             )}
@@ -380,7 +293,7 @@ export default function InteractiveTransactionAreaChart() {
   );
 }
 
-export function chartOptionToType(chartOption: ChartOptions) {
+export function chartOptionToType(chartOption: ChartTypeOptions) {
   let type: Type | undefined;
 
   switch (chartOption) {

@@ -5,6 +5,7 @@ import Link from "next/link";
 import "./globals.css";
 import SplashCursor from "@/components/ui/splashCursor";
 import AuthButton from "@/components/header-auth";
+import ClickSpark from "@/components/ui/clickSpark";
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`

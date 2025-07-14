@@ -137,3 +137,14 @@ export function getAllDatesInRange(start: string, end: string): string[] {
 
   return dates;
 }
+
+export function stringToOklchColor(str: string): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const hue = Math.abs(hash) % 360;
+  const lightness = 0.65;
+  const chroma = 0.22;
+  return `oklch(${lightness} ${chroma} ${hue})`;
+}

@@ -6,8 +6,8 @@ import GridLayout, {
   Responsive,
   WidthProvider,
 } from "react-grid-layout";
-import InteractiveTransactionAreaChart from "@/components/charts/InteractiveTransactionAreaChart";
-import { CategoryRadialChart } from "@/components/charts/CategoryRadialChart";
+import InteractiveTransactionAreaChart from "@/components/charts/InteractiveTransactionArea/InteractiveTransactionAreaChart";
+import { CategoryRadialChart } from "@/components/charts/CategoryRadialChart/CategoryRadialChart";
 
 const layouts: Layouts = {
   lg: [

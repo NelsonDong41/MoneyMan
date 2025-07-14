@@ -23,7 +23,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import TransparentCard from "../ui/transparentCard";
+import TransparentCard from "../../ui/transparentCard";
 
 export const description = "A radar chart with a custom grid";
 
@@ -78,7 +78,6 @@ export function CategoryRadialChart() {
                   content={
                     <ChartTooltipContent
                       labelFormatter={(value) => {
-                        console.log(value);
                         return new Date(value).toLocaleDateString("en-US", {
                           month: "short",
                           day: "numeric",

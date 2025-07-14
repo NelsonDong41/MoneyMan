@@ -1,6 +1,6 @@
 import { columns } from "@/components/dataTable/columns";
 import { DataTable } from "../../components/dataTable/data-table";
-import InteractiveTransactionAreaChart from "@/components/charts/InteractiveTransactionAreaChart";
+import InteractiveTransactionAreaChart from "@/components/charts/InteractiveTransactionArea/InteractiveTransactionAreaChart";
 import { UserProvider } from "@/context/UserContext";
 import { CategoryMapProvider } from "@/context/CategoryMapContext";
 import { TransactionProvider } from "@/context/TransactionsContext";
@@ -14,7 +14,9 @@ export default async function Transactions() {
       <UserProvider initial={user}>
         <TransactionProvider initial={transactions}>
           <CategoryMapProvider initial={categoryMap}>
-            <InteractiveTransactionAreaChart />
+            <div className="w-full h-[60dvh] sm:h-[40dvh]">
+              <InteractiveTransactionAreaChart />
+            </div>
             <DataTable columns={columns} />
           </CategoryMapProvider>
         </TransactionProvider>
