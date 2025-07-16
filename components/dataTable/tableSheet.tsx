@@ -100,7 +100,7 @@ export default function TableSheet({
       reset({
         ...activeSheetData,
         id: activeSheetData.id,
-        category: activeSheetData.category?.category,
+        category: activeSheetData.category?.name,
         date: activeSheetData.date,
         amount: activeSheetData.amount?.toFixed(2),
         subtotal: activeSheetData.subtotal?.toFixed(2),
@@ -484,7 +484,7 @@ export default function TableSheet({
                 if (activeSheetData) {
                   sheetActions.deleteRows(
                     [activeSheetData.id!],
-                    activeSheetData.userId
+                    activeSheetData.user_id
                   );
                 }
               }}

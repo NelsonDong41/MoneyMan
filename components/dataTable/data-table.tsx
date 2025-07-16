@@ -12,7 +12,6 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-  type Table as ReactTable,
 } from "@tanstack/react-table";
 
 import {
@@ -39,14 +38,12 @@ import {
 } from "@/utils/supabase/supabase";
 import useTableStates from "@/hooks/useTableStates";
 import { useIsMobile } from "@/hooks/useIsMobile";
-import { useUser } from "@/context/UserContext";
-import { CategoryMap } from "@/context/CategoryMapContext";
 import { useTransactions } from "@/context/TransactionsContext";
 
 export type TransactionInsert =
-  Database["public"]["Tables"]["Transaction"]["Insert"];
+  Database["public"]["Tables"]["transaction"]["Insert"];
 export type TransactionUpdate =
-  Database["public"]["Tables"]["Transaction"]["Update"];
+  Database["public"]["Tables"]["transaction"]["Update"];
 
 export type SheetAction = {
   upsertRow: (values: FormTransaction) => void;

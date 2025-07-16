@@ -98,36 +98,34 @@ export function generateRandomString(length: number) {
   return result;
 }
 
-export function categoryDataToMap(categoryData: Tables<"Category">[]) {
+export function categoryDataToMap(categoryData: Tables<"category">[]) {
   const categoryMap: CategoryMap = {
     Expense: {},
     Income: {},
   };
 
-  categoryData.forEach(({ category, ParentCategory, type }) => {
-    const parentId = ParentCategory;
-
-    if (parentId) {
-      if (categoryMap[type][parentId]) {
-        categoryMap[type][parentId].push(category);
+  categoryData.forEach(({ name, parent, type }) => {
+    if (parent) {
+      if (categoryMap[type][parent]) {
+        categoryMap[type][parent].push(name);
       } else {
-        categoryMap[type][parentId] = [parentId, category];
+        categoryMap[type][parent] = [parent, name];
       }
     }
 
-    if (!parentId && !categoryMap[type][category]) {
-      categoryMap[type][category] = [category];
+    if (!parent && !categoryMap[type][name]) {
+      categoryMap[type][name] = [name];
     }
   });
 
   return categoryMap;
 }
 
-export function categoryDataToParentMap(categoryData: Tables<"Category">[]) {
+export function categoryDataToParentMap(categoryData: Tables<"category">[]) {
   const categoryToParentMap: CategoryToParentMap = {};
 
-  categoryData.forEach(({ category, ParentCategory }) => {
-    categoryToParentMap[category] = ParentCategory;
+  categoryData.forEach(({ name, parent }) => {
+    categoryToParentMap[name] = parent;
   });
 
   return categoryToParentMap;

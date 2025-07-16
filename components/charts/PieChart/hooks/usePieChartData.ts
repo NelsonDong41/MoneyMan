@@ -19,7 +19,7 @@ export default function usePieChartData(type: Type) {
       ({ type: currType, amount, status, category }) => {
         if (currType !== type) return;
         const rootCategory =
-          categoryToParentMap[category.category] || category.category;
+          categoryToParentMap[category.name] || category.name;
         if (!result[rootCategory]) {
           result[rootCategory] = {
             category: rootCategory,

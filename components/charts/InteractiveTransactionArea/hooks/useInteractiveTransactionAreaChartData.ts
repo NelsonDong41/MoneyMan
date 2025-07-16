@@ -62,7 +62,7 @@ export default function useInteractiveTransactionAreaChart() {
             activeGraphFilters.type === "Both")
         ) {
           entry.expense += amount;
-          const catName = category.category;
+          const catName = category.name;
           if (activeGraphFilters.categories.includes(catName)) {
             if (entry[catName] !== undefined) {
               entry[catName] += amount;

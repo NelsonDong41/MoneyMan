@@ -27,12 +27,12 @@ export async function getDashboardData(): Promise<DashboardData> {
     { data: categoryData, error: categoryError },
   ] = await Promise.all([
     supabase
-      .from("Transaction")
-      .select("*, category(category)")
-      .eq("userId", user.id)
+      .from("transaction")
+      .select("*, category(name)")
+      .eq("user_id", user.id)
       .neq("status", "Canceled")
       .order("date"),
-    supabase.from("Category").select("*").order("category"),
+    supabase.from("category").select("*").order("name"),
   ]);
 
   if (transactionError || categoryError) {

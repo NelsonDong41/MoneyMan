@@ -12,7 +12,7 @@ function transformFormToInsert(
     ...values,
     id: values.id || undefined,
     date: values.date,
-    userId,
+    user_id: userId,
     updated_at: new Date().toUTCString(),
     amount: parseFloat(values.amount.replace(/,/g, "")),
     subtotal: values.subtotal
@@ -47,7 +47,7 @@ export async function PUT(req: NextRequest) {
 
   const supabase = await createClient();
   const { error } = await supabase
-    .from("Transaction")
+    .from("transaction")
     .upsert(transactionInsert);
 
   if (error) {
@@ -67,9 +67,9 @@ export async function DELETE(req: NextRequest) {
   const supabase = await createClient();
 
   const { error } = await supabase
-    .from("Transaction")
+    .from("transaction")
     .delete()
-    .match({ userId: user.id })
+    .match({ user_id: user.id })
     .in("id", raw);
 
   if (error) {

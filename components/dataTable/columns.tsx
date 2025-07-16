@@ -232,7 +232,7 @@ export const columns = (
     },
     {
       id: "category",
-      accessorKey: "category.category",
+      accessorKey: "category.name",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Category" />
       ),
@@ -319,7 +319,7 @@ export const columns = (
               onOpenChange={setDeleteOpen}
               open={deleteOpen}
               action={() =>
-                sheetActions.deleteRows([transaction.id], transaction.userId)
+                sheetActions.deleteRows([transaction.id], transaction.user_id)
               }
             />
           </div>

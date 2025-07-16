@@ -1,10 +1,10 @@
 import { Database, Tables } from "./types";
 
 export type TransactionWithCategory = Omit<
-  Tables<"Transaction">,
+  Tables<"transaction">,
   "category"
 > & {
-  category: { category: Tables<"Category">["category"] };
+  category: { name: Tables<"category">["name"] };
 };
 
 export const STATUS_OPTIONS: Database["public"]["Enums"]["TransactionStatus"][] =

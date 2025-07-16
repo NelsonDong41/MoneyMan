@@ -103,8 +103,6 @@ export function SpendPieChart() {
 
   const innerRadius = isMobile ? 30 : 50;
 
-  console.log(innerRadius);
-
   return (
     <TransparentCard data-chart={id}>
       <ChartStyle id={id} config={chartConfig} />
