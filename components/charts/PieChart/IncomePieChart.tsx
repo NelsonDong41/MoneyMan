@@ -27,8 +27,8 @@ import {
 import usePieChartData from "./hooks/usePieChartData";
 import { useIsMobile } from "@/hooks/useIsMobile";
 
-export function SpendPieChart() {
-  const id = "spend-pie";
+export function IncomePieChart() {
+  const id = "income-pie";
   const { displayedTransactions, activeGraphFilters } = useTransactions();
   const { categoryMap } = useCategoryMap();
   const isMobile = useIsMobile();
@@ -36,7 +36,7 @@ export function SpendPieChart() {
   const [transientIndex, setTransientIndex] = React.useState<
     number | undefined
   >();
-  const { dataTableEntries } = usePieChartData("Expense");
+  const { dataTableEntries } = usePieChartData("Income");
 
   const onPieEnter = (_: any, index: number) => {
     setTransientIndex(index);
@@ -66,30 +66,30 @@ export function SpendPieChart() {
   if (activeIndex !== undefined) activeSectors.push(activeIndex);
   if (transientIndex !== undefined) activeSectors.push(transientIndex);
 
-  const totalSpend = React.useMemo(
+  const totalIncome = React.useMemo(
     () =>
       displayedTransactions.reduce((prev, curr) => {
-        if (curr.type === "Income" || curr.status === "Canceled") return prev;
+        if (curr.type === "Expense" || curr.status === "Canceled") return prev;
         return prev + curr.amount;
       }, 0),
     [displayedTransactions]
   );
 
-  const totalSpendAmountFormatted = new Intl.NumberFormat("en-US", {
+  const totalIncomeAmountFormatted = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
-  }).format(totalSpend);
+  }).format(totalIncome);
 
   const displayIndex = transientIndex ?? activeIndex;
-  const centerSpend =
+  const centerIncome =
     displayIndex !== undefined ? dataTableEntries[displayIndex] : undefined;
 
-  const centerSpendAmountFormatted =
-    centerSpend &&
+  const centerIncomeAmountFormatted =
+    centerIncome &&
     new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
-    }).format(centerSpend.amount);
+    }).format(centerIncome.amount);
 
   const timeRangeDescription = `${formatDateHuman(
     new Date(activeGraphFilters.timeRange[0])
@@ -109,9 +109,9 @@ export function SpendPieChart() {
       <CardHeader className="w-full flex-row items-start space-y-0 pb-0">
         <div className="grid gap-1">
           <CardTitle className="truncate whitespace-nowrap overflow-hidden text-ellipsis w-full max-w-full">
-            Spending
-            {centerSpend?.category !== undefined &&
-              ` - ${centerSpend.category}`}
+            Total Earned
+            {centerIncome?.category !== undefined &&
+              ` - ${centerIncome.category}`}
           </CardTitle>
           <CardDescription>{timeRangeDescription}</CardDescription>
         </div>
@@ -190,8 +190,8 @@ export function SpendPieChart() {
                           }
                           className="fill-foreground text-xl font-bold"
                         >
-                          {centerSpendAmountFormatted ||
-                            totalSpendAmountFormatted}
+                          {centerIncomeAmountFormatted ||
+                            totalIncomeAmountFormatted}
                         </tspan>
                         <tspan
                           x={viewBox.cx}
@@ -202,7 +202,7 @@ export function SpendPieChart() {
                           }
                           className="fill-primary text-xl font-bold"
                         >
-                          {totalSpendAmountFormatted} Total
+                          {totalIncomeAmountFormatted} Total
                         </tspan>
                       </text>
                     );

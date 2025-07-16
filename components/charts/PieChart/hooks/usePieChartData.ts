@@ -32,7 +32,7 @@ export default function usePieChartData(type: Type) {
       }
     );
 
-    return Object.values(result);
+    return Object.values(result).sort((a, b) => b.amount - a.amount);
   }, [displayedTransactions, activeGraphFilters, categoryToParentMap]);
 
   return { dataTableEntries };

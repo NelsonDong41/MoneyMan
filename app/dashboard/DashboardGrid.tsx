@@ -10,6 +10,7 @@ import InteractiveTransactionAreaChart from "@/components/charts/InteractiveTran
 import { CategoryRadialChart } from "@/components/charts/CategoryRadialChart/CategoryRadialChart";
 import { SpendPieChart } from "@/components/charts/PieChart/SpendPieChart";
 import TransparentCard from "@/components/ui/transparentCard";
+import { IncomePieChart } from "@/components/charts/PieChart/IncomePieChart";
 
 const layouts: Layouts = {
   lg: [
@@ -61,9 +62,9 @@ export default function DashboardGrid() {
         </div>
         <div
           key="d"
-          className="bg-yellow-500 rounded shadow flex items-center justify-center drag-handle cursor-default sm:p2"
+          className="rounded shadow flex items-center justify-center drag-handle cursor-default sm:p2"
         >
-          <span className="drag-handle cursor-move pr-2">⠿</span>D
+          <IncomePieChart />
         </div>
       </ResponsiveGridLayout>
     </div>

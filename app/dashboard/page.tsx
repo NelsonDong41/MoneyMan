@@ -13,7 +13,7 @@ import { TransactionWithCategory } from "@/utils/supabase/supabase";
 export default async function Dashboard() {
   const data = await getDashboardData();
   return (
-    <div className="container mx-auto py-10 max-w-">
+    <div className="sm:py-10 max-w-full sm:max-w-6xl w-full">
       <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
       <Providers {...data}>
         <DashboardGrid />
