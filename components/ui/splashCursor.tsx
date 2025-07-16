@@ -69,7 +69,7 @@ export default function SplashCursor({
   TRANSPARENT = true,
 }: SplashCursorProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-
+  const animationFrame = useRef<number>(null);
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -997,7 +997,7 @@ export default function SplashCursor({
       applyInputs();
       step(dt);
       render(null);
-      requestAnimationFrame(updateFrame);
+      animationFrame.current = requestAnimationFrame(updateFrame);
     }
 
     function calcDeltaTime() {
@@ -1417,13 +1417,14 @@ export default function SplashCursor({
       return ((value - min) % range) + min;
     }
 
-    window.addEventListener("mousedown", (e) => {
+    function onMouseDown(e: MouseEvent) {
       const pointer = pointers[0];
       const posX = scaleByPixelRatio(e.clientX);
       const posY = scaleByPixelRatio(e.clientY);
       updatePointerDownData(pointer, -1, posX, posY);
       clickSplat(pointer);
-    });
+    }
+    window.addEventListener("mousedown", onMouseDown);
 
     function handleFirstMouseMove(e: MouseEvent) {
       const pointer = pointers[0];
@@ -1436,13 +1437,14 @@ export default function SplashCursor({
     }
     document.body.addEventListener("mousemove", handleFirstMouseMove);
 
-    window.addEventListener("mousemove", (e) => {
+    function onMouseMove(e: MouseEvent) {
       const pointer = pointers[0];
       const posX = scaleByPixelRatio(e.clientX);
       const posY = scaleByPixelRatio(e.clientY);
       const color = pointer.color;
       updatePointerMoveData(pointer, posX, posY, color);
-    });
+    }
+    window.addEventListener("mousemove", onMouseMove);
 
     function handleFirstTouchStart(e: TouchEvent) {
       const touches = e.targetTouches;
@@ -1457,41 +1459,78 @@ export default function SplashCursor({
     }
     document.body.addEventListener("touchstart", handleFirstTouchStart);
 
-    window.addEventListener(
-      "touchstart",
-      (e) => {
-        const touches = e.targetTouches;
-        const pointer = pointers[0];
-        for (let i = 0; i < touches.length; i++) {
-          const posX = scaleByPixelRatio(touches[i].clientX);
-          const posY = scaleByPixelRatio(touches[i].clientY);
-          updatePointerDownData(pointer, touches[i].identifier, posX, posY);
-        }
-      },
-      false
-    );
+    function onTouchStart(e: TouchEvent) {
+      const touches = e.targetTouches;
+      const pointer = pointers[0];
+      for (let i = 0; i < touches.length; i++) {
+        const posX = scaleByPixelRatio(touches[i].clientX);
+        const posY = scaleByPixelRatio(touches[i].clientY);
+        updatePointerDownData(pointer, touches[i].identifier, posX, posY);
+      }
+    }
 
-    window.addEventListener(
-      "touchmove",
-      (e) => {
-        const touches = e.targetTouches;
-        const pointer = pointers[0];
-        for (let i = 0; i < touches.length; i++) {
-          const posX = scaleByPixelRatio(touches[i].clientX);
-          const posY = scaleByPixelRatio(touches[i].clientY);
-          updatePointerMoveData(pointer, posX, posY, pointer.color);
-        }
-      },
-      false
-    );
+    window.addEventListener("touchstart", onTouchStart, false);
 
-    window.addEventListener("touchend", (e) => {
+    function onTouchMove(e: TouchEvent) {
+      const touches = e.targetTouches;
+      const pointer = pointers[0];
+      for (let i = 0; i < touches.length; i++) {
+        const posX = scaleByPixelRatio(touches[i].clientX);
+        const posY = scaleByPixelRatio(touches[i].clientY);
+        updatePointerMoveData(pointer, posX, posY, pointer.color);
+      }
+    }
+    window.addEventListener("touchmove", onTouchMove, false);
+
+    function onTouchEnd(e: TouchEvent) {
       const touches = e.changedTouches;
       const pointer = pointers[0];
       for (let i = 0; i < touches.length; i++) {
         updatePointerUpData(pointer);
       }
-    });
+    }
+    window.addEventListener("touchend", onTouchEnd);
+
+    return () => {
+      if (animationFrame.current) cancelAnimationFrame(animationFrame.current);
+      if (gl && clearShader) gl.deleteShader(clearShader);
+      if (gl && copyShader) gl.deleteShader(copyShader);
+      if (gl && baseVertexShader) gl.deleteShader(baseVertexShader);
+      if (gl && splatShader) gl.deleteShader(splatShader);
+      if (gl && advectionShader) gl.deleteShader(advectionShader);
+      if (gl && divergenceShader) gl.deleteShader(divergenceShader);
+      if (gl && curlShader) gl.deleteShader(curlShader);
+      if (gl && vorticityShader) gl.deleteShader(vorticityShader);
+      if (gl && pressureShader) gl.deleteShader(pressureShader);
+      if (gl && gradientSubtractShader) gl.deleteShader(gradientSubtractShader);
+      if (copyProgram && copyProgram.program)
+        gl.deleteProgram(copyProgram.program);
+      if (clearProgram && clearProgram.program)
+        gl.deleteProgram(clearProgram.program);
+      if (splatProgram && splatProgram.program)
+        gl.deleteProgram(splatProgram.program);
+      if (advectionProgram && advectionProgram.program)
+        gl.deleteProgram(advectionProgram.program);
+      if (divergenceProgram && divergenceProgram.program)
+        gl.deleteProgram(divergenceProgram.program);
+      if (curlProgram && curlProgram.program)
+        gl.deleteProgram(curlProgram.program);
+      if (vorticityProgram && vorticityProgram.program)
+        gl.deleteProgram(vorticityProgram.program);
+      if (pressureProgram && pressureProgram.program)
+        gl.deleteProgram(pressureProgram.program);
+      if (gradienSubtractProgram && gradienSubtractProgram.program)
+        gl.deleteProgram(gradienSubtractProgram.program);
+
+      window.removeEventListener("resize", resizeCanvas);
+      window.removeEventListener("mousedown", onMouseDown);
+      document.body.removeEventListener("mousemove", handleFirstMouseMove);
+      window.removeEventListener("mousemove", onMouseMove);
+      document.body.removeEventListener("touchstart", handleFirstTouchStart);
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onTouchEnd);
+    };
   }, [
     SIM_RESOLUTION,
     DYE_RESOLUTION,

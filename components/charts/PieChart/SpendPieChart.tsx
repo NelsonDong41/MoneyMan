@@ -5,26 +5,17 @@ import { Label, Pie, PieChart, Sector } from "recharts";
 import { PieSectorDataItem } from "recharts/types/polar/Pie";
 
 import {
-  Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import {
-  ChartConfig,
   ChartContainer,
   ChartStyle,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import TransparentCard from "@/components/ui/transparentCard";
 import { useTransactions } from "@/context/TransactionsContext";
 import { formatDateHuman } from "@/utils/utils";
@@ -33,27 +24,19 @@ import {
   buildChartConfig,
   ExtendableChartConfig,
 } from "../InteractiveTransactionArea/TransactionComposedChart";
-import useSpendPieChartData from "./hooks/useSpendPieChartData";
-
-export const description = "An interactive pie chart";
-
-const desktopData = [
-  { month: "january", desktop: 186, fill: "var(--color-january)" },
-  { month: "february", desktop: 305, fill: "var(--color-february)" },
-  { month: "march", desktop: 237, fill: "var(--color-march)" },
-  { month: "april", desktop: 173, fill: "var(--color-april)" },
-  { month: "may", desktop: 209, fill: "var(--color-may)" },
-];
+import usePieChartData from "./hooks/usePieChartData";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 export function SpendPieChart() {
   const id = "pie-interactive";
   const { displayedTransactions, activeGraphFilters } = useTransactions();
   const { categoryMap } = useCategoryMap();
+  const isMobile = useIsMobile();
   const [activeIndex, setActiveIndex] = React.useState<number | undefined>();
   const [transientIndex, setTransientIndex] = React.useState<
     number | undefined
   >();
-  const { dataTableEntries } = useSpendPieChartData();
+  const { dataTableEntries } = usePieChartData("Expense");
 
   const onPieEnter = (_: any, index: number) => {
     setTransientIndex(index);
@@ -65,6 +48,16 @@ export function SpendPieChart() {
 
   const onPieClick = (_: any, index: number) => {
     setActiveIndex((prev) => (index === prev ? undefined : index));
+    setTransientIndex(undefined);
+  };
+
+  const onPieSectorTap = (index: number) => {
+    if (activeIndex !== index) {
+      setTransientIndex(index);
+      return;
+    }
+
+    setActiveIndex(index === activeIndex ? undefined : index);
     setTransientIndex(undefined);
   };
 
@@ -88,7 +81,8 @@ export function SpendPieChart() {
   }).format(totalSpend);
 
   const displayIndex = transientIndex ?? activeIndex;
-  const centerSpend = displayIndex ? dataTableEntries[displayIndex] : undefined;
+  const centerSpend =
+    displayIndex !== undefined ? dataTableEntries[displayIndex] : undefined;
 
   const centerSpendAmountFormatted =
     centerSpend &&
@@ -107,36 +101,42 @@ export function SpendPieChart() {
 
   const chartConfig: ExtendableChartConfig = categoryConfigObj;
 
-  console.log(chartConfig);
+  const innerRadius = isMobile ? 30 : 50;
+
+  console.log(innerRadius);
 
   return (
     <TransparentCard data-chart={id}>
       <ChartStyle id={id} config={chartConfig} />
       <CardHeader className="w-full flex-row items-start space-y-0 pb-0">
         <div className="grid gap-1">
-          <CardTitle>
-            Spending {centerSpend?.category && ` - ${centerSpend.category}`}
+          <CardTitle className="truncate whitespace-nowrap overflow-hidden text-ellipsis w-full max-w-full">
+            Spending
+            {centerSpend?.category !== undefined &&
+              ` - ${centerSpend.category}`}
           </CardTitle>
           <CardDescription>{timeRangeDescription}</CardDescription>
         </div>
       </CardHeader>
-      <CardContent className="w-full h-full flex flex-1 justify-center pb-0">
+      <CardContent className="w-full h-full flex flex-1 justify-center p-0">
         <ChartContainer
           id={id}
           config={chartConfig}
-          className="mx-auto aspect-square w-full max-w-[300px]"
+          className="mx-auto aspect-square w-full max-w-[250px]"
         >
           <PieChart>
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent hideLabel />}
-            />
+            {!isMobile && (
+              <ChartTooltip
+                cursor={false}
+                content={<ChartTooltipContent hideLabel />}
+              />
+            )}
             <Pie
               data={dataTableEntries}
               dataKey="amount"
               nameKey="category"
-              className="transition-all"
-              innerRadius={60}
+              className="transition-all z-50"
+              innerRadius={innerRadius}
               strokeWidth={5}
               activeIndex={activeSectors}
               labelLine={false}
@@ -146,42 +146,65 @@ export function SpendPieChart() {
                 ...props
               }: PieSectorDataItem) => (
                 <g>
-                  <Sector {...props} outerRadius={outerRadius + 10} />
                   <Sector
                     {...props}
-                    outerRadius={outerRadius + 25}
-                    innerRadius={outerRadius + 12}
+                    outerRadius={outerRadius + (isMobile ? 3 : 10)}
+                  />
+                  <Sector
+                    {...props}
+                    outerRadius={outerRadius + (isMobile ? 12 : 25)}
+                    innerRadius={outerRadius + (isMobile ? 5 : 12)}
                   />
                 </g>
               )}
               onMouseEnter={onPieEnter}
               onMouseDown={onPieClick}
               onMouseLeave={onPieLeave}
+              onTouchStart={(_, index) => onPieSectorTap(index)}
             >
               <Label
                 content={({ viewBox }) => {
-                  if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                  if (
+                    viewBox &&
+                    "cx" in viewBox &&
+                    viewBox.cx &&
+                    "cy" in viewBox &&
+                    viewBox.cy &&
+                    viewBox.outerRadius
+                  ) {
                     return (
                       <text
                         x={viewBox.cx}
-                        y={viewBox.cy}
+                        y={
+                          isMobile
+                            ? viewBox.cy - viewBox.outerRadius - 35
+                            : viewBox.cy
+                        }
                         textAnchor="middle"
                         dominantBaseline="middle"
                       >
                         <tspan
                           x={viewBox.cx}
-                          y={viewBox.cy}
-                          className="fill-foreground text-2xl font-bold"
+                          y={
+                            isMobile
+                              ? viewBox.cy - viewBox.outerRadius - 40
+                              : viewBox.cy
+                          }
+                          className="fill-foreground text-xl font-bold"
                         >
                           {centerSpendAmountFormatted ||
                             totalSpendAmountFormatted}
                         </tspan>
                         <tspan
                           x={viewBox.cx}
-                          y={(viewBox.cy || 0) + 24}
-                          className="fill-muted-foreground"
+                          y={
+                            isMobile
+                              ? viewBox.cy - viewBox.outerRadius + 230
+                              : (viewBox.cy || 0) - 140
+                          }
+                          className="fill-primary text-xl font-bold"
                         >
-                          of {totalSpendAmountFormatted}
+                          {totalSpendAmountFormatted} Total
                         </tspan>
                       </text>
                     );
