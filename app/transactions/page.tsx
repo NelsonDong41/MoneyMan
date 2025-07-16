@@ -2,7 +2,11 @@ import { columns } from "@/components/dataTable/columns";
 import { DataTable } from "../../components/dataTable/data-table";
 import InteractiveTransactionAreaChart from "@/components/charts/InteractiveTransactionArea/InteractiveTransactionAreaChart";
 import { UserProvider } from "@/context/UserContext";
-import { CategoryMap, CategoryMapProvider } from "@/context/CategoryMapContext";
+import {
+  CategoryMap,
+  CategoryMapProvider,
+  CategoryToParentMap,
+} from "@/context/CategoryMapContext";
 import { TransactionProvider } from "@/context/TransactionsContext";
 import { getDashboardData } from "@/lib/server/utils";
 import { TransactionWithCategory } from "@/utils/supabase/supabase";
@@ -28,17 +32,19 @@ function Providers({
   user,
   transactions,
   categoryMap,
+  categoryToParentMap,
   children,
 }: {
   user: User;
   transactions: TransactionWithCategory[];
   categoryMap: CategoryMap;
+  categoryToParentMap: CategoryToParentMap;
   children: React.ReactNode;
 }) {
   return (
     <UserProvider initial={user}>
       <TransactionProvider initial={transactions}>
-        <CategoryMapProvider initial={categoryMap}>
+        <CategoryMapProvider initial={[categoryMap, categoryToParentMap]}>
           {children}
         </CategoryMapProvider>
       </TransactionProvider>

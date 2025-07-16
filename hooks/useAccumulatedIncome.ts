@@ -1,8 +1,7 @@
+import { useTransactions } from "@/context/TransactionsContext";
 import { useUser } from "@/context/UserContext";
 import { createClient } from "@/utils/supabase/client";
 import { TransactionWithCategory } from "@/utils/supabase/supabase";
-import { formatDateDash } from "@/utils/utils";
-import { User } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
 
 export const getStartDate = (timeRange: string) => {
@@ -22,18 +21,17 @@ export const getStartDate = (timeRange: string) => {
   return startDate;
 };
 
-export default function useAccumulatedIncome(
-  data: TransactionWithCategory[],
-  timeRange: [string, string]
-) {
+export default function useAccumulatedIncome() {
   const { user } = useUser();
+  const { activeGraphFilters } = useTransactions();
   const [accumuatedIncome, setAccumulatedIncome] = useState(0);
-  const [start] = timeRange;
+  const [start] = activeGraphFilters.timeRange;
   const supabase = createClient();
 
   useEffect(() => {
+    if (!start) return setAccumulatedIncome(0);
     const getStartingIncome = async (startDate: string) => {
-      const { data, error } = await supabase
+      const { data: transactionData, error } = await supabase
         .from("Transaction")
         .select("amount")
         .eq("userId", user.id)
@@ -47,7 +45,7 @@ export default function useAccumulatedIncome(
       }
 
       const sum =
-        data?.reduce(
+        transactionData?.reduce(
           (total, transaction) => total + (transaction.amount || 0),
           0
         ) || 0;
@@ -56,7 +54,7 @@ export default function useAccumulatedIncome(
     };
 
     getStartingIncome(start);
-  }, [timeRange, data]);
-
+  }, [activeGraphFilters.timeRange]);
+  console.log(accumuatedIncome);
   return accumuatedIncome;
 }

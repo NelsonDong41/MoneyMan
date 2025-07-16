@@ -1,12 +1,13 @@
-import { CategoryMap } from "@/context/CategoryMapContext";
+import { CategoryMap, CategoryToParentMap } from "@/context/CategoryMapContext";
 import { createClient } from "@/utils/supabase/server";
 import { TransactionWithCategory } from "@/utils/supabase/supabase";
-import { categoryDataToMap } from "@/utils/utils";
+import { categoryDataToMap, categoryDataToParentMap } from "@/utils/utils";
 import { User } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 export type DashboardData = {
   transactions: TransactionWithCategory[];
   categoryMap: CategoryMap;
+  categoryToParentMap: CategoryToParentMap;
   user: User;
 };
 
@@ -42,10 +43,12 @@ export async function getDashboardData(): Promise<DashboardData> {
   }
 
   const categoryMap = categoryDataToMap(categoryData);
+  const categoryToParentMap = categoryDataToParentMap(categoryData);
 
   return {
     transactions: transactionData ?? [],
     categoryMap,
+    categoryToParentMap,
     user,
   };
 }

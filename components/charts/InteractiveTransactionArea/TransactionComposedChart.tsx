@@ -16,32 +16,31 @@ import {
   ChartTooltipContent,
 } from "../../ui/chart";
 import { InteractiveChartDataEntry } from "./hooks/useInteractiveTransactionAreaChartData";
-import { ChartOptions } from "./InteractiveTransactionAreaChart";
 import { CategoricalChartState } from "recharts/types/chart/types";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { stringToOklchColor } from "@/utils/utils";
+import { useTransactions } from "@/context/TransactionsContext";
 
 type TransactionComposedChartProps = {
   dataTableEntries: InteractiveChartDataEntry[];
-  activeGraph: ChartOptions;
   setActiveIndex: React.Dispatch<React.SetStateAction<number | null>>;
   setDataTableModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-export type InteractiveChartConfig = ChartConfig & {
-  [key: string]: { label: string; color: string };
+export type ExtendableChartConfig = ChartConfig & {
+  [key: string]: { label: string; color?: string };
 };
 
 export default function TransactionComposedChart({
   dataTableEntries,
-  activeGraph,
   setActiveIndex,
   setDataTableModalOpen,
 }: TransactionComposedChartProps) {
   const isMobile = useIsMobile();
-  const categoryConfigObj = buildChartConfig(activeGraph.categories);
+  const { activeGraphFilters } = useTransactions();
+  const categoryConfigObj = buildChartConfig(activeGraphFilters.categories);
 
-  const chartConfig: InteractiveChartConfig = {
+  const chartConfig: ExtendableChartConfig = {
     expense: {
       label: "Expense",
       color: "var(--chart-1)",
@@ -140,7 +139,8 @@ export default function TransactionComposedChart({
               />
             }
           />
-          {(activeGraph.type === "Both" || activeGraph.type === "Balance") && (
+          {(activeGraphFilters.type === "Both" ||
+            activeGraphFilters.type === "Balance") && (
             <Area
               dataKey="balance"
               type="linear"
@@ -148,7 +148,8 @@ export default function TransactionComposedChart({
               stroke="var(--color-balance)"
             />
           )}
-          {(activeGraph.type === "Both" || activeGraph.type === "Expense") && (
+          {(activeGraphFilters.type === "Both" ||
+            activeGraphFilters.type === "Expense") && (
             <Area
               dataKey="expense"
               type="linear"
@@ -156,7 +157,7 @@ export default function TransactionComposedChart({
               stroke="var(--color-expense)"
             />
           )}
-          {activeGraph.categories.map((cat) => {
+          {activeGraphFilters.categories.map((cat) => {
             return (
               <Line
                 dataKey={cat}

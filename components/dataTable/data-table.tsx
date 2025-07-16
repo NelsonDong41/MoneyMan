@@ -89,7 +89,7 @@ export function DataTable<TValue>({
   columns,
   transactionFilters,
 }: DataTableProps<TValue>) {
-  const { transactions } = useTransactions();
+  const { displayedTransactions } = useTransactions();
   const isMobile = useIsMobile();
   const [sorting, setSorting] = React.useState<SortingState>([
     { id: "date", desc: true },
@@ -106,7 +106,7 @@ export function DataTable<TValue>({
     React.useState<string[]>(defaultColumnOrder);
 
   const filteredTransactions = React.useMemo(() => {
-    return transactions.filter((t) => {
+    return displayedTransactions.filter((t) => {
       if (!transactionFilters) return true;
       const typeFilter =
         !transactionFilters.type || transactionFilters.type === t.type;
@@ -114,7 +114,7 @@ export function DataTable<TValue>({
         !transactionFilters.date || transactionFilters.date === t.date;
       return typeFilter && dateFilter;
     });
-  }, [transactions, transactionFilters]);
+  }, [displayedTransactions, transactionFilters]);
 
   React.useEffect(() => {
     const hiddenColumns = isMobile ? mobileHiddenColumns : defaultHiddenColumns;

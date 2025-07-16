@@ -1,4 +1,5 @@
 "use client";
+import { Type } from "@/utils/supabase/supabase";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 const CategoryMapContext = createContext<CategoryMapContextType | undefined>(
@@ -7,7 +8,9 @@ const CategoryMapContext = createContext<CategoryMapContextType | undefined>(
 
 export type CategoryMapContextType = {
   categoryMap: CategoryMap;
-  setCategoryMap: (user: CategoryMap) => void;
+  setCategoryMap: (map: CategoryMap) => void;
+  categoryToParentMap: CategoryToParentMap;
+  setCategoryToParentMap: (map: CategoryToParentMap) => void;
 };
 
 export function CategoryMapProvider({
@@ -15,13 +18,24 @@ export function CategoryMapProvider({
   initial,
 }: {
   children: React.ReactNode;
-  initial: CategoryMap;
+  initial: [CategoryMap, CategoryToParentMap];
 }) {
-  const [categoryMap, setCategoryMap] = useState<CategoryMap>(initial);
-  const value = useMemo(() => ({ categoryMap, setCategoryMap }), [categoryMap]);
+  const [categoryMap, setCategoryMap] = useState<CategoryMap>(initial[0]);
+  const [categoryToParentMap, setCategoryToParentMap] =
+    useState<CategoryToParentMap>(initial[1]);
+  const value = useMemo(
+    () => ({
+      categoryMap,
+      setCategoryMap,
+      categoryToParentMap,
+      setCategoryToParentMap,
+    }),
+    [categoryMap, categoryToParentMap]
+  );
 
   useEffect(() => {
-    setCategoryMap(initial);
+    setCategoryMap(initial[0]);
+    setCategoryToParentMap(initial[1]);
   }, [initial]);
 
   return (
@@ -41,7 +55,6 @@ export function useCategoryMap() {
   return context;
 }
 
-export type CategoryMap = Record<
-  "Income" | "Expense",
-  Record<string, string[]>
->;
+export type CategoryMap = Record<Type, Record<string, string[]>>;
+
+export type CategoryToParentMap = Record<string, string | null>;

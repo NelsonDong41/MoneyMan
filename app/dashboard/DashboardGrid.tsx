@@ -9,6 +9,7 @@ import GridLayout, {
 import InteractiveTransactionAreaChart from "@/components/charts/InteractiveTransactionArea/InteractiveTransactionAreaChart";
 import { CategoryRadialChart } from "@/components/charts/CategoryRadialChart/CategoryRadialChart";
 import { SpendPieChart } from "@/components/charts/SpendPieChart/SpendPieChart";
+import TransparentCard from "@/components/ui/transparentCard";
 
 const layouts: Layouts = {
   lg: [
@@ -48,19 +49,19 @@ export default function DashboardGrid() {
         </div>
         <div
           key="b"
-          className="rounded shadow flex items-center justify-center drag-handle"
+          className="rounded shadow flex items-center justify-center drag-handle p-2"
         >
           <CategoryRadialChart />
         </div>
         <div
           key="c"
-          className="bg-purple-500 rounded shadow flex items-center justify-center drag-handle cursor-default "
+          className="rounded shadow flex items-center justify-center drag-handle cursor-default p-2"
         >
           <SpendPieChart />
         </div>
         <div
           key="d"
-          className="bg-yellow-500 rounded shadow flex items-center justify-center drag-handle cursor-default "
+          className="bg-yellow-500 rounded shadow flex items-center justify-center drag-handle cursor-default p-2"
         >
           <span className="drag-handle cursor-move pr-2">⠿</span>D
         </div>

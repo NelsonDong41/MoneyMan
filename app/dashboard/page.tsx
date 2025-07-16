@@ -1,5 +1,9 @@
 import { UserProvider } from "@/context/UserContext";
-import { CategoryMap, CategoryMapProvider } from "@/context/CategoryMapContext";
+import {
+  CategoryMap,
+  CategoryMapProvider,
+  CategoryToParentMap,
+} from "@/context/CategoryMapContext";
 import { TransactionProvider } from "@/context/TransactionsContext";
 import DashboardGrid from "./DashboardGrid";
 import { getDashboardData } from "@/lib/server/utils";
@@ -22,17 +26,19 @@ function Providers({
   user,
   transactions,
   categoryMap,
+  categoryToParentMap,
   children,
 }: {
   user: User;
   transactions: TransactionWithCategory[];
   categoryMap: CategoryMap;
+  categoryToParentMap: CategoryToParentMap;
   children: React.ReactNode;
 }) {
   return (
     <UserProvider initial={user}>
       <TransactionProvider initial={transactions}>
-        <CategoryMapProvider initial={categoryMap}>
+        <CategoryMapProvider initial={[categoryMap, categoryToParentMap]}>
           {children}
         </CategoryMapProvider>
       </TransactionProvider>

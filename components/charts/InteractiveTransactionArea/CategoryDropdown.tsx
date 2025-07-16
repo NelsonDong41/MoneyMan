@@ -1,11 +1,8 @@
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Settings2 } from "lucide-react";
-import { CategoryMap, useCategoryMap } from "@/context/CategoryMapContext";
-import {
-  ChartOptions,
-  chartOptionToType,
-} from "./InteractiveTransactionAreaChart";
+import { useCategoryMap } from "@/context/CategoryMapContext";
+import { chartOptionToType } from "./InteractiveTransactionAreaChart";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -16,18 +13,13 @@ import {
 } from "../../ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import ClickSpark from "../../ui/clickSpark";
+import { useTransactions } from "@/context/TransactionsContext";
 
-type CategoryDropdownProps = {
-  activeGraph: ChartOptions;
-  setActiveGraph: React.Dispatch<React.SetStateAction<ChartOptions>>;
-};
-
-export function CategoryDropdown({
-  activeGraph,
-  setActiveGraph,
-}: CategoryDropdownProps) {
+export function CategoryDropdown() {
   const { categoryMap } = useCategoryMap();
-  const activeGraphType = chartOptionToType(activeGraph.type);
+  const { activeGraphFilters, setActiveGraphFilterCategories } =
+    useTransactions();
+  const activeGraphType = chartOptionToType(activeGraphFilters.type);
 
   const allCategories =
     activeGraphType && categoryMap[activeGraphType]
@@ -36,42 +28,35 @@ export function CategoryDropdown({
 
   const allSelected =
     allCategories.length > 0 &&
-    allCategories.every((cat) => activeGraph.categories.includes(cat));
+    allCategories.every((cat) => activeGraphFilters.categories.includes(cat));
   const someSelected =
     !allSelected &&
-    allCategories.some((cat) => activeGraph.categories.includes(cat));
+    allCategories.some((cat) => activeGraphFilters.categories.includes(cat));
 
   const toggleCategory = (category: string) => {
-    setActiveGraph((prev) => ({
-      ...prev,
-      categories: prev.categories.includes(category)
-        ? prev.categories.filter((c) => c !== category)
-        : [...prev.categories, category],
-    }));
+    const prevCategories = activeGraphFilters.categories;
+    const newCateories = prevCategories.includes(category)
+      ? prevCategories.filter((c) => c !== category)
+      : [...prevCategories, category];
+    setActiveGraphFilterCategories(newCateories);
   };
 
   const toggleParent = (categoryList: string[], allSelected: boolean) => {
-    setActiveGraph((prev) => {
-      let newCategories: string[];
-      if (allSelected) {
-        newCategories = prev.categories.filter(
-          (cat) => !categoryList.includes(cat)
-        );
-      } else {
-        const toAdd = categoryList.filter(
-          (cat) => !prev.categories.includes(cat)
-        );
-        newCategories = [...prev.categories, ...toAdd];
-      }
-      return { ...prev, categories: newCategories };
-    });
+    const prevCategories = activeGraphFilters.categories;
+    let newCategories: string[];
+    if (allSelected) {
+      newCategories = prevCategories.filter(
+        (cat) => !categoryList.includes(cat)
+      );
+    } else {
+      const toAdd = categoryList.filter((cat) => !prevCategories.includes(cat));
+      newCategories = [...prevCategories, ...toAdd];
+    }
+    setActiveGraphFilterCategories(newCategories);
   };
 
   const toggleAll = () => {
-    setActiveGraph((prev) => ({
-      ...prev,
-      categories: allSelected ? [] : allCategories,
-    }));
+    setActiveGraphFilterCategories(allSelected ? [] : allCategories);
   };
 
   return (
@@ -106,12 +91,12 @@ export function CategoryDropdown({
             Object.entries(categoryMap[activeGraphType]).map(
               ([parent, categoryList]) => {
                 const parentAllSelected = categoryList.every((cat) =>
-                  activeGraph.categories.includes(cat)
+                  activeGraphFilters.categories.includes(cat)
                 );
                 const parentSomeSelected =
                   !parentAllSelected &&
                   categoryList.some((cat) =>
-                    activeGraph.categories.includes(cat)
+                    activeGraphFilters.categories.includes(cat)
                   );
                 return (
                   <div key={parent + "-List"}>
@@ -132,7 +117,7 @@ export function CategoryDropdown({
                     </DropdownMenuCheckboxItem>
                     {categoryList.map((category) => {
                       const isSelected =
-                        activeGraph.categories.includes(category);
+                        activeGraphFilters.categories.includes(category);
                       return (
                         <DropdownMenuCheckboxItem
                           key={category}

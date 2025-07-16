@@ -46,55 +46,46 @@ import { columns } from "@/components/dataTable/columns";
 import ShinyText from "@/components/ui/shinyText";
 import Particles from "@/components/ui/particles";
 import { NaturalLanguageCalendar } from "@/components/ui/naturalLanguageCalendar";
-import { formatDateDash, formatDateHuman } from "@/utils/utils";
+import {
+  convertSelectedTimeRange,
+  formatDateDash,
+  formatDateHuman,
+} from "@/utils/utils";
 import { Label } from "@/components/ui/label";
 import { ArrowRight } from "lucide-react";
-import { useTransactions } from "@/context/TransactionsContext";
+import {
+  ChartTypeOptions,
+  InteractiveChartTimeRanges,
+  useTransactions,
+} from "@/context/TransactionsContext";
 import TransparentCard from "@/components/ui/transparentCard";
 import useInteractiveTransactionAreaChartData from "./hooks/useInteractiveTransactionAreaChartData";
 import { CategoryDropdown } from "./CategoryDropdown";
 import TransactionComposedChart from "./TransactionComposedChart";
 
-export type ChartTypeOptions = "Balance" | "Expense" | "Both";
 const CHART_TYPE_OPTIONS: ChartTypeOptions[] = [
   "Both",
   "Balance",
   "Expense",
 ] as const;
-export type ChartOptions = {
-  type: ChartTypeOptions;
-  categories: string[];
-};
-
-export type InteractiveChartTimeRanges =
-  | "all"
-  | "custom"
-  | "year"
-  | "3m"
-  | "1m"
-  | "7d";
-
-const DEFAULT_CHART_OPTION: ChartOptions = {
-  type: "Expense",
-  categories: [],
-};
 
 export default function InteractiveTransactionAreaChart() {
-  const { transactions } = useTransactions();
   const isMobile = useIsMobile();
   const [activeIndex, setActiveIndex] = React.useState<number | null>(null);
   const [dataTableModalOpen, setDataTableModalOpen] = React.useState(false);
   const [selectedTimeRange, setSelectedTimeRange] =
     React.useState<InteractiveChartTimeRanges>("year");
-  const [activeGraph, setActiveGraph] =
-    React.useState<ChartOptions>(DEFAULT_CHART_OPTION);
+  const {
+    activeGraphFilters,
+    setActiveGraphFilterTimeRange,
+    setActiveGraphFilterType,
+  } = useTransactions();
 
-  const { timeRange, setTimeRange, dataTableEntries } =
-    useInteractiveTransactionAreaChartData(
-      transactions,
-      selectedTimeRange,
-      activeGraph
-    );
+  const { dataTableEntries } = useInteractiveTransactionAreaChartData();
+
+  React.useEffect(() => {
+    setActiveGraphFilterTimeRange(convertSelectedTimeRange(selectedTimeRange));
+  }, [selectedTimeRange]);
 
   const activeDataPoint =
     activeIndex !== null && dataTableEntries.length
@@ -119,7 +110,7 @@ export default function InteractiveTransactionAreaChart() {
             />
             <ShinyText
               className="absolute font-extrabold sm:text-2xl italic flex w-full h-full items-center justify-center "
-              text={`No Data this ${timeRange}`}
+              text={`No Data this ${activeGraphFilters.timeRange}`}
             />
           </div>
         )}
@@ -128,12 +119,9 @@ export default function InteractiveTransactionAreaChart() {
             Transactions{" "}
             <div className="flex items-center gap-4 justify-between">
               <Select
-                value={activeGraph.type}
+                value={activeGraphFilters.type}
                 onValueChange={(e) =>
-                  setActiveGraph({
-                    type: e as ChartTypeOptions,
-                    categories: [],
-                  })
+                  setActiveGraphFilterType(e as ChartTypeOptions)
                 }
               >
                 <SelectTrigger
@@ -154,19 +142,17 @@ export default function InteractiveTransactionAreaChart() {
                   ))}
                 </SelectContent>
               </Select>
-              <CategoryDropdown
-                activeGraph={activeGraph}
-                setActiveGraph={setActiveGraph}
-              />
+              <CategoryDropdown />
             </div>
           </CardTitle>
           <CardDescription className="grid">
             <span className="hidden @[540px]/card:block">
-              From {timeRange[0]} - {timeRange[1]}
+              From {activeGraphFilters.timeRange[0]} -{" "}
+              {activeGraphFilters.timeRange[1]}
             </span>
             <span className="@[540px]/card:hidden">
-              From {formatDateHuman(new Date(timeRange[0]))} -{" "}
-              {formatDateHuman(new Date(timeRange[1]))}
+              From {formatDateHuman(new Date(activeGraphFilters.timeRange[0]))}{" "}
+              - {formatDateHuman(new Date(activeGraphFilters.timeRange[1]))}
             </span>
           </CardDescription>
         </CardHeader>
@@ -178,7 +164,6 @@ export default function InteractiveTransactionAreaChart() {
           {!!dataTableEntries.length && (
             <TransactionComposedChart
               dataTableEntries={dataTableEntries}
-              activeGraph={activeGraph}
               setActiveIndex={setActiveIndex}
               setDataTableModalOpen={setDataTableModalOpen}
             />
@@ -223,26 +208,30 @@ export default function InteractiveTransactionAreaChart() {
               <div className="flex flex-col gap-1">
                 <Label className="pl-2">Start Date</Label>
                 <NaturalLanguageCalendar
-                  value={timeRange[0]}
-                  onChange={(e) =>
-                    setTimeRange((prev) => [
+                  value={activeGraphFilters.timeRange[0]}
+                  onChange={(e) => {
+                    const prev = activeGraphFilters.timeRange;
+                    const newTimeRange: [string, string] = [
                       formatDateDash(new Date(e)),
                       prev[1],
-                    ])
-                  }
+                    ];
+                    setActiveGraphFilterTimeRange(newTimeRange);
+                  }}
                 />
               </div>
               <ArrowRight />
               <div className="flex flex-col gap-1">
                 <Label className="pl-2">End Date</Label>
                 <NaturalLanguageCalendar
-                  value={timeRange[1]}
-                  onChange={(e) =>
-                    setTimeRange((prev) => [
+                  value={activeGraphFilters.timeRange[1]}
+                  onChange={(e) => {
+                    const prev = activeGraphFilters.timeRange;
+                    const newTimeRange: [string, string] = [
                       prev[0],
                       formatDateDash(new Date(e)),
-                    ])
-                  }
+                    ];
+                    setActiveGraphFilterTimeRange(newTimeRange);
+                  }}
                 />
               </div>
             </div>
@@ -276,7 +265,7 @@ export default function InteractiveTransactionAreaChart() {
                 columns={columns}
                 transactionFilters={{
                   date: activeDataPoint.date,
-                  type: chartOptionToType(activeGraph.type),
+                  type: chartOptionToType(activeGraphFilters.type),
                 }}
               />
             )}

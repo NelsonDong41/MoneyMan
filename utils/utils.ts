@@ -1,8 +1,10 @@
 import tailwindConfig from "@/tailwind.config";
 import { redirect } from "next/navigation";
 import resolveConfig from "tailwindcss/resolveConfig";
-import { Type } from "./supabase/supabase";
+import { TransactionWithCategory, Type } from "./supabase/supabase";
 import { Tables } from "./supabase/types";
+import { InteractiveChartTimeRanges } from "@/context/TransactionsContext";
+import { CategoryMap, CategoryToParentMap } from "@/context/CategoryMapContext";
 
 /**
  * Redirects to a specified path with an encoded message as a query parameter.
@@ -97,7 +99,7 @@ export function generateRandomString(length: number) {
 }
 
 export function categoryDataToMap(categoryData: Tables<"Category">[]) {
-  const categoryMap: Record<Type, Record<string, any[]>> = {
+  const categoryMap: CategoryMap = {
     Expense: {},
     Income: {},
   };
@@ -121,7 +123,25 @@ export function categoryDataToMap(categoryData: Tables<"Category">[]) {
   return categoryMap;
 }
 
-export function getAllDatesInRange(start: string, end: string): string[] {
+export function categoryDataToParentMap(categoryData: Tables<"Category">[]) {
+  const categoryToParentMap: CategoryToParentMap = {};
+
+  categoryData.forEach(({ category, ParentCategory }) => {
+    categoryToParentMap[category] = ParentCategory;
+  });
+
+  return categoryToParentMap;
+}
+
+export function getAllDatesInRange(
+  timeRange: [string, string],
+  firstDate: string
+): string[] {
+  let [start, end] = timeRange;
+  if (!timeRange[0] && !timeRange[1]) {
+    start = firstDate;
+    end = formatDateDash(new Date());
+  }
   if (start === end) return [start];
   const dates: string[] = [];
   const [startYear, startMonth, startDay] = start.split("-").map(Number);
@@ -147,4 +167,40 @@ export function stringToOklchColor(str: string): string {
   const lightness = 0.65;
   const chroma = 0.22;
   return `oklch(${lightness} ${chroma} ${hue})`;
+}
+
+export function convertSelectedTimeRange(
+  selectedTimeRange: InteractiveChartTimeRanges
+): [string, string] {
+  const today = new Date();
+
+  switch (selectedTimeRange) {
+    case "all":
+      return ["", ""];
+    case "custom":
+      return [formatDateDash(today), formatDateDash(today)];
+    case "year":
+      return [
+        formatDateDash(new Date(today.getFullYear(), 0, 1)),
+        formatDateDash(today),
+      ];
+    case "3m": {
+      const start = new Date(today.getFullYear(), today.getMonth() - 2, 1);
+      const end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      return [formatDateDash(start), formatDateDash(end)];
+    }
+    case "1m": {
+      const start = new Date(today.getFullYear(), today.getMonth(), 1);
+      const end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      return [formatDateDash(start), formatDateDash(end)];
+    }
+    case "7d": {
+      const start = new Date(today);
+      start.setDate(today.getDate() - 6);
+      const end = today;
+      return [formatDateDash(start), formatDateDash(end)];
+    }
+    default:
+      throw new Error(`Converting Invalid time range ${selectedTimeRange}`);
+  }
 }
