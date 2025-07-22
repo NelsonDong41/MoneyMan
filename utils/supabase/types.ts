@@ -17,70 +17,47 @@ export type Database = {
       category: {
         Row: {
           name: string
-          parent: string | null
           type: Database["public"]["Enums"]["TransactionType"]
         }
         Insert: {
           name: string
-          parent?: string | null
           type?: Database["public"]["Enums"]["TransactionType"]
         }
         Update: {
           name?: string
-          parent?: string | null
           type?: Database["public"]["Enums"]["TransactionType"]
         }
-        Relationships: [
-          {
-            foreignKeyName: "Category_ParentCategory_fkey"
-            columns: ["parent"]
-            isOneToOne: false
-            referencedRelation: "category"
-            referencedColumns: ["name"]
-          },
-        ]
+        Relationships: []
       }
-      category_spending_limit: {
+      category_spend_limit: {
         Row: {
-          amount: number
-          category_name: string
-          created_at: string | null
-          end_date: string | null
+          category: string
+          created_at: string
           id: number
-          is_active: boolean
-          period: string
-          start_date: string | null
-          updated_at: string | null
+          limit: number
+          time_frame: Database["public"]["Enums"]["SpendLimitTimeFrame"]
           user_id: string
         }
         Insert: {
-          amount: number
-          category_name: string
-          created_at?: string | null
-          end_date?: string | null
+          category: string
+          created_at?: string
           id?: number
-          is_active?: boolean
-          period: string
-          start_date?: string | null
-          updated_at?: string | null
+          limit?: number
+          time_frame?: Database["public"]["Enums"]["SpendLimitTimeFrame"]
           user_id: string
         }
         Update: {
-          amount?: number
-          category_name?: string
-          created_at?: string | null
-          end_date?: string | null
+          category?: string
+          created_at?: string
           id?: number
-          is_active?: boolean
-          period?: string
-          start_date?: string | null
-          updated_at?: string | null
+          limit?: number
+          time_frame?: Database["public"]["Enums"]["SpendLimitTimeFrame"]
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "categoryspendinglimit_categoryid_fkey"
-            columns: ["category_name"]
+            foreignKeyName: "category_spend_limit_category_fkey"
+            columns: ["category"]
             isOneToOne: false
             referencedRelation: "category"
             referencedColumns: ["name"]
@@ -141,7 +118,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "Transactions_category_fkey"
+            foreignKeyName: "transaction_category_fkey"
             columns: ["category"]
             isOneToOne: false
             referencedRelation: "category"
@@ -154,9 +131,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_parent_category: {
+        Args: { check_category_name: string }
+        Returns: boolean
+      }
     }
     Enums: {
+      SpendLimitTimeFrame: "Yearly" | "Monthly" | "Weekly" | "Daily"
       TransactionStatus: "Complete" | "Pending" | "Canceled"
       TransactionType: "Income" | "Expense"
     }
@@ -286,6 +267,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      SpendLimitTimeFrame: ["Yearly", "Monthly", "Weekly", "Daily"],
       TransactionStatus: ["Complete", "Pending", "Canceled"],
       TransactionType: ["Income", "Expense"],
     },

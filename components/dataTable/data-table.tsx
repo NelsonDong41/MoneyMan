@@ -56,7 +56,7 @@ interface DataTableProps<TValue> {
     sheetActions: SheetAction,
     isMobile: boolean
   ) => ColumnDef<TransactionWithCategory, TValue>[];
-  transactionFilters?: { date?: string; type?: Type };
+  transactionFilters?: { date?: string; type?: Type; categories?: string[] };
 }
 
 const defaultHiddenColumns: ColumnKeys[] = ["subtotal", "tip", "tax"];
@@ -109,7 +109,10 @@ export function DataTable<TValue>({
         !transactionFilters.type || transactionFilters.type === t.type;
       const dateFilter =
         !transactionFilters.date || transactionFilters.date === t.date;
-      return typeFilter && dateFilter;
+      const categoryFilter =
+        !transactionFilters.categories ||
+        transactionFilters.categories.some((c) => c === t.category.name);
+      return typeFilter && dateFilter && categoryFilter;
     });
   }, [allTransactions, transactionFilters]);
 

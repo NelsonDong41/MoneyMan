@@ -9,8 +9,6 @@ const CategoryMapContext = createContext<CategoryMapContextType | undefined>(
 export type CategoryMapContextType = {
   categoryMap: CategoryMap;
   setCategoryMap: (map: CategoryMap) => void;
-  categoryToParentMap: CategoryToParentMap;
-  setCategoryToParentMap: (map: CategoryToParentMap) => void;
 };
 
 export function CategoryMapProvider({
@@ -18,24 +16,19 @@ export function CategoryMapProvider({
   initial,
 }: {
   children: React.ReactNode;
-  initial: [CategoryMap, CategoryToParentMap];
+  initial: CategoryMap;
 }) {
-  const [categoryMap, setCategoryMap] = useState<CategoryMap>(initial[0]);
-  const [categoryToParentMap, setCategoryToParentMap] =
-    useState<CategoryToParentMap>(initial[1]);
+  const [categoryMap, setCategoryMap] = useState<CategoryMap>(initial);
   const value = useMemo(
     () => ({
       categoryMap,
       setCategoryMap,
-      categoryToParentMap,
-      setCategoryToParentMap,
     }),
-    [categoryMap, categoryToParentMap]
+    [categoryMap]
   );
 
   useEffect(() => {
-    setCategoryMap(initial[0]);
-    setCategoryToParentMap(initial[1]);
+    setCategoryMap(initial);
   }, [initial]);
 
   return (
@@ -55,6 +48,4 @@ export function useCategoryMap() {
   return context;
 }
 
-export type CategoryMap = Record<Type, Record<string, string[]>>;
-
-export type CategoryToParentMap = Record<string, string | null>;
+export type CategoryMap = Record<Type, string[]>;

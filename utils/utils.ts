@@ -1,10 +1,5 @@
-import tailwindConfig from "@/tailwind.config";
 import { redirect } from "next/navigation";
-import resolveConfig from "tailwindcss/resolveConfig";
-import { TransactionWithCategory, Type } from "./supabase/supabase";
-import { Tables } from "./supabase/types";
 import { InteractiveChartTimeRanges } from "@/context/TransactionsContext";
-import { CategoryMap, CategoryToParentMap } from "@/context/CategoryMapContext";
 
 /**
  * Redirects to a specified path with an encoded message as a query parameter.
@@ -96,39 +91,6 @@ export function generateRandomString(length: number) {
     .toString(36)
     .substring(2, 2 + length);
   return result;
-}
-
-export function categoryDataToMap(categoryData: Tables<"category">[]) {
-  const categoryMap: CategoryMap = {
-    Expense: {},
-    Income: {},
-  };
-
-  categoryData.forEach(({ name, parent, type }) => {
-    if (parent) {
-      if (categoryMap[type][parent]) {
-        categoryMap[type][parent].push(name);
-      } else {
-        categoryMap[type][parent] = [parent, name];
-      }
-    }
-
-    if (!parent && !categoryMap[type][name]) {
-      categoryMap[type][name] = [name];
-    }
-  });
-
-  return categoryMap;
-}
-
-export function categoryDataToParentMap(categoryData: Tables<"category">[]) {
-  const categoryToParentMap: CategoryToParentMap = {};
-
-  categoryData.forEach(({ name, parent }) => {
-    categoryToParentMap[name] = parent;
-  });
-
-  return categoryToParentMap;
 }
 
 export function getAllDatesInRange(

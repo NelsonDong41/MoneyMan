@@ -16,23 +16,23 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "../../ui/chart";
-import { InteractiveChartDataEntry } from "./hooks/useInteractiveTransactionAreaChartData";
 import { CategoricalChartState } from "recharts/types/chart/types";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { stringToOklchColor } from "@/utils/utils";
 import { useTransactions } from "@/context/TransactionsContext";
+import { CategoryChartDataEntry } from "./hooks/useInteractiveCategoryAreaChartData";
 
-type TransactionComposedChartProps = {
-  dataTableEntries: InteractiveChartDataEntry[];
+type CategoryComposedChartProps = {
+  dataTableEntries: CategoryChartDataEntry[];
   setActiveIndex: React.Dispatch<React.SetStateAction<number | null>>;
   setDataTableModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-export default function TransactionComposedChart({
+export default function CategoryComposedChart({
   dataTableEntries,
   setActiveIndex,
   setDataTableModalOpen,
-}: TransactionComposedChartProps) {
+}: CategoryComposedChartProps) {
   const isMobile = useIsMobile();
   const { activeGraphFilters } = useTransactions();
   const categoryConfigObj = buildChartConfig(activeGraphFilters.categories);
@@ -41,10 +41,6 @@ export default function TransactionComposedChart({
     expense: {
       label: "Expense",
       color: "var(--chart-1)",
-    },
-    balance: {
-      label: "Balance",
-      color: "var(--chart-2)",
     },
     ...categoryConfigObj,
   };

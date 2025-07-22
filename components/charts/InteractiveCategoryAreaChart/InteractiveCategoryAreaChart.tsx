@@ -58,33 +58,18 @@ import {
   InteractiveChartTimeRanges,
   useTransactions,
 } from "@/context/TransactionsContext";
-import useInteractiveTransactionAreaChartData from "./hooks/useInteractiveTransactionAreaChartData";
-import { CategoryDropdown } from "./CategoryDropdown";
-import TransactionComposedChart from "./TransactionComposedChart";
+import useInteractiveCategoryAreaChartData from "./hooks/useInteractiveCategoryAreaChartData";
 
-const CHART_TYPE_OPTIONS: ChartTypeOptions[] = [
-  "Both",
-  "Balance",
-  "Expense",
-] as const;
-
-export default function InteractiveTransactionAreaChart() {
+export default function InteractiveCategoryAreaChart(type: Type) {
   const isMobile = useIsMobile();
   const [activeIndex, setActiveIndex] = React.useState<number | null>(null);
   const [dataTableModalOpen, setDataTableModalOpen] = React.useState(false);
-  const [selectedTimeRange, setSelectedTimeRange] =
-    React.useState<InteractiveChartTimeRanges>("year");
-  const {
-    activeGraphFilters,
-    setActiveGraphFilterTimeRange,
-    setActiveGraphFilterType,
-  } = useTransactions();
+  const { activeGraphFilters, setActiveGraphFilterTimeRange } =
+    useTransactions();
 
-  const { dataTableEntries } = useInteractiveTransactionAreaChartData();
+  const { dataTableEntries } = useInteractiveCategoryAreaChartData(type);
 
-  React.useEffect(() => {
-    setActiveGraphFilterTimeRange(convertSelectedTimeRange(selectedTimeRange));
-  }, [selectedTimeRange]);
+  console.log(dataTableEntries);
 
   const activeDataPoint =
     activeIndex !== null && dataTableEntries.length
@@ -93,55 +78,9 @@ export default function InteractiveTransactionAreaChart() {
 
   return (
     <>
-      {!dataTableEntries.length && (
-        <div className="-z-50 pointer-events-none">
-          <Particles
-            particleColors={["#ffffff", "#ffffff"]}
-            particleCount={2000}
-            particleSpread={50}
-            speed={0.05}
-            particleBaseSize={150}
-            moveParticlesOnHover={true}
-            alphaParticles={false}
-            disableRotation={false}
-            className="absolute w-full h-full z-50"
-          />
-          <ShinyText
-            className="absolute font-extrabold sm:text-2xl italic flex w-full h-full items-center justify-center "
-            text={`No Data this ${activeGraphFilters.timeRange}`}
-          />
-        </div>
-      )}
       <CardHeader>
         <CardTitle className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-          Transactions{" "}
-          <div className="flex items-center gap-4 justify-between">
-            <Select
-              value={activeGraphFilters.type}
-              onValueChange={(e) =>
-                setActiveGraphFilterType(e as ChartTypeOptions)
-              }
-            >
-              <SelectTrigger
-                className="flex w-40 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate @[767px]/card:hidden bg-popover"
-                aria-label="Select a value"
-              >
-                <SelectValue placeholder="Both" />
-              </SelectTrigger>
-              <SelectContent className="rounded-xl">
-                {CHART_TYPE_OPTIONS.map((option) => (
-                  <SelectItem
-                    key={option + "-select"}
-                    value={option}
-                    className="rounded-lg"
-                  >
-                    {option}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <CategoryDropdown />
-          </div>
+          Spending Categories
         </CardTitle>
         <CardDescription className="grid">
           <span className="hidden @[540px]/card:block">

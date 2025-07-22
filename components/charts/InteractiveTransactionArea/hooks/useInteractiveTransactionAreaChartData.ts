@@ -1,15 +1,7 @@
-import { useEffect, useMemo } from "react";
-import {
-  convertSelectedTimeRange,
-  formatDateDash,
-  getAllDatesInRange,
-} from "@/utils/utils";
+import { useMemo } from "react";
+import { getAllDatesInRange } from "@/utils/utils";
 import useAccumulatedIncome from "@/hooks/useAccumulatedIncome";
-import {
-  ChartOptions,
-  InteractiveChartTimeRanges,
-  useTransactions,
-} from "@/context/TransactionsContext";
+import { useTransactions } from "@/context/TransactionsContext";
 
 export type InteractiveChartDataEntry = {
   date: string;
@@ -19,7 +11,7 @@ export type InteractiveChartDataEntry = {
   [key: string]: number | string;
 };
 
-export default function useInteractiveTransactionAreaChart() {
+export default function useInteractiveTransactionAreaChartData() {
   const { allTransactions, displayedTransactions, activeGraphFilters } =
     useTransactions();
 

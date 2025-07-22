@@ -11,32 +11,45 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
+  ChartConfig,
   ChartContainer,
   ChartStyle,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import TransparentCard from "@/components/ui/transparentCard";
 import { useTransactions } from "@/context/TransactionsContext";
 import { formatDateHuman } from "@/utils/utils";
 import { useCategoryMap } from "@/context/CategoryMapContext";
-import {
-  buildChartConfig,
-  ExtendableChartConfig,
-} from "../InteractiveTransactionArea/TransactionComposedChart";
+import { buildChartConfig } from "../InteractiveTransactionArea/TransactionComposedChart";
 import usePieChartData from "./hooks/usePieChartData";
 import { useIsMobile } from "@/hooks/useIsMobile";
+
+const findNumberInArray = (arr: number[], target: number) => {
+  return arr.find((curr) => curr === target);
+};
 
 export function IncomePieChart() {
   const id = "income-pie";
   const { displayedTransactions, activeGraphFilters } = useTransactions();
   const { categoryMap } = useCategoryMap();
   const isMobile = useIsMobile();
-  const [activeIndex, setActiveIndex] = React.useState<number | undefined>();
+  const [activeIndicies, setActiveIndicies] = React.useState<number[]>([]);
   const [transientIndex, setTransientIndex] = React.useState<
     number | undefined
   >();
   const { dataTableEntries } = usePieChartData("Income");
+
+  React.useEffect(() => {
+    const foundActiveIndicies: number[] = [];
+    activeGraphFilters.categories.forEach((cat) => {
+      const index = dataTableEntries.findIndex(
+        (currEntry) => currEntry.category === cat
+      );
+      index !== undefined && index !== -1 && foundActiveIndicies.push(index);
+    });
+
+    setActiveIndicies(foundActiveIndicies);
+  }, [activeGraphFilters.categories, dataTableEntries]);
 
   const onPieEnter = (_: any, index: number) => {
     setTransientIndex(index);
@@ -47,24 +60,26 @@ export function IncomePieChart() {
   };
 
   const onPieClick = (_: any, index: number) => {
-    setActiveIndex((prev) => (index === prev ? undefined : index));
+    setActiveIndicies((prev) => {
+      const arrIndex = findNumberInArray(prev, index);
+      if (arrIndex !== undefined) {
+        return prev.filter((val) => val !== index);
+      }
+      return [...prev, index].filter((val) => val >= 0);
+    });
     setTransientIndex(undefined);
   };
 
   const onPieSectorTap = (index: number) => {
-    if (activeIndex !== index) {
-      setTransientIndex(index);
-      return;
-    }
-
-    setActiveIndex(index === activeIndex ? undefined : index);
+    setActiveIndicies((prev) => {
+      const arrIndex = findNumberInArray(prev, index);
+      if (arrIndex !== undefined) {
+        return prev.filter((val) => val !== index);
+      }
+      return [...prev, index].filter((val) => val >= 0);
+    });
     setTransientIndex(undefined);
   };
-
-  let activeSectors: number[] = [];
-
-  if (activeIndex !== undefined) activeSectors.push(activeIndex);
-  if (transientIndex !== undefined) activeSectors.push(transientIndex);
 
   const totalIncome = React.useMemo(
     () =>
@@ -80,38 +95,36 @@ export function IncomePieChart() {
     currency: "USD",
   }).format(totalIncome);
 
-  const displayIndex = transientIndex ?? activeIndex;
-  const centerIncome =
-    displayIndex !== undefined ? dataTableEntries[displayIndex] : undefined;
+  const indexes: number[] = Array.from(
+    new Set([...activeIndicies, transientIndex].filter((n) => n !== undefined))
+  );
+
+  const centerIncome = indexes.reduce((accumulated, activeIndex) => {
+    return accumulated + dataTableEntries[activeIndex].amount;
+  }, 0);
 
   const centerIncomeAmountFormatted =
     centerIncome &&
     new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
-    }).format(centerIncome.amount);
+    }).format(centerIncome);
 
   const timeRangeDescription = `${formatDateHuman(
     new Date(activeGraphFilters.timeRange[0])
   )} - ${formatDateHuman(new Date(activeGraphFilters.timeRange[1]))}`;
 
-  const categoryConfigObj = buildChartConfig(
-    Object.keys(categoryMap["Expense"])
-  );
-
-  const chartConfig: ExtendableChartConfig = categoryConfigObj;
+  const categoryConfigObj = buildChartConfig(categoryMap["Income"]);
 
   const innerRadius = isMobile ? 30 : 50;
 
   return (
-    <TransparentCard data-chart={id}>
-      <ChartStyle id={id} config={chartConfig} />
+    <>
+      <ChartStyle id={id} config={categoryConfigObj} />
       <CardHeader className="w-full flex-row items-start space-y-0 pb-0">
         <div className="grid gap-1">
           <CardTitle className="truncate whitespace-nowrap overflow-hidden text-ellipsis w-full max-w-full">
             Total Earned
-            {centerIncome?.category !== undefined &&
-              ` - ${centerIncome.category}`}
           </CardTitle>
           <CardDescription>{timeRangeDescription}</CardDescription>
         </div>
@@ -119,7 +132,7 @@ export function IncomePieChart() {
       <CardContent className="w-full h-full flex flex-1 justify-center p-0">
         <ChartContainer
           id={id}
-          config={chartConfig}
+          config={categoryConfigObj}
           className="mx-auto aspect-square w-full max-w-[250px]"
         >
           <PieChart>
@@ -136,7 +149,11 @@ export function IncomePieChart() {
               className="transition-all z-50"
               innerRadius={innerRadius}
               strokeWidth={5}
-              activeIndex={activeSectors}
+              activeIndex={
+                transientIndex !== undefined
+                  ? activeIndicies.concat(transientIndex)
+                  : activeIndicies
+              }
               labelLine={false}
               label={renderCustomLabel}
               activeShape={({
@@ -213,13 +230,12 @@ export function IncomePieChart() {
           </PieChart>
         </ChartContainer>
       </CardContent>
-    </TransparentCard>
+    </>
   );
 }
 
 function renderCustomLabel(props: any) {
-  const { cx, cy, midAngle, innerRadius, outerRadius, percent, index, name } =
-    props;
+  const { cx, cy, midAngle, innerRadius, outerRadius, name } = props;
 
   const RADIAN = Math.PI / 180;
   const radius = innerRadius + (outerRadius - innerRadius) * 0.5;

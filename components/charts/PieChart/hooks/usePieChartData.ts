@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import { useTransactions } from "@/context/TransactionsContext";
-import { useCategoryMap } from "@/context/CategoryMapContext";
 import { Type } from "@/utils/supabase/supabase";
 
 export type SpendPieChartDataEntry = {
@@ -10,30 +9,27 @@ export type SpendPieChartDataEntry = {
 };
 
 export default function usePieChartData(type: Type) {
-  const { displayedTransactions, activeGraphFilters } = useTransactions();
-  const { categoryToParentMap } = useCategoryMap();
+  const { displayedTransactions } = useTransactions();
   const dataTableEntries = useMemo(() => {
     const result: Record<string, SpendPieChartDataEntry> = {};
 
     displayedTransactions.forEach(
       ({ type: currType, amount, status, category }) => {
         if (currType !== type) return;
-        const rootCategory =
-          categoryToParentMap[category.name] || category.name;
-        if (!result[rootCategory]) {
-          result[rootCategory] = {
-            category: rootCategory,
+        if (!result[category.name]) {
+          result[category.name] = {
+            category: category.name,
             amount: status === "Canceled" ? 0 : amount,
-            fill: `var(--color-${rootCategory})`,
+            fill: `var(--color-${category.name})`,
           };
         } else {
-          result[rootCategory].amount += status === "Canceled" ? 0 : amount;
+          result[category.name].amount += status === "Canceled" ? 0 : amount;
         }
       }
     );
 
     return Object.values(result).sort((a, b) => b.amount - a.amount);
-  }, [displayedTransactions, activeGraphFilters, categoryToParentMap]);
+  }, [displayedTransactions, type]);
 
   return { dataTableEntries };
 }

@@ -23,7 +23,7 @@ export function CategoryDropdown() {
 
   const allCategories =
     activeGraphType && categoryMap[activeGraphType]
-      ? Object.values(categoryMap[activeGraphType]).flat()
+      ? categoryMap[activeGraphType]
       : [];
 
   const allSelected =
@@ -40,21 +40,6 @@ export function CategoryDropdown() {
       : [...prevCategories, category];
     setActiveGraphFilterCategories(newCateories);
   };
-
-  const toggleParent = (categoryList: string[], allSelected: boolean) => {
-    const prevCategories = activeGraphFilters.categories;
-    let newCategories: string[];
-    if (allSelected) {
-      newCategories = prevCategories.filter(
-        (cat) => !categoryList.includes(cat)
-      );
-    } else {
-      const toAdd = categoryList.filter((cat) => !prevCategories.includes(cat));
-      newCategories = [...prevCategories, ...toAdd];
-    }
-    setActiveGraphFilterCategories(newCategories);
-  };
-
   const toggleAll = () => {
     setActiveGraphFilterCategories(allSelected ? [] : allCategories);
   };
@@ -88,54 +73,25 @@ export function CategoryDropdown() {
           )}
           <DropdownMenuSeparator />
           {activeGraphType && allCategories.length ? (
-            Object.entries(categoryMap[activeGraphType]).map(
-              ([parent, categoryList]) => {
-                const parentAllSelected = categoryList.every((cat) =>
-                  activeGraphFilters.categories.includes(cat)
-                );
-                const parentSomeSelected =
-                  !parentAllSelected &&
-                  categoryList.some((cat) =>
-                    activeGraphFilters.categories.includes(cat)
-                  );
-                return (
-                  <div key={parent + "-List"}>
-                    <DropdownMenuCheckboxItem
-                      checked={parentAllSelected}
-                      className={cn(
-                        parentSomeSelected
-                          ? "data-[state=checked]:bg-muted"
-                          : "",
-                        "cursor-pointer"
-                      )}
-                      onSelect={(e) => {
-                        e.preventDefault();
-                        toggleParent(categoryList, parentAllSelected);
-                      }}
-                    >
-                      <span className="font-semibold capitalize">{parent}</span>
-                    </DropdownMenuCheckboxItem>
-                    {categoryList.map((category) => {
-                      const isSelected =
-                        activeGraphFilters.categories.includes(category);
-                      return (
-                        <DropdownMenuCheckboxItem
-                          key={category}
-                          className="capitalize cursor-pointer"
-                          checked={isSelected}
-                          onSelect={(e) => {
-                            e.preventDefault();
-                            toggleCategory(category);
-                          }}
-                        >
-                          <span className="pl-4">{category}</span>
-                        </DropdownMenuCheckboxItem>
-                      );
-                    })}
-                  </div>
-                );
-              }
-            )
+            categoryMap[activeGraphType].map((category) => {
+              const isSelected =
+                activeGraphFilters.categories.includes(category);
+              return (
+                <div key={category + "-List"}>
+                  <DropdownMenuCheckboxItem
+                    key={category}
+                    className="capitalize cursor-pointer"
+                    checked={isSelected}
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      toggleCategory(category);
+                    }}
+                  >
+                    <span className="py-1">{category}</span>
+                  </DropdownMenuCheckboxItem>
+                </div>
+              );
+            })
           ) : (
             <div className="text-muted-foreground px-2 py-1">
               No categories available
