@@ -52,12 +52,8 @@ export default function TransactionComposedChart({
     if (!state || !state.activeTooltipIndex) {
       return;
     }
-    const { expense, balance } = dataTableEntries[state.activeTooltipIndex];
-    const hasData = expense || balance;
-    if (hasData) {
-      setActiveIndex(state.activeTooltipIndex);
-      setDataTableModalOpen(true);
-    }
+    setActiveIndex(state.activeTooltipIndex);
+    setDataTableModalOpen(true);
   };
 
   const labelFormatter = (value: string, isShort?: boolean) => {

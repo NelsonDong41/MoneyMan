@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import { getAllDatesInRange } from "@/utils/utils";
-import useAccumulatedIncome from "@/hooks/useAccumulatedIncome";
 import { useTransactions } from "@/context/TransactionsContext";
 import { Type } from "@/utils/supabase/supabase";
 import useInteractiveTransactionAreaChartData from "../../../InteractiveTransactionArea/hooks/useInteractiveTransactionAreaChartData";

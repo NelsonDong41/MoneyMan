@@ -79,8 +79,6 @@ export default function useInteractiveTransactionAreaChartData() {
       });
     }
 
-    if (!hasEntryInRange) return [];
-
     return result;
   }, [accumulatedBalance, activeGraphFilters]);
 

@@ -73,7 +73,7 @@ export default function InteractiveTransactionAreaChart() {
   const [activeIndex, setActiveIndex] = React.useState<number | null>(null);
   const [dataTableModalOpen, setDataTableModalOpen] = React.useState(false);
   const [selectedTimeRange, setSelectedTimeRange] =
-    React.useState<InteractiveChartTimeRanges>("year");
+    React.useState<InteractiveChartTimeRanges>("1m");
   const {
     activeGraphFilters,
     setActiveGraphFilterTimeRange,

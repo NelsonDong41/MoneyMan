@@ -27,21 +27,6 @@ const cols = { lg: 3, md: 3, sm: 3, xs: 1, xxs: 1 };
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
 export default function DashboardGrid() {
-  const SpendPieCard = () => {
-    return (
-      <TransparentCard>
-        <SpendCard />
-      </TransparentCard>
-    );
-  };
-
-  const IncomePieCard = () => {
-    return (
-      <TransparentCard>
-        <IncomeCard />
-      </TransparentCard>
-    );
-  };
   return (
     <div className="w-full">
       <ResponsiveGridLayout
@@ -64,15 +49,15 @@ export default function DashboardGrid() {
         </div>
         <div
           key="b"
-          className="rounded shadow flex items-center justify-center drag-handle cursor-default sm:p2"
+          className="rounded shadow flex items-center justify-center sm:p2"
         >
-          <SpendPieCard />
+          <SpendCard />
         </div>
         <div
           key="c"
-          className="rounded shadow flex items-center justify-center drag-handle cursor-default sm:p2"
+          className="rounded shadow flex items-center justify-center sm:p2"
         >
-          <IncomePieCard />
+          <IncomeCard />
         </div>
       </ResponsiveGridLayout>
     </div>

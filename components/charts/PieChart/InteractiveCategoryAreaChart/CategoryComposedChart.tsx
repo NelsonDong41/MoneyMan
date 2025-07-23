@@ -55,11 +55,8 @@ export default function CategoryComposedChart({
     if (!state || !state.activeTooltipIndex) {
       return;
     }
-    const { amount } = dataTableEntries[state.activeTooltipIndex];
-    if (amount) {
-      setActiveIndex(state.activeTooltipIndex);
-      setDataTableModalOpen(true);
-    }
+    setActiveIndex(state.activeTooltipIndex);
+    setDataTableModalOpen(true);
   };
 
   const labelFormatter = (value: string, isShort?: boolean) => {
@@ -76,7 +73,7 @@ export default function CategoryComposedChart({
     <ResponsiveContainer className="h-full w-full pr-6">
       <ChartContainer config={chartConfig} className="h-full w-full">
         <ComposedChart
-          className="h-full w-full"
+          className="h-full w-full z-50"
           data={dataTableEntries}
           onClick={handleChartClick}
           syncId="chart"

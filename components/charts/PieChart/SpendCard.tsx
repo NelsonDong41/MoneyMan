@@ -24,6 +24,8 @@ import { buildChartConfig } from "../InteractiveTransactionArea/TransactionCompo
 import usePieChartData from "./hooks/usePieChartData";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import InteractiveCategoryAreaChart from "./InteractiveCategoryAreaChart/InteractiveCategoryAreaChart";
+import TransparentCard from "@/components/ui/transparentCard";
+import { GripVertical } from "lucide-react";
 
 export function SpendCard() {
   const id = "expense-pie";
@@ -71,7 +73,11 @@ export function SpendCard() {
   const selectedCategorySpend = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
-  }).format(activeIndex !== undefined ? pieChartData[activeIndex].amount : 0);
+  }).format(
+    activeIndex !== undefined && pieChartData[activeIndex]
+      ? pieChartData[activeIndex].amount
+      : 0
+  );
 
   const centerSpend =
     pieChartData.length && activeIndex !== undefined
@@ -93,7 +99,8 @@ export function SpendCard() {
   )?.category;
 
   return (
-    <div className="flex flex-col sm:flex-row justify-between w-full h-full">
+    <TransparentCard className="flex flex-col sm:flex-row justify-between w-full h-full">
+      <GripVertical className="drag-handle cursor-default  ml-2 my-5" />
       <div className="h-full flex flex-col">
         <ChartStyle id={id} config={chartConfig} />
         <CardHeader className="flex-row items-start space-y-0 pb-0">
@@ -219,7 +226,7 @@ export function SpendCard() {
         type={"Expense"}
         pieSelectedCategory={pieSelectedCategory}
       />
-    </div>
+    </TransparentCard>
   );
 }
 

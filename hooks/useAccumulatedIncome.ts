@@ -33,9 +33,8 @@ export default function useAccumulatedIncome() {
     const getStartingIncome = async (startDate: string) => {
       const { data: transactionData, error } = await supabase
         .from("transaction")
-        .select("amount")
+        .select("amount, type")
         .eq("user_id", user.id)
-        .eq("type", "Income")
         .neq("status", "Canceled")
         .lt("date", startDate);
 
@@ -46,7 +45,10 @@ export default function useAccumulatedIncome() {
 
       const sum =
         transactionData?.reduce(
-          (total, transaction) => total + (transaction.amount || 0),
+          (total, transaction) =>
+            transaction.type === "Income"
+              ? total + (transaction.amount || 0)
+              : total - (transaction.amount || 0),
           0
         ) || 0;
 
@@ -54,6 +56,6 @@ export default function useAccumulatedIncome() {
     };
 
     getStartingIncome(start);
-  }, [activeGraphFilters.timeRange]);
+  }, [activeGraphFilters.timeRange, start]);
   return accumuatedIncome;
 }
