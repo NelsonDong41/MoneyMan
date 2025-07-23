@@ -15,32 +15,36 @@ import {
   ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
-} from "../../ui/chart";
+} from "../../../ui/chart";
 import { CategoricalChartState } from "recharts/types/chart/types";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { stringToOklchColor } from "@/utils/utils";
-import { useTransactions } from "@/context/TransactionsContext";
 import { CategoryChartDataEntry } from "./hooks/useInteractiveCategoryAreaChartData";
+import { useCategorySpendLimit } from "@/context/CategorySpendLimitContext";
 
 type CategoryComposedChartProps = {
   dataTableEntries: CategoryChartDataEntry[];
   setActiveIndex: React.Dispatch<React.SetStateAction<number | null>>;
   setDataTableModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  pieSelectedCategory?: string;
 };
 
 export default function CategoryComposedChart({
   dataTableEntries,
   setActiveIndex,
   setDataTableModalOpen,
+  pieSelectedCategory,
 }: CategoryComposedChartProps) {
   const isMobile = useIsMobile();
-  const { activeGraphFilters } = useTransactions();
-  const categoryConfigObj = buildChartConfig(activeGraphFilters.categories);
+  const { categorySpendLimits } = useCategorySpendLimit();
+  const categoryConfigObj = pieSelectedCategory
+    ? buildChartConfig([pieSelectedCategory])
+    : {};
 
   const chartConfig: ChartConfig = {
-    expense: {
-      label: "Expense",
-      color: "var(--chart-1)",
+    amount: {
+      label: "Amount",
+      color: !pieSelectedCategory ? "var(--chart-1)" : "var(--chart-1-muted)",
     },
     ...categoryConfigObj,
   };
@@ -49,9 +53,8 @@ export default function CategoryComposedChart({
     if (!state || !state.activeTooltipIndex) {
       return;
     }
-    const { expense, balance } = dataTableEntries[state.activeTooltipIndex];
-    const hasData = expense || balance;
-    if (hasData) {
+    const { amount } = dataTableEntries[state.activeTooltipIndex];
+    if (amount) {
       setActiveIndex(state.activeTooltipIndex);
       setDataTableModalOpen(true);
     }
@@ -77,33 +80,20 @@ export default function CategoryComposedChart({
           syncId="chart"
         >
           <defs>
-            <linearGradient id="fillBalance" x1="0" y1="0" x2="0" y2="1">
+            <linearGradient id="fillAmount" x1="0" y1="0" x2="0" y2="1">
               <stop
                 offset="5%"
-                stopColor="var(--color-balance)"
+                stopColor="var(--color-amount)"
                 stopOpacity={1.0}
               />
               <stop
                 offset="95%"
-                stopColor="var(--color-balance)"
-                stopOpacity={0.1}
-              />
-            </linearGradient>
-            <linearGradient id="fillExpense" x1="0" y1="0" x2="0" y2="1">
-              <stop
-                offset="5%"
-                stopColor="var(--color-expense)"
-                stopOpacity={0.8}
-              />
-              <stop
-                offset="95%"
-                stopColor="var(--color-expense)"
+                stopColor="var(--color-amount)"
                 stopOpacity={0.1}
               />
             </linearGradient>
           </defs>
           <CartesianGrid vertical={false} />
-
           <XAxis
             dataKey="date"
             tickLine={false}
@@ -132,35 +122,31 @@ export default function CategoryComposedChart({
               />
             }
           />
-          {(activeGraphFilters.type === "Both" ||
-            activeGraphFilters.type === "Balance") && (
-            <Area
-              dataKey="balance"
+          <Area
+            dataKey="amount"
+            type="linear"
+            fill="url(#fillAmount)"
+            stroke="var(--color-amount)"
+          />
+          {pieSelectedCategory && (
+            <Line
+              dataKey={pieSelectedCategory}
+              stroke={
+                chartConfig[pieSelectedCategory].color ?? "var(--chart-4)"
+              }
               type="linear"
-              fill="url(#fillBalance)"
-              stroke="var(--color-balance)"
+              strokeWidth={2}
+              dot={false}
             />
           )}
-          {(activeGraphFilters.type === "Both" ||
-            activeGraphFilters.type === "Expense") && (
-            <Area
-              dataKey="expense"
-              type="linear"
-              fill="url(#fillExpense)"
-              stroke="var(--color-expense)"
+
+          {pieSelectedCategory && (
+            <ReferenceLine
+              y={categorySpendLimits.get(pieSelectedCategory)?.limit}
+              stroke="red"
+              strokeDasharray="3 3"
             />
           )}
-          {activeGraphFilters.categories.map((cat) => {
-            return (
-              <Line
-                dataKey={cat}
-                stroke={chartConfig[cat].color ?? "var(--chart-4)"}
-                type="linear"
-                strokeWidth={2}
-                dot={false}
-              />
-            );
-          })}
           {!isMobile && <ChartLegend content={<ChartLegendContent />} />}
         </ComposedChart>
       </ChartContainer>

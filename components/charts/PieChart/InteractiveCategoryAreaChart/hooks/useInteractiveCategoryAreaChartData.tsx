@@ -3,6 +3,7 @@ import { getAllDatesInRange } from "@/utils/utils";
 import useAccumulatedIncome from "@/hooks/useAccumulatedIncome";
 import { useTransactions } from "@/context/TransactionsContext";
 import { Type } from "@/utils/supabase/supabase";
+import useInteractiveTransactionAreaChartData from "../../../InteractiveTransactionArea/hooks/useInteractiveTransactionAreaChartData";
 
 export type CategoryChartDataEntry = {
   date: string;
@@ -10,34 +11,38 @@ export type CategoryChartDataEntry = {
   [k: string]: string | number;
 };
 
-export default function useInteractiveCategoryAreaChartData(type: Type) {
+export default function useInteractiveCategoryAreaChartData(
+  type: Type,
+  pieSelectedCategory?: string
+) {
   const { allTransactions, displayedTransactions, activeGraphFilters } =
     useTransactions();
 
-  const categoryDefaultObject = Object.fromEntries(
-    activeGraphFilters.categories.map((cat) => [cat, 0])
-  );
-
-  let accumulatedBalance = useAccumulatedIncome();
+  const { dataTableEntries: interactiveTransactionEntries } =
+    useInteractiveTransactionAreaChartData();
 
   const dataTableEntries = useMemo(() => {
     let hasEntryInRange = false;
     const transactionsByDate = new Map<string, CategoryChartDataEntry>();
 
     displayedTransactions.forEach(
-      ({ date, type: transactionType, amount, status, category }) => {
+      ({ date, type: transactionType, amount, category }, i) => {
         if (transactionType !== type) return;
         if (!transactionsByDate.has(date)) {
           transactionsByDate.set(date, {
             date,
             amount,
-            ...categoryDefaultObject,
+            ...(pieSelectedCategory ? { [pieSelectedCategory]: 0 } : {}),
           });
         } else {
           const entry = transactionsByDate.get(date)!;
           entry.amount += amount;
-          entry.categories[category.name] =
-            entry.categories[category.name] + amount;
+        }
+
+        const entry = transactionsByDate.get(date)!;
+
+        if (entry[category.name] !== undefined) {
+          entry[category.name] = Number(entry[category.name]) + amount;
         }
       }
     );
@@ -48,30 +53,30 @@ export default function useInteractiveCategoryAreaChartData(type: Type) {
     );
     const result: CategoryChartDataEntry[] = [];
 
-    for (const date of allDates) {
+    allDates.forEach((date, i) => {
       const databaseEntry = transactionsByDate.get(date);
       if (databaseEntry) {
         hasEntryInRange = true;
-        accumulatedBalance += (type === "Income" ? databaseEntry.amount : 0)
       }
       const entry = databaseEntry || {
         date,
-        amount: type === "Income" ?
-        ...categoryDefaultObject,
+        amount: 0,
+        ...(pieSelectedCategory ? { [pieSelectedCategory]: 0 } : {}),
       };
-      balance += entry.balance;
-      balance -= entry.expense;
-      result.push({
-        date,
-        ...entry,
-        balance,
-      });
-    }
+
+      // math for calculating accumulated balance over time already done in interactiveTransactionEntries
+      if (type === "Income") {
+        entry.amount = interactiveTransactionEntries[i].balance || 0;
+      }
+      result.push(entry);
+    });
 
     if (!hasEntryInRange) return [];
 
+    console.log(type, result);
+
     return result;
-  }, [activeGraphFilters]);
+  }, [activeGraphFilters, pieSelectedCategory]);
 
   return { dataTableEntries };
 }

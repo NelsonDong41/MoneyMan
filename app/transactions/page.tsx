@@ -4,13 +4,61 @@ import InteractiveTransactionAreaChart from "@/components/charts/InteractiveTran
 import { UserProvider } from "@/context/UserContext";
 import { CategoryMap, CategoryMapProvider } from "@/context/CategoryMapContext";
 import { TransactionProvider } from "@/context/TransactionsContext";
-import { getDashboardData } from "@/lib/server/utils";
 import { TransactionWithCategory } from "@/utils/supabase/supabase";
 import { User } from "@supabase/supabase-js";
 import TransparentCard from "@/components/ui/transparentCard";
+import { createClient } from "@/utils/supabase/server";
+import { redirect } from "next/navigation";
 
+export async function getTransactionData() {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return redirect("/sign-in");
+  }
+
+  const [
+    { data: transactionData, error: transactionError },
+    { data: categoryData, error: categoryError },
+  ] = await Promise.all([
+    supabase
+      .from("transaction")
+      .select("*, category(name)")
+      .eq("user_id", user.id)
+      .neq("status", "Canceled")
+      .order("date"),
+    supabase.from("category").select("*").order("name"),
+  ]);
+
+  if (transactionError || categoryError) {
+    throw new Error(
+      "Error fetching data from supabase: " +
+        (transactionError?.message || categoryError?.message)
+    );
+  }
+
+  const initCategoryMap: CategoryMap = {
+    Income: [],
+    Expense: [],
+  };
+  const categoryMap: CategoryMap = categoryData.reduce((acc, curr) => {
+    const { type, name } = curr;
+    acc[type].push(name);
+    return acc;
+  }, initCategoryMap);
+
+  return {
+    transactions: transactionData ?? [],
+    categoryMap,
+    user,
+  };
+}
 export default async function Transactions() {
-  const data = await getDashboardData();
+  const data = await getTransactionData();
 
   return (
     <div className="sm:py-10 max-w-full sm:max-w-screen-2xl w-full sm:max-h-screen-2xl">

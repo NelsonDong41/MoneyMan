@@ -340,12 +340,10 @@ export default function TableSheet({
                             <CommandList>
                               <CommandEmpty>No category found.</CommandEmpty>
                               <CommandGroup>
-                                {Object.entries(
-                                  categoryMap[form.getValues("type")]
-                                ).map(([parent, categoryList]) => {
-                                  return categoryList.map((category, i) => (
+                                {categoryMap[form.getValues("type")].map(
+                                  (category, i) => (
                                     <CommandItem
-                                      value={`${parent}:${category}`}
+                                      value={`${category}-select`}
                                       key={category}
                                       onSelect={() => {
                                         form.setValue("category", category);
@@ -364,8 +362,8 @@ export default function TableSheet({
                                         )}
                                       />
                                     </CommandItem>
-                                  ));
-                                })}
+                                  )
+                                )}
                               </CommandGroup>
                             </CommandList>
                           </Command>

@@ -10,7 +10,7 @@ export type SpendPieChartDataEntry = {
 
 export default function usePieChartData(type: Type) {
   const { displayedTransactions } = useTransactions();
-  const dataTableEntries = useMemo(() => {
+  const pieChartData = useMemo(() => {
     const result: Record<string, SpendPieChartDataEntry> = {};
 
     displayedTransactions.forEach(
@@ -31,5 +31,5 @@ export default function usePieChartData(type: Type) {
     return Object.values(result).sort((a, b) => b.amount - a.amount);
   }, [displayedTransactions, type]);
 
-  return { dataTableEntries };
+  return { pieChartData };
 }

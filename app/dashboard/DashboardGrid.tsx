@@ -3,16 +3,16 @@
 import React from "react";
 import { Layouts, Responsive, WidthProvider } from "react-grid-layout";
 import InteractiveTransactionAreaChart from "@/components/charts/InteractiveTransactionArea/InteractiveTransactionAreaChart";
-import { SpendPieChart } from "@/components/charts/PieChart/SpendPieChart";
 import TransparentCard from "@/components/ui/transparentCard";
-import { IncomePieChart } from "@/components/charts/PieChart/IncomePieChart";
+import { SpendCard } from "@/components/charts/PieChart/SpendCard";
+import { IncomeCard } from "@/components/charts/PieChart/IncomeCard";
 
 const layouts: Layouts = {
   lg: [
     { i: "a", x: 0, y: 0, w: 3, h: 2, static: true },
-    { i: "b", x: 0, y: 1, w: 3, h: 2 },
-    { i: "c", x: 0, y: 1, w: 3, h: 2 },
-    { i: "d", x: 2, y: 1, w: 1, h: 2 },
+    { i: "b", x: 0, y: 2, w: 3, h: 2 },
+    { i: "c", x: 0, y: 4, w: 3, h: 2 },
+    { i: "d", x: 2, y: 6, w: 1, h: 2 },
   ],
   xs: [
     { i: "a", x: 0, y: 0, w: 1, h: 2, static: true },
@@ -30,7 +30,7 @@ export default function DashboardGrid() {
   const SpendPieCard = () => {
     return (
       <TransparentCard>
-        <SpendPieChart />
+        <SpendCard />
       </TransparentCard>
     );
   };
@@ -38,7 +38,7 @@ export default function DashboardGrid() {
   const IncomePieCard = () => {
     return (
       <TransparentCard>
-        <IncomePieChart />
+        <IncomeCard />
       </TransparentCard>
     );
   };
