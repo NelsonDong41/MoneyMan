@@ -14,3 +14,4 @@ export type Type = Database["public"]["Enums"]["TransactionType"];
 export const TYPE_OPTIONS: Type[] = ["Expense", "Income"];
 
 export type ColumnKeys = keyof TransactionWithCategory;
+export type CategorySpendLimitRecord = Tables<"category_spend_limit">;

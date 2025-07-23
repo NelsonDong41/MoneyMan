@@ -1,6 +1,10 @@
 "use client";
-import { Type } from "@/utils/supabase/supabase";
-import { Database, Tables } from "@/utils/supabase/types";
+import {
+  CategorySpendLimitErrorResponse,
+  CategorySpendLimitResponse,
+} from "@/app/api/categorySpendLimits/route";
+import { CategorySpendLimitForm } from "@/utils/schemas/categorySpendLimitFormSchema";
+import { CategorySpendLimitRecord, Type } from "@/utils/supabase/supabase";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 const CategorySpendLimitContext = createContext<
@@ -8,8 +12,10 @@ const CategorySpendLimitContext = createContext<
 >(undefined);
 
 export type CategorySpendLimitContextType = {
-  categorySpendLimits: Map<string, CategorySpendLimit>;
-  setCategorySpendLimits: (map: Map<string, CategorySpendLimit>) => void;
+  categorySpendLimits: Record<string, CategorySpendLimitRecord>;
+  updateCategorySpendLimit: (
+    values: CategorySpendLimitForm
+  ) => Promise<CategorySpendLimitRecord | null>;
 };
 
 export function CategorySpendLimitProvider({
@@ -17,27 +23,60 @@ export function CategorySpendLimitProvider({
   initial,
 }: {
   children: React.ReactNode;
-  initial: CategorySpendLimit[];
+  initial: CategorySpendLimitRecord[];
 }) {
   const [categorySpendLimits, setCategorySpendLimits] = useState<
-    Map<string, CategorySpendLimit>
-  >(new Map());
-  const value = useMemo(
-    () => ({
-      categorySpendLimits,
-      setCategorySpendLimits,
-    }),
-    [categorySpendLimits]
-  );
+    Record<string, CategorySpendLimitRecord>
+  >({});
 
   useEffect(() => {
-    const arrAsMap: Map<string, CategorySpendLimit> = new Map();
-    initial.forEach((spendLimit) =>
-      arrAsMap.set(spendLimit.category, spendLimit)
+    const arrAsMap: Record<string, CategorySpendLimitRecord> = {};
+    initial.forEach(
+      (spendLimit) => (arrAsMap[spendLimit.category] = spendLimit)
     );
     setCategorySpendLimits(arrAsMap);
   }, [initial]);
 
+  const updateCategorySpendLimit = async (
+    values: CategorySpendLimitForm
+  ): Promise<CategorySpendLimitRecord | null> => {
+    try {
+      const response = await fetch("/api/categorySpendLimits", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+
+      if (!response.ok) {
+        const { error } =
+          (await response.json()) as CategorySpendLimitErrorResponse;
+        console.error("Error updating category spend limit:", error);
+        return null;
+      }
+
+      const { record } = (await response.json()) as CategorySpendLimitResponse;
+
+      setCategorySpendLimits((prev) => {
+        return {
+          ...prev,
+          [record.category]: record,
+        };
+      });
+
+      return record;
+    } catch (err) {
+      console.error("Unexpected error:", err);
+      return null;
+    }
+  };
+
+  const value = useMemo(
+    () => ({
+      categorySpendLimits,
+      updateCategorySpendLimit,
+    }),
+    [categorySpendLimits]
+  );
   return (
     <CategorySpendLimitContext.Provider value={value}>
       {children}
@@ -54,8 +93,3 @@ export function useCategorySpendLimit() {
   }
   return context;
 }
-
-export type CategorySpendLimit = Pick<
-  Tables<"category_spend_limit">,
-  "category" | "limit" | "time_frame"
->;

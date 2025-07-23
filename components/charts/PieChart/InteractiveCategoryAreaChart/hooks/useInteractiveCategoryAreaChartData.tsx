@@ -15,7 +15,7 @@ export default function useInteractiveCategoryAreaChartData(
   type: Type,
   pieSelectedCategory?: string
 ) {
-  const { allTransactions, displayedTransactions, activeGraphFilters } =
+  const { allTransactions, transactionsInRange, activeGraphFilters } =
     useTransactions();
 
   const { dataTableEntries: interactiveTransactionEntries } =
@@ -25,8 +25,8 @@ export default function useInteractiveCategoryAreaChartData(
     let hasEntryInRange = false;
     const transactionsByDate = new Map<string, CategoryChartDataEntry>();
 
-    displayedTransactions.forEach(
-      ({ date, type: transactionType, amount, category }, i) => {
+    transactionsInRange.forEach(
+      ({ date, type: transactionType, amount, category }) => {
         if (transactionType !== type) return;
         if (!transactionsByDate.has(date)) {
           transactionsByDate.set(date, {
@@ -73,10 +73,14 @@ export default function useInteractiveCategoryAreaChartData(
 
     if (!hasEntryInRange) return [];
 
-    console.log(type, result);
-
     return result;
-  }, [activeGraphFilters, pieSelectedCategory]);
+  }, [
+    transactionsInRange,
+    allTransactions,
+    activeGraphFilters,
+    pieSelectedCategory,
+    interactiveTransactionEntries,
+  ]);
 
   return { dataTableEntries };
 }

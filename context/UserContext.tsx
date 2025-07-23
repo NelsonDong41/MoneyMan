@@ -6,7 +6,6 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export type UserContextType = {
   user: User;
-  setUser: (user: User) => void;
 };
 
 export function UserProvider({
@@ -17,7 +16,7 @@ export function UserProvider({
   initial: User;
 }) {
   const [user, setUser] = useState<User>(initial);
-  const value = useMemo(() => ({ user, setUser }), [user]);
+  const value = useMemo(() => ({ user }), [user]);
 
   useEffect(() => {
     setUser(initial);

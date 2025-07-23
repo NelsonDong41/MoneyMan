@@ -9,11 +9,11 @@ export type SpendPieChartDataEntry = {
 };
 
 export default function usePieChartData(type: Type) {
-  const { displayedTransactions } = useTransactions();
+  const { transactionsInRange } = useTransactions();
   const pieChartData = useMemo(() => {
     const result: Record<string, SpendPieChartDataEntry> = {};
 
-    displayedTransactions.forEach(
+    transactionsInRange.forEach(
       ({ type: currType, amount, status, category }) => {
         if (currType !== type) return;
         if (!result[category.name]) {
@@ -29,7 +29,7 @@ export default function usePieChartData(type: Type) {
     );
 
     return Object.values(result).sort((a, b) => b.amount - a.amount);
-  }, [displayedTransactions, type]);
+  }, [transactionsInRange, type]);
 
   return { pieChartData };
 }

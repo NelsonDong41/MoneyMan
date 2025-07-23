@@ -12,7 +12,7 @@ export type InteractiveChartDataEntry = {
 };
 
 export default function useInteractiveTransactionAreaChartData() {
-  const { allTransactions, displayedTransactions, activeGraphFilters } =
+  const { allTransactions, transactionsInRange, activeGraphFilters } =
     useTransactions();
 
   const categoryDefaultObject = Object.fromEntries(
@@ -28,41 +28,30 @@ export default function useInteractiveTransactionAreaChartData() {
       { balance: number; expense: number; [x: string]: number }
     >();
 
-    displayedTransactions.forEach(
-      ({ date, type, amount, status, category }) => {
-        if (!transactionsByDate.has(date)) {
-          const entry: {
-            balance: number;
-            expense: number;
-            [x: string]: number;
-          } = { balance: 0, expense: 0, ...categoryDefaultObject };
+    transactionsInRange.forEach(({ date, type, amount, status, category }) => {
+      if (!transactionsByDate.has(date)) {
+        const entry: {
+          balance: number;
+          expense: number;
+          [x: string]: number;
+        } = { balance: 0, expense: 0, ...categoryDefaultObject };
 
-          transactionsByDate.set(date, entry);
-        }
-        const entry = transactionsByDate.get(date)!;
+        transactionsByDate.set(date, entry);
+      }
+      const entry = transactionsByDate.get(date)!;
 
-        if (
-          type === "Income" &&
-          (activeGraphFilters.type === "Balance" ||
-            activeGraphFilters.type === "Both")
-        ) {
-          entry.balance += amount;
-        } else if (
-          type === "Expense" &&
-          status !== "Canceled" &&
-          (activeGraphFilters.type === "Expense" ||
-            activeGraphFilters.type === "Both")
-        ) {
-          entry.expense += amount;
-          const catName = category.name;
-          if (activeGraphFilters.categories.includes(catName)) {
-            if (entry[catName] !== undefined) {
-              entry[catName] += amount;
-            }
+      if (type === "Income") {
+        entry.balance += amount;
+      } else if (type === "Expense" && status !== "Canceled") {
+        entry.expense += amount;
+        const catName = category.name;
+        if (activeGraphFilters.categories.includes(catName)) {
+          if (entry[catName] !== undefined) {
+            entry[catName] += amount;
           }
         }
       }
-    );
+    });
 
     const allDates = getAllDatesInRange(
       activeGraphFilters.timeRange,

@@ -23,6 +23,7 @@ import { CategoryChartDataEntry } from "./hooks/useInteractiveCategoryAreaChartD
 import { useCategorySpendLimit } from "@/context/CategorySpendLimitContext";
 
 type CategoryComposedChartProps = {
+  id: string;
   dataTableEntries: CategoryChartDataEntry[];
   setActiveIndex: React.Dispatch<React.SetStateAction<number | null>>;
   setDataTableModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -30,6 +31,7 @@ type CategoryComposedChartProps = {
 };
 
 export default function CategoryComposedChart({
+  id,
   dataTableEntries,
   setActiveIndex,
   setDataTableModalOpen,
@@ -80,15 +82,15 @@ export default function CategoryComposedChart({
           syncId="chart"
         >
           <defs>
-            <linearGradient id="fillAmount" x1="0" y1="0" x2="0" y2="1">
+            <linearGradient id={`${id}-gradient`} x1="0" y1="0" x2="0" y2="1">
               <stop
                 offset="5%"
-                stopColor="var(--color-amount)"
-                stopOpacity={1.0}
+                stopColor={chartConfig.amount.color}
+                stopOpacity={1}
               />
               <stop
                 offset="95%"
-                stopColor="var(--color-amount)"
+                stopColor={chartConfig.amount.color}
                 stopOpacity={0.1}
               />
             </linearGradient>
@@ -125,8 +127,8 @@ export default function CategoryComposedChart({
           <Area
             dataKey="amount"
             type="linear"
-            fill="url(#fillAmount)"
-            stroke="var(--color-amount)"
+            stroke={chartConfig.amount.color}
+            fill={`url(#${id}-gradient)`}
           />
           {pieSelectedCategory && (
             <Line
@@ -142,7 +144,7 @@ export default function CategoryComposedChart({
 
           {pieSelectedCategory && (
             <ReferenceLine
-              y={categorySpendLimits.get(pieSelectedCategory)?.limit}
+              y={categorySpendLimits[pieSelectedCategory]?.limit || undefined}
               stroke="red"
               strokeDasharray="3 3"
             />

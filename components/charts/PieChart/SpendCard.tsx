@@ -27,7 +27,7 @@ import InteractiveCategoryAreaChart from "./InteractiveCategoryAreaChart/Interac
 
 export function SpendCard() {
   const id = "expense-pie";
-  const { displayedTransactions, activeGraphFilters } = useTransactions();
+  const { transactionsInRange, activeGraphFilters } = useTransactions();
   const { categoryMap } = useCategoryMap();
   const isMobile = useIsMobile();
 
@@ -56,11 +56,11 @@ export function SpendCard() {
 
   const totalSpend = React.useMemo(
     () =>
-      displayedTransactions.reduce((prev, curr) => {
+      transactionsInRange.reduce((prev, curr) => {
         if (curr.type === "Income" || curr.status === "Canceled") return prev;
         return prev + curr.amount;
       }, 0),
-    [displayedTransactions]
+    [transactionsInRange]
   );
 
   const totalSpendAmountFormatted = new Intl.NumberFormat("en-US", {
@@ -207,6 +207,7 @@ export function SpendCard() {
         </CardContent>
       </div>
       <InteractiveCategoryAreaChart
+        id={id}
         type={"Expense"}
         pieSelectedCategory={pieSelectedCategory}
       />

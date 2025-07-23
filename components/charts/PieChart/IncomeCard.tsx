@@ -27,7 +27,7 @@ import InteractiveCategoryAreaChart from "./InteractiveCategoryAreaChart/Interac
 
 export function IncomeCard() {
   const id = "income-pie";
-  const { displayedTransactions, activeGraphFilters } = useTransactions();
+  const { transactionsInRange, activeGraphFilters } = useTransactions();
   const { categoryMap } = useCategoryMap();
   const isMobile = useIsMobile();
 
@@ -56,11 +56,11 @@ export function IncomeCard() {
 
   const totalIncome = React.useMemo(
     () =>
-      displayedTransactions.reduce((prev, curr) => {
+      transactionsInRange.reduce((prev, curr) => {
         if (curr.type === "Expense" || curr.status === "Canceled") return prev;
         return prev + curr.amount;
       }, 0),
-    [displayedTransactions]
+    [transactionsInRange]
   );
 
   const totalIncomeAmountFormatted = new Intl.NumberFormat("en-US", {
@@ -207,6 +207,7 @@ export function IncomeCard() {
         </CardContent>
       </div>
       <InteractiveCategoryAreaChart
+        id={id}
         type={"Income"}
         pieSelectedCategory={pieSelectedCategory}
       />

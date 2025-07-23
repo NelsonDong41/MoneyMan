@@ -24,7 +24,7 @@ export default function useTableStates() {
         return prev;
       });
 
-      const response = await fetch("/api/transactions/upsert", {
+      const response = await fetch("/api/transactions", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
@@ -58,7 +58,7 @@ export default function useTableStates() {
       setLoadingRows((prev) => {
         return new Set(prev).union(idSet);
       });
-      const response = await fetch("/api/transactions/upsert", {
+      const response = await fetch("/api/transactions", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(ids),

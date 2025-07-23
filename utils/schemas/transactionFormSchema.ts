@@ -3,7 +3,6 @@ import { z } from "zod";
 // Replace with your actual enum values from Supabase
 const transactionStatusEnum = ["Pending", "Complete", "Canceled"] as const;
 const transactionTypeEnum = ["Income", "Expense"] as const;
-const categoriesEnum = ["Food", ""];
 
 export const transactionFormSchema = z.object({
   id: z.number().optional().nullable(),

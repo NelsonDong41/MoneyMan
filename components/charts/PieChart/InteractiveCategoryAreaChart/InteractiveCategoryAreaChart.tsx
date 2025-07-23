@@ -28,9 +28,11 @@ import useInteractiveCategoryAreaChartData from "./hooks/useInteractiveCategoryA
 import CategoryComposedChart from "./CategoryComposedChart";
 
 export default function InteractiveCategoryAreaChart({
+  id,
   type,
   pieSelectedCategory,
 }: {
+  id: string;
   type: Type;
   pieSelectedCategory?: string;
 }) {
@@ -73,6 +75,7 @@ export default function InteractiveCategoryAreaChart({
 
         {!!dataTableEntries.length && (
           <CategoryComposedChart
+            id={id}
             pieSelectedCategory={pieSelectedCategory}
             dataTableEntries={dataTableEntries}
             setActiveIndex={setActiveIndex}

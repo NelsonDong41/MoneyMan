@@ -9,7 +9,7 @@ const TransactionContext = createContext<TransactionContextType | undefined>(
 
 export type TransactionContextType = {
   allTransactions: TransactionWithCategory[];
-  displayedTransactions: TransactionWithCategory[];
+  transactionsInRange: TransactionWithCategory[];
   activeGraphFilters: ChartOptions;
   setActiveGraphFilterTimeRange: (payload: [string, string]) => void;
   setActiveGraphFilterType: (payload: ChartTypeOptions) => void;
@@ -54,7 +54,7 @@ export function TransactionProvider({
     setTransactions(initial);
   }, [initial]);
 
-  const displayedTransactions = useMemo(
+  const transactionsInRange = useMemo(
     () =>
       spliceTransactionDatabyDate(transactions, activeGraphFilters.timeRange),
     [transactions, activeGraphFilters]
@@ -81,7 +81,7 @@ export function TransactionProvider({
 
   const value = {
     allTransactions: transactions,
-    displayedTransactions,
+    transactionsInRange,
     activeGraphFilters,
     setActiveGraphFilterTimeRange,
     setActiveGraphFilterType,

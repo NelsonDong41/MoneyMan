@@ -8,7 +8,6 @@ const CategoryMapContext = createContext<CategoryMapContextType | undefined>(
 
 export type CategoryMapContextType = {
   categoryMap: CategoryMap;
-  setCategoryMap: (map: CategoryMap) => void;
 };
 
 export function CategoryMapProvider({
@@ -22,7 +21,6 @@ export function CategoryMapProvider({
   const value = useMemo(
     () => ({
       categoryMap,
-      setCategoryMap,
     }),
     [categoryMap]
   );
