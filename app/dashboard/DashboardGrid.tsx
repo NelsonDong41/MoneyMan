@@ -4,8 +4,7 @@ import React from "react";
 import { Layouts, Responsive, WidthProvider } from "react-grid-layout";
 import InteractiveTransactionAreaChart from "@/components/charts/InteractiveTransactionArea/InteractiveTransactionAreaChart";
 import TransparentCard from "@/components/ui/transparentCard";
-import { SpendCard } from "@/components/charts/PieChart/SpendCard";
-import { IncomeCard } from "@/components/charts/PieChart/IncomeCard";
+import { PieChartCard } from "@/components/charts/PieChart/PieChartCard";
 
 const layouts: Layouts = {
   lg: [
@@ -21,7 +20,6 @@ const layouts: Layouts = {
     { i: "d", x: 0, y: 8, w: 1, h: 2, static: true },
   ],
 };
-const breakpoints = { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 };
 const cols = { lg: 3, md: 3, sm: 3, xs: 1, xxs: 1 };
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
@@ -51,13 +49,13 @@ export default function DashboardGrid() {
           key="b"
           className="rounded shadow flex items-center justify-center sm:p2"
         >
-          <SpendCard />
+          <PieChartCard type={"Expense"} />
         </div>
         <div
           key="c"
           className="rounded shadow flex items-center justify-center sm:p2"
         >
-          <IncomeCard />
+          <PieChartCard type={"Income"} />
         </div>
       </ResponsiveGridLayout>
     </div>

@@ -117,10 +117,6 @@ export default function TableSheet({
     <Sheet
       open={sheetOpen}
       onOpenChange={() => {
-        if (form.formState.isDirty) {
-          if (!window.confirm("You have unsaved changes. Close anyway?"))
-            return;
-        }
         setActiveSheetData(null);
         setSheetOpen(false);
       }}

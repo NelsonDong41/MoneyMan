@@ -70,8 +70,6 @@ export default function useInteractiveCategoryAreaChartData(
       result.push(entry);
     });
 
-    if (!hasEntryInRange) return [];
-
     return result;
   }, [
     transactionsInRange,

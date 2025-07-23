@@ -10,7 +10,7 @@ import TransparentCard from "@/components/ui/transparentCard";
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 
-export async function getTransactionData() {
+async function getTransactionData() {
   const supabase = await createClient();
 
   const {

@@ -3,15 +3,15 @@ import { CategoryMap, CategoryMapProvider } from "@/context/CategoryMapContext";
 import { TransactionProvider } from "@/context/TransactionsContext";
 import DashboardGrid from "./DashboardGrid";
 import { User } from "@supabase/supabase-js";
-import { TransactionWithCategory } from "@/utils/supabase/supabase";
+import {
+  CategorySpendLimitRecord,
+  TransactionWithCategory,
+} from "@/utils/supabase/supabase";
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
-import {
-  CategorySpendLimit,
-  CategorySpendLimitProvider,
-} from "@/context/CategorySpendLimitContext";
+import { CategorySpendLimitProvider } from "@/context/CategorySpendLimitContext";
 
-export async function getDashboardData() {
+async function getDashboardData() {
   const supabase = await createClient();
 
   const {
@@ -59,19 +59,12 @@ export async function getDashboardData() {
     acc[type].push(name);
     return acc;
   }, initCategoryMap);
-  const categorySpendLimits = spendLimitData.map(
-    ({ category, limit, time_frame }) => ({
-      category,
-      limit,
-      time_frame,
-    })
-  );
 
   return {
-    transactions: transactionData ?? [],
+    transactions: transactionData,
     categoryMap,
     user,
-    categorySpendLimits,
+    categorySpendLimits: spendLimitData,
   };
 }
 
@@ -97,7 +90,7 @@ function Providers({
   user: User;
   transactions: TransactionWithCategory[];
   categoryMap: CategoryMap;
-  categorySpendLimits: CategorySpendLimit[];
+  categorySpendLimits: CategorySpendLimitRecord[];
   children: React.ReactNode;
 }) {
   return (
