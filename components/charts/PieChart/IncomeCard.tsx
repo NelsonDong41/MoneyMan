@@ -68,17 +68,16 @@ export function IncomeCard() {
     currency: "USD",
   }).format(totalIncome);
 
+  const selectedCategoryIncome = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(activeIndex !== undefined ? pieChartData[activeIndex].amount : 0);
+
   const centerIncome =
     pieChartData.length && activeIndex !== undefined
-      ? pieChartData[activeIndex].amount
-      : 0;
-
-  const centerIncomeAmountFormatted =
-    centerIncome &&
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(centerIncome);
+      ? ((pieChartData[activeIndex].amount / totalIncome) * 100).toFixed(3) +
+        "%"
+      : totalIncomeAmountFormatted;
 
   const timeRangeDescription = `${formatDateHuman(
     new Date(activeGraphFilters.timeRange[0])
@@ -96,21 +95,21 @@ export function IncomeCard() {
 
   return (
     <div className="flex flex-col sm:flex-row justify-between w-full h-full">
-      <div>
+      <div className="h-full flex flex-col">
         <ChartStyle id={id} config={chartConfig} />
         <CardHeader className="flex-row items-start space-y-0 pb-0">
           <div className="grid gap-1">
             <CardTitle className="truncate whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
-              Total Earned
+              Total Spent
             </CardTitle>
             <CardDescription>{timeRangeDescription}</CardDescription>
           </div>
         </CardHeader>
-        <CardContent className="h-full flex flex-1 p-0 px-8">
+        <CardContent className="flex flex-1 p-0 place-self-center place-content-center items-center w-full">
           <ChartContainer
             id={id}
             config={chartConfig}
-            className="aspect-square max-w-[250px]"
+            className="aspect-square max-w-[250px] h-full w-full"
           >
             <PieChart>
               {!isMobile && (
@@ -177,20 +176,30 @@ export function IncomeCard() {
                             x={viewBox.cx}
                             y={
                               isMobile
+                                ? viewBox.cy - viewBox.outerRadius + 230
+                                : (viewBox.cy || 0) - 140
+                            }
+                            className="fill-primary text-xl font-bold"
+                          >
+                            {selectedCategoryIncome}
+                          </tspan>
+                          <tspan
+                            x={viewBox.cx}
+                            y={
+                              isMobile
                                 ? viewBox.cy - viewBox.outerRadius - 40
                                 : viewBox.cy
                             }
                             className="fill-foreground text-xl font-bold"
                           >
-                            {centerIncomeAmountFormatted ||
-                              totalIncomeAmountFormatted}
+                            {centerIncome || totalIncomeAmountFormatted}
                           </tspan>
                           <tspan
                             x={viewBox.cx}
                             y={
                               isMobile
                                 ? viewBox.cy - viewBox.outerRadius + 230
-                                : (viewBox.cy || 0) - 140
+                                : (viewBox.cy || 0) + 140
                             }
                             className="fill-primary text-xl font-bold"
                           >

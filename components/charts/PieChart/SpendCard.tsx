@@ -68,17 +68,15 @@ export function SpendCard() {
     currency: "USD",
   }).format(totalSpend);
 
+  const selectedCategorySpend = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(activeIndex !== undefined ? pieChartData[activeIndex].amount : 0);
+
   const centerSpend =
     pieChartData.length && activeIndex !== undefined
-      ? pieChartData[activeIndex].amount
-      : 0;
-
-  const centerSpendAmountFormatted =
-    centerSpend &&
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(centerSpend);
+      ? ((pieChartData[activeIndex].amount / totalSpend) * 100).toFixed(3) + "%"
+      : totalSpendAmountFormatted;
 
   const timeRangeDescription = `${formatDateHuman(
     new Date(activeGraphFilters.timeRange[0])
@@ -96,7 +94,7 @@ export function SpendCard() {
 
   return (
     <div className="flex flex-col sm:flex-row justify-between w-full h-full">
-      <div>
+      <div className="h-full flex flex-col">
         <ChartStyle id={id} config={chartConfig} />
         <CardHeader className="flex-row items-start space-y-0 pb-0">
           <div className="grid gap-1">
@@ -106,11 +104,11 @@ export function SpendCard() {
             <CardDescription>{timeRangeDescription}</CardDescription>
           </div>
         </CardHeader>
-        <CardContent className="h-full flex flex-1 p-0 px-8 place-self-center">
+        <CardContent className="flex flex-1 p-0 place-self-center place-content-center items-center w-full">
           <ChartContainer
             id={id}
             config={chartConfig}
-            className="aspect-square max-w-[250px]"
+            className="aspect-square max-w-[250px] h-full w-full"
           >
             <PieChart>
               {!isMobile && (
@@ -177,20 +175,30 @@ export function SpendCard() {
                             x={viewBox.cx}
                             y={
                               isMobile
+                                ? viewBox.cy - viewBox.outerRadius + 230
+                                : (viewBox.cy || 0) - 140
+                            }
+                            className="fill-primary text-xl font-bold"
+                          >
+                            {selectedCategorySpend}
+                          </tspan>
+                          <tspan
+                            x={viewBox.cx}
+                            y={
+                              isMobile
                                 ? viewBox.cy - viewBox.outerRadius - 40
                                 : viewBox.cy
                             }
-                            className="fill-foreground text-xl font-bold"
+                            className="fill-foreground text-lg font-bold"
                           >
-                            {centerSpendAmountFormatted ||
-                              totalSpendAmountFormatted}
+                            {centerSpend || totalSpendAmountFormatted}
                           </tspan>
                           <tspan
                             x={viewBox.cx}
                             y={
                               isMobile
                                 ? viewBox.cy - viewBox.outerRadius + 230
-                                : (viewBox.cy || 0) - 140
+                                : (viewBox.cy || 0) + 140
                             }
                             className="fill-primary text-xl font-bold"
                           >
@@ -219,7 +227,7 @@ function renderCustomLabel(props: any) {
   const { cx, cy, midAngle, innerRadius, outerRadius, name } = props;
 
   const RADIAN = Math.PI / 180;
-  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.65;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
   const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
