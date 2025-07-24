@@ -1,8 +1,13 @@
 import { useMemo } from "react";
-import { getAllDatesInRange } from "@/utils/utils";
+import {
+  formatDateDash,
+  getAllDatesInRange,
+  getLastDateOfMonth,
+} from "@/utils/utils";
 import { useTransactions } from "@/context/TransactionsContext";
 import { Type } from "@/utils/supabase/supabase";
 import useInteractiveTransactionAreaChartData from "../../../InteractiveTransactionArea/hooks/useInteractiveTransactionAreaChartData";
+import useAccumulatedCategorySpendThisMonth from "@/hooks/useAcccumulatedCategorySpendThisMonth";
 
 export type CategoryChartDataEntry = {
   date: string;
@@ -20,8 +25,10 @@ export default function useInteractiveCategoryAreaChartData(
   const { dataTableEntries: interactiveTransactionEntries } =
     useInteractiveTransactionAreaChartData();
 
+  let accumulatedCategorySpendThisMonth =
+    useAccumulatedCategorySpendThisMonth(pieSelectedCategory);
+
   const dataTableEntries = useMemo(() => {
-    let hasEntryInRange = false;
     const transactionsByDate = new Map<string, CategoryChartDataEntry>();
 
     transactionsInRange.forEach(
@@ -51,12 +58,12 @@ export default function useInteractiveCategoryAreaChartData(
       allTransactions[0].date
     );
     const result: CategoryChartDataEntry[] = [];
+    let lastDateOfThisMonth = getLastDateOfMonth(
+      activeGraphFilters.timeRange[0]
+    );
 
     allDates.forEach((date, i) => {
       const databaseEntry = transactionsByDate.get(date);
-      if (databaseEntry) {
-        hasEntryInRange = true;
-      }
       const entry = databaseEntry || {
         date,
         amount: 0,
@@ -67,7 +74,23 @@ export default function useInteractiveCategoryAreaChartData(
       if (type === "Income") {
         entry.amount = interactiveTransactionEntries[i].balance || 0;
       }
+      if (pieSelectedCategory) {
+        entry[pieSelectedCategory] =
+          Number(entry[pieSelectedCategory]) +
+          accumulatedCategorySpendThisMonth;
+
+        accumulatedCategorySpendThisMonth = entry[pieSelectedCategory];
+      }
       result.push(entry);
+
+      if (lastDateOfThisMonth === date) {
+        accumulatedCategorySpendThisMonth = 0;
+        const [yearStr, monthStr, _dateStr] = date.split("-");
+        const year = parseInt(yearStr, 10);
+        const month = parseInt(monthStr, 10);
+        const nextMonth = new Date(year, month, 1);
+        lastDateOfThisMonth = getLastDateOfMonth(formatDateDash(nextMonth));
+      }
     });
 
     return result;
@@ -77,6 +100,7 @@ export default function useInteractiveCategoryAreaChartData(
     activeGraphFilters,
     pieSelectedCategory,
     interactiveTransactionEntries,
+    accumulatedCategorySpendThisMonth,
   ]);
 
   return { dataTableEntries };

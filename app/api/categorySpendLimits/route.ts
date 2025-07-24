@@ -5,14 +5,18 @@ import { NextRequest, NextResponse } from "next/server";
 
 export type CategorySpendLimitResponse = {
   success: true;
-  record: CategorySpendLimitRecord;
+  data: CategorySpendLimitRecord;
 };
 export type CategorySpendLimitErrorResponse = {
   error: string;
   details?: any;
 };
 
-export async function PUT(req: NextRequest) {
+export async function PUT(
+  req: NextRequest
+): Promise<
+  NextResponse<CategorySpendLimitResponse | CategorySpendLimitErrorResponse>
+> {
   const user = await getUserFromRequest();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -31,9 +35,9 @@ export async function PUT(req: NextRequest) {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("category_spend_limit")
-    .upsert(raw)
+    .upsert({ ...raw, user_id: user.id })
     .eq("user_id", user.id)
-    .select("id, category, limit, time_frame")
+    .select("*")
     .single();
 
   if (error) {

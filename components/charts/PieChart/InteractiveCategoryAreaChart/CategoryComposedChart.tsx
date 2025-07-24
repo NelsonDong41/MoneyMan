@@ -70,86 +70,82 @@ export default function CategoryComposedChart({
   };
 
   return (
-    <ResponsiveContainer className="h-full w-full pr-6">
-      <ChartContainer config={chartConfig} className="h-full w-full">
-        <ComposedChart
-          className="h-full w-full z-50"
-          data={dataTableEntries}
-          onClick={handleChartClick}
-          syncId="chart"
-        >
-          <defs>
-            <linearGradient id={`${id}-gradient`} x1="0" y1="0" x2="0" y2="1">
-              <stop
-                offset="5%"
-                stopColor={chartConfig.amount.color}
-                stopOpacity={1}
-              />
-              <stop
-                offset="95%"
-                stopColor={chartConfig.amount.color}
-                stopOpacity={0.1}
-              />
-            </linearGradient>
-          </defs>
-          <CartesianGrid vertical={false} />
-          <XAxis
-            dataKey="date"
-            tickLine={false}
-            axisLine={false}
-            tickMargin={8}
-            minTickGap={32}
-            tickFormatter={(e) => labelFormatter(e, true)}
-          />
-          <YAxis
-            tickFormatter={(value) => {
-              if (value >= 1000) return `${value / 1000}k`;
-              return value;
-            }}
-            width={isMobile ? 10 : 40}
-            tickLine={false}
-            axisLine={false}
-            tickMargin={8}
-            tickCount={3}
-          />
-          <ChartTooltip
-            cursor={true}
-            content={
-              <ChartTooltipContent
-                labelFormatter={(e) => labelFormatter(e)}
-                indicator="line"
-              />
-            }
-          />
-          <Area
-            dataKey="amount"
+    <ChartContainer config={chartConfig} className="h-full w-full px-5">
+      <ComposedChart
+        className="h-full w-full z-50"
+        data={dataTableEntries}
+        onClick={handleChartClick}
+        syncId="chart"
+      >
+        <defs>
+          <linearGradient id={`${id}-gradient`} x1="0" y1="0" x2="0" y2="1">
+            <stop
+              offset="5%"
+              stopColor={chartConfig.amount.color}
+              stopOpacity={1}
+            />
+            <stop
+              offset="95%"
+              stopColor={chartConfig.amount.color}
+              stopOpacity={0.1}
+            />
+          </linearGradient>
+        </defs>
+        <CartesianGrid vertical={false} />
+        <XAxis
+          dataKey="date"
+          tickLine={false}
+          axisLine={false}
+          tickMargin={8}
+          minTickGap={32}
+          tickFormatter={(e) => labelFormatter(e, true)}
+        />
+        <YAxis
+          tickFormatter={(value) => {
+            if (value >= 1000) return `${value / 1000}k`;
+            return value;
+          }}
+          width={isMobile ? 10 : 40}
+          tickLine={false}
+          axisLine={false}
+          tickMargin={8}
+          tickCount={3}
+        />
+        <ChartTooltip
+          cursor={true}
+          content={
+            <ChartTooltipContent
+              labelFormatter={(e) => labelFormatter(e)}
+              indicator="line"
+            />
+          }
+        />
+        <Area
+          dataKey="amount"
+          type="linear"
+          stroke={chartConfig.amount.color}
+          fill={`url(#${id}-gradient)`}
+        />
+        {pieSelectedCategory && (
+          <Line
+            dataKey={pieSelectedCategory}
+            stroke={chartConfig[pieSelectedCategory].color ?? "var(--chart-4)"}
             type="linear"
-            stroke={chartConfig.amount.color}
-            fill={`url(#${id}-gradient)`}
+            strokeWidth={2}
+            dot={false}
           />
-          {pieSelectedCategory && (
-            <Line
-              dataKey={pieSelectedCategory}
-              stroke={
-                chartConfig[pieSelectedCategory].color ?? "var(--chart-4)"
-              }
-              type="linear"
-              strokeWidth={2}
-              dot={false}
-            />
-          )}
+        )}
 
-          {pieSelectedCategory && (
-            <ReferenceLine
-              y={categorySpendLimits[pieSelectedCategory]?.limit || undefined}
-              stroke="red"
-              strokeDasharray="3 3"
-            />
-          )}
-          {!isMobile && <ChartLegend content={<ChartLegendContent />} />}
-        </ComposedChart>
-      </ChartContainer>
-    </ResponsiveContainer>
+        {pieSelectedCategory && (
+          <ReferenceLine
+            y={categorySpendLimits[pieSelectedCategory]?.limit || undefined}
+            stroke="red"
+            strokeDasharray="3 3"
+          />
+        )}
+        {!isMobile && <ChartLegend content={<ChartLegendContent />} />}
+      </ComposedChart>
+    </ChartContainer>
   );
 }
 

@@ -83,7 +83,9 @@ export function PieChartCard({ type }: { type: Type }) {
 
   const centerValue =
     pieChartData.length && activeIndex !== undefined
-      ? ((pieChartData[activeIndex].amount / totalValue) * 100).toFixed(3) + "%"
+      ? (((pieChartData[activeIndex]?.amount || 0) / totalValue) * 100).toFixed(
+          3
+        ) + "%"
       : totalValueAmountFormatted;
 
   const timeRangeDescription = `${formatDateHuman(
@@ -101,168 +103,160 @@ export function PieChartCard({ type }: { type: Type }) {
   )?.category;
 
   return (
-    <TransparentCard className="flex flex-col sm:flex-row justify-between w-full h-full">
-      <GripVertical className="drag-handle cursor-default ml-2 my-5" />
-      <div className="h-full flex flex-col">
-        <ChartStyle id={id} config={chartConfig} />
-        <CardHeader className="flex-row items-start space-y-0 pb-0">
-          <div className="grid gap-1">
-            <CardTitle className="truncate whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
-              Total {type === "Expense" ? "Spend" : "Earned"}
-            </CardTitle>
-            <CardDescription>{timeRangeDescription}</CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent className="flex flex-1 p-0 place-self-center place-content-center items-center w-full">
-          {pieChartData.length ? (
-            <ChartContainer
-              id={id}
-              config={chartConfig}
-              className="aspect-square max-w-[250px] h-full w-full"
-            >
-              <PieChart>
-                {!isMobile && (
-                  <ChartTooltip
-                    cursor={false}
-                    content={<ChartTooltipContent hideLabel />}
-                  />
-                )}
-
-                <defs>
-                  {pieChartData.map((entry, index) => (
-                    <linearGradient
-                      key={`gradient-${index}`}
-                      id={`gradient-${index}`}
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
-                      <stop
-                        offset="0%"
-                        stopColor={categoryConfigObj[entry.category].color}
-                        stopOpacity={0.8}
-                      />
-                      <stop
-                        offset="100%"
-                        stopColor={categoryConfigObj[entry.category].color}
-                        stopOpacity={0.55}
-                      />
-                    </linearGradient>
-                  ))}
-                </defs>
-
-                <Pie
-                  data={pieChartData}
-                  dataKey="amount"
-                  nameKey="category"
-                  className="transition-all z-50"
-                  innerRadius={innerRadius}
-                  strokeWidth={5}
-                  activeIndex={[transientIndex, activeIndex].filter(
-                    (v) => v !== undefined
-                  )}
-                  labelLine={false}
-                  label={renderCustomLabel}
-                  activeShape={({
-                    outerRadius = 0,
-                    ...props
-                  }: PieSectorDataItem) => (
-                    <g>
-                      <Sector
-                        {...props}
-                        outerRadius={outerRadius + (isMobile ? 3 : 10)}
-                      />
-                      <Sector
-                        {...props}
-                        outerRadius={outerRadius + (isMobile ? 12 : 25)}
-                        innerRadius={outerRadius + (isMobile ? 5 : 12)}
-                      />
-                    </g>
-                  )}
-                  onMouseEnter={onPieEnter}
-                  onMouseDown={onPieClick}
-                  onMouseLeave={onPieLeave}
-                  onTouchStart={(_, index) => onPieSectorTap(index)}
-                >
-                  <Label
-                    content={({ viewBox }) => {
-                      if (
-                        viewBox &&
-                        "cx" in viewBox &&
-                        viewBox.cx &&
-                        "cy" in viewBox &&
-                        viewBox.cy &&
-                        viewBox.outerRadius
-                      ) {
-                        return (
-                          <text
-                            x={viewBox.cx}
-                            y={
-                              isMobile
-                                ? viewBox.cy - viewBox.outerRadius - 35
-                                : viewBox.cy
-                            }
-                            textAnchor="middle"
-                            dominantBaseline="middle"
-                          >
-                            <tspan
-                              x={viewBox.cx}
-                              y={
-                                isMobile
-                                  ? viewBox.cy - viewBox.outerRadius + 230
-                                  : (viewBox.cy || 0) - 140
-                              }
-                              className="fill-primary text-xl font-bold"
-                            >
-                              {selectedCategoryValue}
-                            </tspan>
-                            <tspan
-                              x={viewBox.cx}
-                              y={
-                                isMobile
-                                  ? viewBox.cy - viewBox.outerRadius - 40
-                                  : viewBox.cy
-                              }
-                              className="fill-foreground text-xl font-bold"
-                            >
-                              {centerValue || totalValueAmountFormatted}
-                            </tspan>
-                            <tspan
-                              x={viewBox.cx}
-                              y={
-                                isMobile
-                                  ? viewBox.cy - viewBox.outerRadius + 230
-                                  : (viewBox.cy || 0) + 140
-                              }
-                              className="fill-primary text-xl font-bold"
-                            >
-                              {totalValueAmountFormatted} Total
-                            </tspan>
-                          </text>
-                        );
-                      }
-                    }}
-                  />
-                  {pieChartData.map((_entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={`url(#gradient-${index})`}
+    <TransparentCard className="flex flex-col">
+      <div className="flex flex-col sm:flex-row justify-between w-full h-full">
+        <div className="flex h-full max-h-[500px] flex-col gap-14 pb-6 sm:gap-0 sm:pb-0">
+          <ChartStyle id={id} config={chartConfig} />
+          <CardHeader className="flex-row items-center space-y-0 py-0 sm:py-6">
+            <GripVertical className="drag-handle cursor-default mr-5" />
+            <div className="grid gap-1">
+              <CardTitle className="truncate whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
+                Total {type === "Expense" ? "Spend" : "Earned"}
+              </CardTitle>
+              <CardDescription>{timeRangeDescription}</CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="flex h-full p-0 place-self-center place-content-center items-center aspect-square max-w-[300px] max-h-[400px]">
+            {pieChartData.length ? (
+              <ChartContainer
+                id={id}
+                config={chartConfig}
+                className="aspect-square max-w-[300px] h-full w-full"
+              >
+                <PieChart>
+                  {!isMobile && (
+                    <ChartTooltip
+                      cursor={false}
+                      content={<ChartTooltipContent hideLabel />}
                     />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ChartContainer>
-          ) : (
-            <Skeleton className="rounded-full max-w-[200px] w-full aspect-square" />
-          )}
-        </CardContent>
+                  )}
+
+                  <defs>
+                    {pieChartData.map((entry, index) => (
+                      <linearGradient
+                        key={`gradient-${index}`}
+                        id={`gradient-${index}`}
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor={categoryConfigObj[entry.category].color}
+                          stopOpacity={0.8}
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor={categoryConfigObj[entry.category].color}
+                          stopOpacity={0.55}
+                        />
+                      </linearGradient>
+                    ))}
+                  </defs>
+
+                  <Pie
+                    data={pieChartData}
+                    dataKey="amount"
+                    nameKey="category"
+                    className="transition-all z-50"
+                    innerRadius={innerRadius}
+                    strokeWidth={5}
+                    activeIndex={[transientIndex, activeIndex].filter(
+                      (v) => v !== undefined
+                    )}
+                    labelLine={false}
+                    label={renderCustomLabel}
+                    activeShape={({
+                      outerRadius = 0,
+                      ...props
+                    }: PieSectorDataItem) => (
+                      <g>
+                        <Sector
+                          {...props}
+                          outerRadius={outerRadius + (isMobile ? 3 : 10)}
+                        />
+                        <Sector
+                          {...props}
+                          outerRadius={outerRadius + (isMobile ? 12 : 25)}
+                          innerRadius={outerRadius + (isMobile ? 5 : 12)}
+                        />
+                      </g>
+                    )}
+                    onMouseEnter={onPieEnter}
+                    onMouseDown={onPieClick}
+                    onMouseLeave={onPieLeave}
+                    onTouchStart={(_, index) => onPieSectorTap(index)}
+                  >
+                    <Label
+                      content={({ viewBox }) => {
+                        if (
+                          viewBox &&
+                          "cx" in viewBox &&
+                          viewBox.cx &&
+                          "cy" in viewBox &&
+                          viewBox.cy &&
+                          viewBox.outerRadius
+                        ) {
+                          return (
+                            <text
+                              x={viewBox.cx}
+                              y={viewBox.cy}
+                              textAnchor="middle"
+                              dominantBaseline="middle"
+                            >
+                              {activeIndex !== undefined && (
+                                <tspan
+                                  x={viewBox.cx}
+                                  y={(viewBox.cy || 0) - 180}
+                                  className="fill-primary text-xl font-bold"
+                                >
+                                  {selectedCategoryValue}
+                                </tspan>
+                              )}
+                              <tspan
+                                x={viewBox.cx}
+                                y={
+                                  isMobile
+                                    ? viewBox.cy - viewBox.outerRadius - 40
+                                    : viewBox.cy
+                                }
+                                className="fill-foreground text-xl font-bold"
+                              >
+                                {centerValue || totalValueAmountFormatted}
+                              </tspan>
+                              <tspan
+                                x={viewBox.cx}
+                                y={(viewBox.cy || 0) + 180}
+                                className="fill-primary text-xl font-bold"
+                              >
+                                {totalValueAmountFormatted} Total
+                              </tspan>
+                            </text>
+                          );
+                        }
+                      }}
+                    />
+                    {pieChartData.map((_entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={`url(#gradient-${index})`}
+                      />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ChartContainer>
+            ) : (
+              <Skeleton className="rounded-full max-w-[200px] w-full aspect-square" />
+            )}
+          </CardContent>
+        </div>
+        <InteractiveCategoryAreaChart
+          id={id}
+          type={type}
+          pieSelectedCategory={pieSelectedCategory}
+        />
       </div>
-      <InteractiveCategoryAreaChart
-        id={id}
-        type={type}
-        pieSelectedCategory={pieSelectedCategory}
-      />
     </TransparentCard>
   );
 }

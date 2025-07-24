@@ -26,6 +26,7 @@ import {
 } from "@/context/TransactionsContext";
 import useInteractiveCategoryAreaChartData from "./hooks/useInteractiveCategoryAreaChartData";
 import CategoryComposedChart from "./CategoryComposedChart";
+import CategorySpendLimitSlider from "../CategorySpendLimitSlider/CategorySpendLimitSlider";
 
 export default function InteractiveCategoryAreaChart({
   id,
@@ -52,8 +53,8 @@ export default function InteractiveCategoryAreaChart({
       : null;
 
   return (
-    <div className="flex-1">
-      <CardHeader>
+    <div className="flex-1 flex-col h-full w-full">
+      <CardHeader className=" py-0 sm:py-6">
         <CardTitle className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           {type} Categories
         </CardTitle>
@@ -68,10 +69,8 @@ export default function InteractiveCategoryAreaChart({
           </span>
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex-1 h-72 p-0 w-full">
-        {!dataTableEntries.length && (
-          <div className="h-full w-full sm:p-6 aspect-[5/2]" />
-        )}
+      <CardContent className="flex-1 p-0 w-full max-h-[300px] h-full">
+        {!dataTableEntries.length && <div className="h-full w-full sm:p-6" />}
 
         {!!dataTableEntries.length && (
           <CategoryComposedChart
@@ -81,6 +80,11 @@ export default function InteractiveCategoryAreaChart({
             setActiveIndex={setActiveIndex}
             setDataTableModalOpen={setDataTableModalOpen}
           />
+        )}
+      </CardContent>
+      <CardContent className="flex-1 p-0 w-full">
+        {pieSelectedCategory && type === "Expense" && (
+          <CategorySpendLimitSlider category={pieSelectedCategory} />
         )}
       </CardContent>
       <Dialog

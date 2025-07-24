@@ -31,11 +31,7 @@ export function copyObjectToClipboard(obj: any) {
   }
 }
 
-export function formatDateHuman(date: Date | undefined) {
-  if (!date) {
-    return undefined;
-  }
-
+export function formatDateHuman(date: Date) {
   return date.toLocaleDateString("en-US", {
     day: "2-digit",
     month: "long",
@@ -63,6 +59,28 @@ export function getRandomDate(startDate: Date, endDate: Date) {
   const randomMillis = startMillis + Math.random() * (endMillis - startMillis);
   return new Date(randomMillis);
 }
+
+// assume date is of type yyyy-mm-dd
+export const getFirstDateOfMonth = (dateStr: string): string => {
+  const [yearStr, monthStr, _dayStr] = dateStr.split("-");
+  const year = Number(yearStr);
+  const month = Number(monthStr);
+
+  const firstDayOfMonth = new Date(year, month - 1, 1);
+
+  return formatDateDash(firstDayOfMonth);
+};
+
+// assume date is of type yyyy-mm-dd
+export const getLastDateOfMonth = (date: string): string => {
+  const [yearStr, monthStr, _dayStr] = date.split("-");
+  const year = parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10);
+
+  const lastDate = new Date(year, month, 0);
+
+  return formatDateDash(lastDate);
+};
 
 export function getRandomFloatTwoDecimalPlaces(min: number, max: number) {
   const randomNumberScaled =

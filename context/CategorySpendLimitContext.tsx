@@ -54,16 +54,16 @@ export function CategorySpendLimitProvider({
         return null;
       }
 
-      const { record } = (await response.json()) as CategorySpendLimitResponse;
+      const { data } = (await response.json()) as CategorySpendLimitResponse;
 
       setCategorySpendLimits((prev) => {
         return {
           ...prev,
-          [record.category]: record,
+          [data.category]: data,
         };
       });
 
-      return record;
+      return data;
     } catch (err) {
       console.error("Unexpected error:", err);
       return null;

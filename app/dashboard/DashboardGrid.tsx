@@ -31,7 +31,7 @@ export default function DashboardGrid() {
         className="layout w-full"
         layouts={layouts}
         cols={cols}
-        rowHeight={200}
+        rowHeight={250}
         draggableHandle=".drag-handle"
         isResizable={false}
       >

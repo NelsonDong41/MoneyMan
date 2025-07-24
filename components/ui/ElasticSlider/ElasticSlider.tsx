@@ -6,76 +6,58 @@ import {
   useMotionValueEvent,
   useTransform,
 } from "framer-motion";
+import { Input } from "../input";
+import { ControllerRenderProps } from "react-hook-form";
 
 const MAX_OVERFLOW = 50;
 
-interface ElasticSliderProps {
-  defaultValue?: number;
-  startingValue?: number;
-  maxValue?: number;
-  className?: string;
-  isStepped?: boolean;
-  stepSize?: number;
-  leftIcon?: React.ReactNode;
-  rightIcon?: React.ReactNode;
-}
-
-const ElasticSlider: React.FC<ElasticSliderProps> = ({
-  defaultValue = 50,
-  startingValue = 0,
-  maxValue = 100,
-  className = "",
-  isStepped = false,
-  stepSize = 1,
-  leftIcon = <>-</>,
-  rightIcon = <>+</>,
-}) => {
+const ElasticSlider = ({
+  value,
+  onChange,
+  className,
+  ...props
+}: ControllerRenderProps<
+  {
+    id: number;
+    category: string;
+    limit: number;
+    time_frame: "Yearly" | "Monthly" | "Weekly" | "Daily";
+  },
+  "limit"
+> & { className?: string }) => {
   return (
     <div
-      className={`flex flex-col items-center justify-center gap-4 w-48 ${className}`}
+      className={`flex flex-col items-center justify-center gap-4 w-full ${className}`}
     >
-      <Slider
-        defaultValue={defaultValue}
-        startingValue={startingValue}
-        maxValue={maxValue}
-        isStepped={isStepped}
-        stepSize={stepSize}
-        leftIcon={leftIcon}
-        rightIcon={rightIcon}
-      />
+      <Slider value={value} onChange={onChange} {...props} />
     </div>
   );
 };
 
-interface SliderProps {
-  defaultValue: number;
-  startingValue: number;
-  maxValue: number;
-  isStepped: boolean;
-  stepSize: number;
-  leftIcon: React.ReactNode;
-  rightIcon: React.ReactNode;
-}
+const Slider = ({
+  value,
+  onChange,
+}: ControllerRenderProps<
+  {
+    id: number;
+    category: string;
+    limit: number;
+    time_frame: "Yearly" | "Monthly" | "Weekly" | "Daily";
+  },
+  "limit"
+>) => {
+  const startingValue = 0;
+  const isStepped = false;
+  const maxValue = 2000;
+  const stepSize = 1;
+  const leftIcon = <>-</>;
+  const rightIcon = <>+</>;
 
-const Slider: React.FC<SliderProps> = ({
-  defaultValue,
-  startingValue,
-  maxValue,
-  isStepped,
-  stepSize,
-  leftIcon,
-  rightIcon,
-}) => {
-  const [value, setValue] = useState<number>(defaultValue);
   const sliderRef = useRef<HTMLDivElement>(null);
   const [region, setRegion] = useState<"left" | "middle" | "right">("middle");
   const clientX = useMotionValue(0);
   const overflow = useMotionValue(0);
   const scale = useMotionValue(1);
-
-  useEffect(() => {
-    setValue(defaultValue);
-  }, [defaultValue]);
 
   useMotionValueEvent(clientX, "change", (latest: number) => {
     if (sliderRef.current) {
@@ -105,7 +87,7 @@ const Slider: React.FC<SliderProps> = ({
         newValue = Math.round(newValue / stepSize) * stepSize;
       }
       newValue = Math.min(Math.max(newValue, startingValue), maxValue);
-      setValue(newValue);
+      onChange(newValue);
       clientX.jump(e.clientX);
     }
   };
@@ -126,7 +108,7 @@ const Slider: React.FC<SliderProps> = ({
   };
 
   return (
-    <>
+    <div className="h-full w-full">
       <motion.div
         onHoverStart={() => animate(scale, 1.2)}
         onHoverEnd={() => animate(scale, 1)}
@@ -145,7 +127,7 @@ const Slider: React.FC<SliderProps> = ({
           }}
           style={{
             x: useTransform(() =>
-              region === "left" ? -overflow.get() / scale.get() : 0,
+              region === "left" ? -overflow.get() / scale.get() : 0
             ),
           }}
         >
@@ -154,7 +136,7 @@ const Slider: React.FC<SliderProps> = ({
 
         <div
           ref={sliderRef}
-          className="relative flex w-full max-w-xs flex-grow cursor-grab touch-none select-none items-center py-4"
+          className="relative flex w-full max-w-xs sm:max-w-md flex-grow cursor-grab touch-none select-none items-center py-1"
           onPointerMove={handlePointerMove}
           onPointerDown={handlePointerDown}
           onPointerUp={handlePointerUp}
@@ -183,9 +165,9 @@ const Slider: React.FC<SliderProps> = ({
             }}
             className="flex flex-grow"
           >
-            <div className="relative h-full flex-grow overflow-hidden rounded-full bg-gray-400">
+            <div className="relative h-full flex-grow overflow-hidden rounded-full bg-secondary">
               <div
-                className="absolute h-full bg-gray-500 rounded-full"
+                className="absolute h-full bg-primary rounded-full"
                 style={{ width: `${getRangePercentage()}%` }}
               />
             </div>
@@ -199,17 +181,14 @@ const Slider: React.FC<SliderProps> = ({
           }}
           style={{
             x: useTransform(() =>
-              region === "right" ? overflow.get() / scale.get() : 0,
+              region === "right" ? overflow.get() / scale.get() : 0
             ),
           }}
         >
           {rightIcon}
         </motion.div>
       </motion.div>
-      <p className="absolute text-gray-400 transform -translate-y-4 text-xs font-medium tracking-wide">
-        {Math.round(value)}
-      </p>
-    </>
+    </div>
   );
 };
 
