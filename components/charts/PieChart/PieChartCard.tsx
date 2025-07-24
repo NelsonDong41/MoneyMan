@@ -116,7 +116,7 @@ export function PieChartCard({ type }: { type: Type }) {
               <CardDescription>{timeRangeDescription}</CardDescription>
             </div>
           </CardHeader>
-          <CardContent className="flex h-full p-0 place-self-center place-content-center items-center aspect-square max-w-[300px] max-h-[400px]">
+          <CardContent className="flex h-full p-0 sm:pl-6 place-self-center place-content-center items-center aspect-square max-w-[300px] max-h-[400px]">
             {pieChartData.length ? (
               <ChartContainer
                 id={id}
