@@ -36,7 +36,7 @@ export default function CategorySpendLimitSlider({
 
   const defaultFormValues: CategorySpendLimitForm = useMemo(
     () =>
-      categorySpendLimits[category] ?? {
+      categorySpendLimits.get(category) ?? {
         category,
         limit: 0.0,
         time_frame: "Monthly",

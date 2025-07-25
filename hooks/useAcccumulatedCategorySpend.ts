@@ -31,17 +31,14 @@ export default function useAccumulatedCategorySpend(category?: string) {
   const supabase = createClient();
 
   const timeFrame = category
-    ? categorySpendLimits[category].time_frame
+    ? categorySpendLimits.get(category)?.time_frame
     : undefined;
 
   const firstDay = timeFrame && getFirstDayWithTimeFrame(timeFrame, start);
 
   useEffect(() => {
-    if (!start) return setAccumulatedSpend(0);
+    if (!start || !category || !firstDay) return setAccumulatedSpend(0);
     if (firstDay === start) return setAccumulatedSpend(0);
-    if (!category) return setAccumulatedSpend(0);
-
-    console.log(firstDay);
 
     const getStartingSpend = async (startDate: string) => {
       const { data: transactionData, error } = await supabase
@@ -54,7 +51,10 @@ export default function useAccumulatedCategorySpend(category?: string) {
         .lt("date", startDate);
 
       if (error) {
-        console.error("Error fetching transactions before date:", error);
+        console.error(
+          "Error fetching transactions to calculate starting spend:",
+          error
+        );
         throw error;
       }
 
@@ -71,6 +71,6 @@ export default function useAccumulatedCategorySpend(category?: string) {
     };
 
     getStartingSpend(start);
-  }, [activeGraphFilters.timeRange, start, category]);
+  }, [activeGraphFilters.timeRange, start, category, categorySpendLimits]);
   return accumuatedSpend;
 }

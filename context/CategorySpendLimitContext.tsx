@@ -12,7 +12,7 @@ const CategorySpendLimitContext = createContext<
 >(undefined);
 
 export type CategorySpendLimitContextType = {
-  categorySpendLimits: Record<string, CategorySpendLimitRecord>;
+  categorySpendLimits: Map<string, CategorySpendLimitRecord>;
   updateCategorySpendLimit: (
     values: CategorySpendLimitForm
   ) => Promise<CategorySpendLimitRecord | null>;
@@ -26,13 +26,13 @@ export function CategorySpendLimitProvider({
   initial: CategorySpendLimitRecord[];
 }) {
   const [categorySpendLimits, setCategorySpendLimits] = useState<
-    Record<string, CategorySpendLimitRecord>
-  >({});
+    Map<string, CategorySpendLimitRecord>
+  >(new Map());
 
   useEffect(() => {
-    const arrAsMap: Record<string, CategorySpendLimitRecord> = {};
-    initial.forEach(
-      (spendLimit) => (arrAsMap[spendLimit.category] = spendLimit)
+    const arrAsMap: Map<string, CategorySpendLimitRecord> = new Map();
+    initial.forEach((spendLimit) =>
+      arrAsMap.set(spendLimit.category, spendLimit)
     );
     setCategorySpendLimits(arrAsMap);
   }, [initial]);
@@ -57,10 +57,9 @@ export function CategorySpendLimitProvider({
       const { data } = (await response.json()) as CategorySpendLimitResponse;
 
       setCategorySpendLimits((prev) => {
-        return {
-          ...prev,
-          [data.category]: data,
-        };
+        const newMap = new Map(prev);
+        newMap.set(data.category, data);
+        return newMap;
       });
 
       return data;

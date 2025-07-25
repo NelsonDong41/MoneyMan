@@ -39,7 +39,10 @@ export default function useAccumulatedIncome() {
         .lt("date", startDate);
 
       if (error) {
-        console.error("Error fetching transactions before date:", error);
+        console.error(
+          "Error fetching transactions to calculate starting balance:",
+          error
+        );
         throw error;
       }
 

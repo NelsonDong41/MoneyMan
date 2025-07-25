@@ -138,7 +138,7 @@ export default function CategoryComposedChart({
 
         {pieSelectedCategory && (
           <ReferenceLine
-            y={categorySpendLimits[pieSelectedCategory]?.limit || undefined}
+            y={categorySpendLimits.get(pieSelectedCategory)?.limit}
             stroke="red"
             strokeDasharray="3 3"
           />

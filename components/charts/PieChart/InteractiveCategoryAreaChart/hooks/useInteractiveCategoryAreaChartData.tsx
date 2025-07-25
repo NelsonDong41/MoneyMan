@@ -34,7 +34,8 @@ export default function useInteractiveCategoryAreaChartData(
 
   const { categorySpendLimits } = useCategorySpendLimit();
   const timeFrame =
-    pieSelectedCategory && categorySpendLimits[pieSelectedCategory].time_frame;
+    pieSelectedCategory &&
+    categorySpendLimits.get(pieSelectedCategory)?.time_frame;
 
   const dataTableEntries = useMemo(() => {
     const transactionsByDate = new Map<string, CategoryChartDataEntry>();
@@ -103,6 +104,7 @@ export default function useInteractiveCategoryAreaChartData(
     pieSelectedCategory,
     interactiveTransactionEntries,
     accumulatedCategorySpend,
+    categorySpendLimits,
   ]);
 
   return { dataTableEntries };

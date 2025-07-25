@@ -33,9 +33,15 @@ export async function PUT(
   }
 
   const supabase = await createClient();
+
   const { data, error } = await supabase
     .from("category_spend_limit")
-    .upsert({ ...raw, user_id: user.id })
+    .upsert(
+      { ...raw, user_id: user.id },
+      {
+        onConflict: "id",
+      }
+    )
     .eq("user_id", user.id)
     .select("*")
     .single();
