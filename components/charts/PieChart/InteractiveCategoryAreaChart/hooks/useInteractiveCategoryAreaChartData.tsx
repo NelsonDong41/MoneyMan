@@ -2,12 +2,16 @@ import { useMemo } from "react";
 import {
   formatDateDash,
   getAllDatesInRange,
+  getFirstDayWithTimeFrame,
   getLastDateOfMonth,
+  getLastDayWithTimeFrame,
+  getNextDay,
 } from "@/utils/utils";
 import { useTransactions } from "@/context/TransactionsContext";
 import { Type } from "@/utils/supabase/supabase";
 import useInteractiveTransactionAreaChartData from "../../../InteractiveTransactionArea/hooks/useInteractiveTransactionAreaChartData";
-import useAccumulatedCategorySpendThisMonth from "@/hooks/useAcccumulatedCategorySpendThisMonth";
+import useAccumulatedCategorySpend from "@/hooks/useAcccumulatedCategorySpend";
+import { useCategorySpendLimit } from "@/context/CategorySpendLimitContext";
 
 export type CategoryChartDataEntry = {
   date: string;
@@ -25,8 +29,12 @@ export default function useInteractiveCategoryAreaChartData(
   const { dataTableEntries: interactiveTransactionEntries } =
     useInteractiveTransactionAreaChartData();
 
-  let accumulatedCategorySpendThisMonth =
-    useAccumulatedCategorySpendThisMonth(pieSelectedCategory);
+  let accumulatedCategorySpend =
+    useAccumulatedCategorySpend(pieSelectedCategory);
+
+  const { categorySpendLimits } = useCategorySpendLimit();
+  const timeFrame =
+    pieSelectedCategory && categorySpendLimits[pieSelectedCategory].time_frame;
 
   const dataTableEntries = useMemo(() => {
     const transactionsByDate = new Map<string, CategoryChartDataEntry>();
@@ -58,9 +66,7 @@ export default function useInteractiveCategoryAreaChartData(
       allTransactions[0].date
     );
     const result: CategoryChartDataEntry[] = [];
-    let lastDateOfThisMonth = getLastDateOfMonth(
-      activeGraphFilters.timeRange[0]
-    );
+    let lastDate = timeFrame && getLastDayWithTimeFrame(timeFrame, allDates[0]);
 
     allDates.forEach((date, i) => {
       const databaseEntry = transactionsByDate.get(date);
@@ -74,22 +80,18 @@ export default function useInteractiveCategoryAreaChartData(
       if (type === "Income") {
         entry.amount = interactiveTransactionEntries[i].balance || 0;
       }
+
       if (pieSelectedCategory) {
         entry[pieSelectedCategory] =
-          Number(entry[pieSelectedCategory]) +
-          accumulatedCategorySpendThisMonth;
+          Number(entry[pieSelectedCategory]) + accumulatedCategorySpend;
 
-        accumulatedCategorySpendThisMonth = entry[pieSelectedCategory];
+        accumulatedCategorySpend = entry[pieSelectedCategory];
       }
       result.push(entry);
 
-      if (lastDateOfThisMonth === date) {
-        accumulatedCategorySpendThisMonth = 0;
-        const [yearStr, monthStr, _dateStr] = date.split("-");
-        const year = parseInt(yearStr, 10);
-        const month = parseInt(monthStr, 10);
-        const nextMonth = new Date(year, month, 1);
-        lastDateOfThisMonth = getLastDateOfMonth(formatDateDash(nextMonth));
+      if (timeFrame && lastDate === date) {
+        accumulatedCategorySpend = 0;
+        lastDate = getLastDayWithTimeFrame(timeFrame, getNextDay(lastDate));
       }
     });
 
@@ -100,7 +102,7 @@ export default function useInteractiveCategoryAreaChartData(
     activeGraphFilters,
     pieSelectedCategory,
     interactiveTransactionEntries,
-    accumulatedCategorySpendThisMonth,
+    accumulatedCategorySpend,
   ]);
 
   return { dataTableEntries };

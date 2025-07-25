@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { InteractiveChartTimeRanges } from "@/context/TransactionsContext";
+import { TimeFrame } from "./schemas/categorySpendLimitFormSchema";
 
 /**
  * Redirects to a specified path with an encoded message as a query parameter.
@@ -61,6 +62,16 @@ export function getRandomDate(startDate: Date, endDate: Date) {
 }
 
 // assume date is of type yyyy-mm-dd
+export const getFirstDateOfYear = (dateStr: string): string => {
+  const [yearStr, _monthStr, _dayStr] = dateStr.split("-");
+  const year = Number(yearStr);
+
+  const firstDayOfYear = new Date(year, 0, 1);
+
+  return formatDateDash(firstDayOfYear);
+};
+
+// assume date is of type yyyy-mm-dd
 export const getFirstDateOfMonth = (dateStr: string): string => {
   const [yearStr, monthStr, _dayStr] = dateStr.split("-");
   const year = Number(yearStr);
@@ -69,6 +80,49 @@ export const getFirstDateOfMonth = (dateStr: string): string => {
   const firstDayOfMonth = new Date(year, month - 1, 1);
 
   return formatDateDash(firstDayOfMonth);
+};
+
+// assume date is of type yyyy-mm-dd
+export const getFirstDayOfWeek = (date: string): string => {
+  const dt = new Date(date);
+  const day = dt.getDay();
+  const diff = dt.getDate() - day + (day === 0 ? -6 : 1);
+  dt.setDate(diff);
+  return formatDateDash(dt);
+};
+
+export const getFirstDayWithTimeFrame = (
+  timeFrame: TimeFrame,
+  start: string
+) => {
+  let firstDay: string;
+
+  switch (timeFrame) {
+    case "Yearly":
+      firstDay = getFirstDateOfYear(start);
+      break;
+    case "Monthly":
+      firstDay = getFirstDateOfMonth(start);
+      break;
+    case "Weekly":
+      firstDay = getFirstDayOfWeek(start);
+      break;
+    case "Daily":
+      firstDay = start;
+      break;
+  }
+
+  return firstDay;
+};
+
+// assume date is of type yyyy-mm-dd
+export const getLastDateOfYear = (dateStr: string): string => {
+  const [yearStr, _monthStr, _dayStr] = dateStr.split("-");
+  const year = Number(yearStr);
+
+  const lastDayOfYear = new Date(year, 12, 0);
+
+  return formatDateDash(lastDayOfYear);
 };
 
 // assume date is of type yyyy-mm-dd
@@ -82,6 +136,45 @@ export const getLastDateOfMonth = (date: string): string => {
   return formatDateDash(lastDate);
 };
 
+// assume date is of type yyyy-mm-dd
+export const getLastDayOfWeek = (date: string): string => {
+  const dt = new Date(date);
+  dt.setDate(dt.getDate() - dt.getDay() + 7 - 1);
+  return formatDateDash(dt);
+};
+
+export const getLastDayWithTimeFrame = (
+  timeFrame: TimeFrame,
+  start: string
+) => {
+  let lastDay: string;
+
+  switch (timeFrame) {
+    case "Yearly":
+      lastDay = getLastDateOfYear(start);
+      break;
+    case "Monthly":
+      lastDay = getLastDateOfMonth(start);
+      break;
+    case "Weekly":
+      lastDay = getLastDayOfWeek(start);
+      break;
+    case "Daily":
+      lastDay = start;
+      break;
+  }
+
+  return lastDay;
+};
+
+export const getNextDay = (date: string): string => {
+  const [yearStr, monthStr, dateStr] = date.split("-");
+  const year = parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10);
+  const day = parseInt(dateStr, 10);
+  const nextDate = new Date(year, month - 1, day + 1);
+  return formatDateDash(nextDate);
+};
 export function getRandomFloatTwoDecimalPlaces(min: number, max: number) {
   const randomNumberScaled =
     Math.random() * (max * 100 - min * 100) + min * 100;
