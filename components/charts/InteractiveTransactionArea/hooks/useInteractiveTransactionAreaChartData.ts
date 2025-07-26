@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { getAllDatesInRange } from "@/utils/utils";
-import useAccumulatedIncome from "@/hooks/useAccumulatedIncome";
+import useAccumulatedIncome from "@/hooks/useAccumulatedValues";
 import { useTransactions } from "@/context/TransactionsContext";
 
 export type InteractiveChartDataEntry = {
@@ -19,7 +19,9 @@ export default function useInteractiveTransactionAreaChartData() {
     activeGraphFilters.categories.map((cat) => [cat, 0])
   );
 
-  const accumulatedBalance = useAccumulatedIncome();
+  const { accumuatedProfit } = useAccumulatedIncome(
+    activeGraphFilters.timeRange[0]
+  );
 
   const dataTableEntries = useMemo(() => {
     let hasEntryInRange = false;
@@ -57,7 +59,7 @@ export default function useInteractiveTransactionAreaChartData() {
       activeGraphFilters.timeRange,
       allTransactions[0].date
     );
-    let balance = accumulatedBalance;
+    let balance = accumuatedProfit;
     const result: InteractiveChartDataEntry[] = [];
 
     for (const date of allDates) {
@@ -80,7 +82,7 @@ export default function useInteractiveTransactionAreaChartData() {
     }
 
     return result;
-  }, [accumulatedBalance, activeGraphFilters]);
+  }, [accumuatedProfit, activeGraphFilters]);
 
   return { dataTableEntries };
 }

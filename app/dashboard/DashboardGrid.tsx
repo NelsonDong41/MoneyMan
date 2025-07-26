@@ -5,33 +5,35 @@ import { Layouts, Responsive, WidthProvider } from "react-grid-layout";
 import InteractiveTransactionAreaChart from "@/components/charts/InteractiveTransactionArea/InteractiveTransactionAreaChart";
 import TransparentCard from "@/components/ui/transparentCard";
 import { PieChartCard } from "@/components/charts/PieChart/PieChartCard";
+import SectionCards from "@/components/charts/SectionCards/SectionCards";
 
 const layouts: Layouts = {
   lg: [
-    { i: "a", x: 0, y: 0, w: 3, h: 2, static: true },
-    { i: "b", x: 0, y: 2, w: 3, h: 2 },
-    { i: "c", x: 0, y: 4, w: 3, h: 2 },
-    { i: "d", x: 2, y: 6, w: 1, h: 2 },
+    { i: "a", x: 0, y: 0, w: 4, h: 9, static: true },
+    { i: "b", x: 0, y: 9, w: 4, h: 9 },
+    { i: "c", x: 0, y: 18, w: 4, h: 9 },
+    { i: "d", x: 0, y: 27, w: 1, h: 4 },
   ],
   xs: [
-    { i: "a", x: 0, y: 0, w: 1, h: 2, static: true },
-    { i: "b", x: 0, y: 2, w: 1, h: 4, static: true },
-    { i: "c", x: 0, y: 6, w: 1, h: 2, static: true },
-    { i: "d", x: 0, y: 8, w: 1, h: 2, static: true },
+    { i: "a", x: 0, y: 0, w: 1, h: 9, static: true },
+    { i: "b", x: 0, y: 9, w: 1, h: 17, static: true },
+    { i: "c", x: 0, y: 26, w: 1, h: 17, static: true },
+    { i: "d", x: 0, y: 33, w: 1, h: 17, static: true },
   ],
 };
-const cols = { lg: 3, md: 3, sm: 3, xs: 1, xxs: 1 };
+const cols = { lg: 4, md: 3, sm: 3, xs: 1, xxs: 1 };
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
 export default function DashboardGrid() {
   return (
     <div className="w-full">
+      <SectionCards />
       <ResponsiveGridLayout
         className="layout w-full"
         layouts={layouts}
         cols={cols}
-        rowHeight={250}
+        rowHeight={50}
         draggableHandle=".drag-handle"
         isResizable={false}
       >

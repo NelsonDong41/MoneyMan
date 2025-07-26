@@ -175,6 +175,16 @@ export const getNextDay = (date: string): string => {
   const nextDate = new Date(year, month - 1, day + 1);
   return formatDateDash(nextDate);
 };
+
+export const getLastMonth = (date: string): string => {
+  const [yearStr, monthStr, dateStr] = date.split("-");
+  const year = parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10);
+  const day = parseInt(dateStr, 10);
+  const nextDate = new Date(year, month - 2, day);
+  return formatDateDash(nextDate);
+};
+
 export function getRandomFloatTwoDecimalPlaces(min: number, max: number) {
   const randomNumberScaled =
     Math.random() * (max * 100 - min * 100) + min * 100;

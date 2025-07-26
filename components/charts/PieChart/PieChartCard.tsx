@@ -105,9 +105,9 @@ export function PieChartCard({ type }: { type: Type }) {
   return (
     <TransparentCard className="flex flex-col">
       <div className="flex flex-col sm:flex-row justify-between w-full h-full">
-        <div className="flex h-full max-h-[500px] flex-col gap-14 pb-6 sm:gap-0 sm:pb-0">
+        <div className="flex h-full max-h-[500px] flex-col pb-6 gap-0 sm:pb-0">
           <ChartStyle id={id} config={chartConfig} />
-          <CardHeader className="flex-row items-center space-y-0 py-0 sm:py-6">
+          <CardHeader className="flex-row items-center space-y-0 py-6">
             <GripVertical className="drag-handle cursor-default mr-5" />
             <div className="grid gap-1">
               <CardTitle className="truncate whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
