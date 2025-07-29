@@ -9,6 +9,8 @@ export default function useAccumulatedValues(startDate: string) {
   const [accumuatedIncome, setAccumulatedIncome] = useState(0);
   const [accumulatedSpend, setAccumulatedSpend] = useState(0);
   const accumuatedProfit = accumuatedIncome - accumulatedSpend;
+  const [totalIncomingTransactions, setTotalIncomingTransactions] = useState(0);
+  const [totalOutgoingTransactions, setTotalOutgoingTransactions] = useState(0);
 
   const supabase = createClient();
 
@@ -30,22 +32,34 @@ export default function useAccumulatedValues(startDate: string) {
         throw error;
       }
 
-      const incomeSum = transactionData!.reduce(
-        (total, transaction) =>
-          transaction.type === "Income" ? total + transaction.amount : total,
-        0
-      );
-      const spendSum = transactionData!.reduce(
-        (total, transaction) =>
-          transaction.type === "Expense" ? total + transaction.amount : total,
-        0
-      );
+      let incomeSum = 0;
+      let spendSum = 0;
+      let numIncomingTransactions = 0;
+      let numOutgoingTransactions = 0;
+      transactionData.forEach((transactionData) => {
+        if (transactionData.type === "Expense") {
+          spendSum += transactionData.amount;
+          numOutgoingTransactions += 1;
+        }
+        if (transactionData.type === "Income") {
+          spendSum += transactionData.amount;
+          numIncomingTransactions += 1;
+        }
+      });
 
       setAccumulatedIncome(incomeSum);
       setAccumulatedSpend(spendSum);
+      setTotalIncomingTransactions(numIncomingTransactions);
+      setTotalOutgoingTransactions(numOutgoingTransactions);
     };
 
     getStartingIncome(startDate);
   }, [activeGraphFilters.timeRange, startDate]);
-  return { accumuatedIncome, accumulatedSpend, accumuatedProfit };
+  return {
+    accumuatedIncome,
+    accumulatedSpend,
+    accumuatedProfit,
+    totalIncomingTransactions,
+    totalOutgoingTransactions,
+  };
 }

@@ -102,10 +102,10 @@ export default function CategoryComposedChart({
         />
         <YAxis
           tickFormatter={(value) => {
-            if (value >= 1000) return `${value / 1000}k`;
+            if (Math.abs(value) >= 1000) return `${value / 1000}k`;
             return value;
           }}
-          width={isMobile ? 10 : 40}
+          width={isMobile ? 10 : 50}
           tickLine={false}
           axisLine={false}
           tickMargin={8}

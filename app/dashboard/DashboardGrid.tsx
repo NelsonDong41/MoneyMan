@@ -18,7 +18,7 @@ const layouts: Layouts = {
     { i: "a", x: 0, y: 0, w: 1, h: 9, static: true },
     { i: "b", x: 0, y: 9, w: 1, h: 17, static: true },
     { i: "c", x: 0, y: 26, w: 1, h: 17, static: true },
-    { i: "d", x: 0, y: 33, w: 1, h: 17, static: true },
+    { i: "d", x: 0, y: 43, w: 1, h: 17, static: true },
   ],
 };
 const cols = { lg: 4, md: 3, sm: 3, xs: 1, xxs: 1 };
@@ -27,7 +27,7 @@ const ResponsiveGridLayout = WidthProvider(Responsive);
 
 export default function DashboardGrid() {
   return (
-    <div className="w-full">
+    <div className="">
       <SectionCards />
       <ResponsiveGridLayout
         className="layout w-full"

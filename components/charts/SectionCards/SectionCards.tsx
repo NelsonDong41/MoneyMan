@@ -11,16 +11,16 @@ const ResponsiveGridLayout = WidthProvider(Responsive);
 
 const layouts: Layouts = {
   lg: [
-    { i: "a", x: 0, y: 0, w: 1, h: 3 },
-    { i: "b", x: 1, y: 0, w: 1, h: 3 },
-    { i: "c", x: 2, y: 0, w: 1, h: 3 },
-    { i: "d", x: 3, y: 0, w: 1, h: 3 },
+    { i: "a", x: 0, y: 0, w: 1, h: 4 },
+    { i: "b", x: 1, y: 0, w: 1, h: 4 },
+    { i: "c", x: 2, y: 0, w: 1, h: 4 },
+    { i: "d", x: 3, y: 0, w: 1, h: 4 },
   ],
   xs: [
     { i: "a", x: 0, y: 0, w: 1, h: 4, static: true },
-    { i: "b", x: 1, y: 0, w: 1, h: 4, static: true },
-    { i: "c", x: 0, y: 2, w: 1, h: 4, static: true },
-    { i: "d", x: 1, y: 2, w: 1, h: 4, static: true },
+    { i: "b", x: 0, y: 4, w: 1, h: 4, static: true },
+    { i: "c", x: 0, y: 8, w: 1, h: 4, static: true },
+    { i: "d", x: 0, y: 12, w: 1, h: 4, static: true },
   ],
 };
 const cols = { lg: 4, md: 4, sm: 2, xs: 2, xxs: 1 };
@@ -30,11 +30,17 @@ export default function SectionCards() {
   const todayFormatted = formatDateDash(today);
   const firstDateOfMonth = getFirstDateOfMonth(todayFormatted);
   const firstDateLastMonth = getFirstDateOfMonth(getLastMonth(todayFormatted));
-  const { accumuatedIncome, accumulatedSpend } =
-    useAccumulatedValues(firstDateOfMonth);
+  const {
+    accumuatedIncome,
+    accumulatedSpend,
+    totalIncomingTransactions,
+    totalOutgoingTransactions,
+  } = useAccumulatedValues(firstDateOfMonth);
   const {
     accumuatedIncome: lastMonthIncome,
     accumulatedSpend: lastMonthSpend,
+    totalIncomingTransactions: lastMonthIncomingTransactions,
+    totalOutgoingTransactions: lastMonthOutgoingTransactions,
   } = useAccumulatedValues(firstDateLastMonth);
 
   const incomePercentDiff = !!lastMonthIncome
@@ -44,6 +50,17 @@ export default function SectionCards() {
   const spendPercentDiff = !!lastMonthSpend
     ? (accumulatedSpend - lastMonthSpend) / lastMonthSpend
     : undefined;
+
+  const outgoingTransactionsDiff = !!lastMonthOutgoingTransactions
+    ? (totalOutgoingTransactions - lastMonthOutgoingTransactions) /
+      lastMonthOutgoingTransactions
+    : undefined;
+
+  const incomingTransactionsDiff = !!lastMonthIncomingTransactions
+    ? (totalIncomingTransactions - lastMonthIncomingTransactions) /
+      lastMonthIncomingTransactions
+    : undefined;
+
   return (
     <ResponsiveGridLayout
       className="layout w-full"
@@ -62,7 +79,6 @@ export default function SectionCards() {
       </div>
       <div key="b" className="rounded shadow sm:p2 drag-handle">
         <SectionCard
-          key="b"
           title={`$${accumulatedSpend.toFixed(2)}`}
           description="Monthly Spend"
           value={spendPercentDiff}
@@ -71,17 +87,17 @@ export default function SectionCards() {
       </div>
       <div key="c" className="rounded shadow sm:p2 drag-handle">
         <SectionCard
-          title={`$${accumuatedIncome.toFixed(2)}`}
-          description="Monthly Income"
-          value={incomePercentDiff}
+          title={`${totalIncomingTransactions}`}
+          description="Monthly Incoming transactions"
+          value={incomingTransactionsDiff}
         />
       </div>
       <div key="d" className="rounded shadow sm:p2 drag-handle">
         <SectionCard
-          key="b"
-          title={`$${accumulatedSpend.toFixed(2)}`}
-          description="Monthly Spend"
-          value={spendPercentDiff}
+          title={`${totalOutgoingTransactions}`}
+          description="Monthly Outgoing transactions"
+          value={outgoingTransactionsDiff}
+          isMoreBetter={false}
         />
       </div>
     </ResponsiveGridLayout>

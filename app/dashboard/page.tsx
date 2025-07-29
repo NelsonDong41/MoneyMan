@@ -71,8 +71,8 @@ async function getDashboardData() {
 export default async function Dashboard() {
   const data = await getDashboardData();
   return (
-    <div className="sm:py-10 max-w-full sm:max-w-screen-2xl w-full">
-      <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+    <div className="max-w-full sm:max-w-screen-2xl w-full">
+      <h1 className="text-2xl font-bold mb-6 pt-6">Dashboard</h1>
       <Providers {...data}>
         <DashboardGrid />
       </Providers>

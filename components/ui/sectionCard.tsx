@@ -16,7 +16,7 @@ type SectionCardProps = {
   value?: number;
   isMoreBetter?: boolean;
 };
-export default function SectionCard({
+export default function pSectionCard({
   title,
   description,
   value,
@@ -39,14 +39,16 @@ export default function SectionCard({
     trendingDescription = "trending downwards";
   }
   return (
-    <TransparentCard className="@container/card h-full">
+    <TransparentCard className="@container/card h-full pt-4">
       <CardHeader>
-        <CardDescription className={"flex justify-between"}>
+        <CardDescription
+          className={"flex justify-between p-0 sm:flex-row flex-col"}
+        >
           {description}{" "}
           <Badge
             variant="outline"
             className={cn(
-              "flex justify-center items-center h-full",
+              "flex justify-center items-center h-fit p-3 text-sm sm:px-2 sm:py-0 sm:text-xs",
               colorIndication
             )}
           >
@@ -60,13 +62,12 @@ export default function SectionCard({
             %{trendingIcon}
           </Badge>
         </CardDescription>
-        <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+        <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl pt-3">
           {title}
         </CardTitle>
       </CardHeader>
-      <CardFooter className="flex-row items-center text-sm">
-        The {description} is
-        <strong className="pl-1">{trendingDescription}</strong>
+      <CardFooter className="flex-row items-center text-sm p-0 flex justify-between px-5">
+        The {description} is {trendingDescription}
         {trendingIcon}
       </CardFooter>
     </TransparentCard>

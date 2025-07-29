@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/utils/supabase/middleware";
 import { createClient } from "@/utils/supabase/server";
 
-const PROTECTED_ROUTES = ["/dashboard", "/transactions", "/protected"];
+export const PROTECTED_ROUTES = ["/dashboard", "/transactions"];
 
 export async function middleware(request: NextRequest) {
   const isProtectedRoute = PROTECTED_ROUTES.some((route) =>

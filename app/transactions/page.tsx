@@ -61,8 +61,8 @@ export default async function Transactions() {
   const data = await getTransactionData();
 
   return (
-    <div className="sm:py-10 max-w-full sm:max-w-screen-2xl w-full sm:max-h-screen-2xl">
-      <h1 className="text-2xl font-bold mb-6">Transactions</h1>
+    <div className="max-w-full sm:max-w-screen-2xl w-full sm:max-h-screen-2xl">
+      <h1 className="text-2xl font-bold mb-6 pt-6">Transactions</h1>
       <Providers {...data}>
         <div className="w-full h-[60dvh] sm:h-[40dvh]">
           <div className="h-full w-full">

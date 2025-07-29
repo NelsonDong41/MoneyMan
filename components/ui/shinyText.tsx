@@ -1,14 +1,14 @@
 import React from "react";
 
 interface ShinyTextProps {
-  text: string;
+  children: string;
   disabled?: boolean;
   speed?: number;
   className?: string;
 }
 
 const ShinyText: React.FC<ShinyTextProps> = ({
-  text,
+  children,
   disabled = false,
   speed = 5,
   className = "",
@@ -26,7 +26,7 @@ const ShinyText: React.FC<ShinyTextProps> = ({
         animationDuration: animationDuration,
       }}
     >
-      {text}
+      {children}
     </div>
   );
 };
