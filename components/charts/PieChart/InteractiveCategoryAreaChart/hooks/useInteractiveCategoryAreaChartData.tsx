@@ -1,12 +1,5 @@
 import { useMemo } from "react";
-import {
-  formatDateDash,
-  getAllDatesInRange,
-  getFirstDayWithTimeFrame,
-  getLastDateOfMonth,
-  getLastDayWithTimeFrame,
-  getNextDay,
-} from "@/utils/utils";
+import { getLastDayWithTimeFrame, getNextDay } from "@/utils/utils";
 import { useTransactions } from "@/context/TransactionsContext";
 import { Type } from "@/utils/supabase/supabase";
 import useInteractiveTransactionAreaChartData from "../../../InteractiveTransactionArea/hooks/useInteractiveTransactionAreaChartData";
@@ -26,7 +19,7 @@ export default function useInteractiveCategoryAreaChartData(
   const { allTransactions, transactionsInRange, activeGraphFilters } =
     useTransactions();
 
-  const { dataTableEntries: interactiveTransactionEntries } =
+  const { dataTableEntries: interactiveTransactionEntries, periodType } =
     useInteractiveTransactionAreaChartData();
 
   let accumulatedCategorySpend =
@@ -36,13 +29,13 @@ export default function useInteractiveCategoryAreaChartData(
   const timeFrame =
     pieSelectedCategory &&
     categorySpendLimits.get(pieSelectedCategory)?.time_frame;
-
   const dataTableEntries = useMemo(() => {
     const transactionsByDate = new Map<string, CategoryChartDataEntry>();
 
     transactionsInRange.forEach(
       ({ date, type: transactionType, amount, category }) => {
         if (transactionType !== type) return;
+
         if (!transactionsByDate.has(date)) {
           transactionsByDate.set(date, {
             date,
@@ -62,11 +55,10 @@ export default function useInteractiveCategoryAreaChartData(
       }
     );
 
-    const allDates = getAllDatesInRange(
-      activeGraphFilters.timeRange,
-      allTransactions[0].date
-    );
+    const allDates = interactiveTransactionEntries.map((entry) => entry.date);
+
     const result: CategoryChartDataEntry[] = [];
+
     let lastDate = timeFrame && getLastDayWithTimeFrame(timeFrame, allDates[0]);
 
     allDates.forEach((date, i) => {
@@ -79,7 +71,7 @@ export default function useInteractiveCategoryAreaChartData(
 
       // math for calculating accumulated balance over time already done in interactiveTransactionEntries
       if (type === "Income") {
-        entry.amount = interactiveTransactionEntries[i].balance || 0;
+        entry.amount = interactiveTransactionEntries[i]?.balance || 0;
       }
 
       if (pieSelectedCategory) {
@@ -92,6 +84,7 @@ export default function useInteractiveCategoryAreaChartData(
 
       if (timeFrame && lastDate === date) {
         accumulatedCategorySpend = 0;
+
         lastDate = getLastDayWithTimeFrame(timeFrame, getNextDay(lastDate));
       }
     });
@@ -105,7 +98,8 @@ export default function useInteractiveCategoryAreaChartData(
     interactiveTransactionEntries,
     accumulatedCategorySpend,
     categorySpendLimits,
+    timeFrame,
   ]);
 
-  return { dataTableEntries };
+  return { dataTableEntries, periodType };
 }

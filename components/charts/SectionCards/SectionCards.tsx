@@ -26,8 +26,7 @@ const layouts: Layouts = {
 const cols = { lg: 4, md: 4, sm: 2, xs: 2, xxs: 1 };
 
 export default function SectionCards() {
-  const today = new Date();
-  const todayFormatted = formatDateDash(today);
+  const todayFormatted = formatDateDash();
   const firstDateOfMonth = getFirstDateOfMonth(todayFormatted);
   const firstDateLastMonth = getFirstDateOfMonth(getLastMonth(todayFormatted));
   const {

@@ -2,10 +2,10 @@
 
 import React from "react";
 import { Layouts, Responsive, WidthProvider } from "react-grid-layout";
-import InteractiveTransactionAreaChart from "@/components/charts/InteractiveTransactionArea/InteractiveTransactionAreaChart";
 import TransparentCard from "@/components/ui/transparentCard";
 import { PieChartCard } from "@/components/charts/PieChart/PieChartCard";
 import SectionCards from "@/components/charts/SectionCards/SectionCards";
+import InteractiveTransactionAreaChart from "@/components/charts/InteractiveTransactionArea/InteractiveTransactionAreaChart";
 
 const layouts: Layouts = {
   lg: [

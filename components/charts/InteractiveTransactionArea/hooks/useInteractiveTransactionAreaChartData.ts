@@ -1,7 +1,12 @@
 import { useMemo } from "react";
-import { getAllDatesInRange } from "@/utils/utils";
+import {
+  formatDateDash,
+  getAggregatedPeriodsInRange,
+  mapDateToPeriodKey,
+} from "@/utils/utils";
 import useAccumulatedIncome from "@/hooks/useAccumulatedValues";
 import { useTransactions } from "@/context/TransactionsContext";
+import { format } from "date-fns";
 
 export type InteractiveChartDataEntry = {
   date: string;
@@ -11,78 +16,90 @@ export type InteractiveChartDataEntry = {
   [key: string]: number | string;
 };
 
+export type AggregationPeriod = "day" | "week" | "month";
+
 export default function useInteractiveTransactionAreaChartData() {
   const { allTransactions, transactionsInRange, activeGraphFilters } =
     useTransactions();
 
+  const categories = activeGraphFilters.categories.length
+    ? activeGraphFilters.categories
+    : [];
+
   const categoryDefaultObject = Object.fromEntries(
-    activeGraphFilters.categories.map((cat) => [cat, 0])
+    categories.map((cat) => [cat, 0])
   );
 
   const { accumuatedProfit } = useAccumulatedIncome(
     activeGraphFilters.timeRange[0]
   );
 
+  const { periods: aggregatedPeriods, periodType } = useMemo(() => {
+    return getAggregatedPeriodsInRange(
+      activeGraphFilters.timeRange,
+      allTransactions[0]?.date ?? formatDateDash()
+    );
+  }, [activeGraphFilters.timeRange, allTransactions]);
+
   const dataTableEntries = useMemo(() => {
-    let hasEntryInRange = false;
-    const transactionsByDate = new Map<
+    const aggregatedTransactions = new Map<
       string,
-      { balance: number; expense: number; [x: string]: number }
+      { balance: number; expense: number; [key: string]: number }
     >();
 
-    transactionsInRange.forEach(({ date, type, amount, status, category }) => {
-      if (!transactionsByDate.has(date)) {
-        const entry: {
-          balance: number;
-          expense: number;
-          [x: string]: number;
-        } = { balance: 0, expense: 0, ...categoryDefaultObject };
+    for (const period of aggregatedPeriods) {
+      aggregatedTransactions.set(period, {
+        balance: 0,
+        expense: 0,
+        ...categoryDefaultObject,
+      });
+    }
 
-        transactionsByDate.set(date, entry);
-      }
-      const entry = transactionsByDate.get(date)!;
+    transactionsInRange.forEach(({ date, type, amount, status, category }) => {
+      if (status === "Canceled") return;
+
+      const periodKey = mapDateToPeriodKey(date, periodType);
+      const entry = aggregatedTransactions.get(periodKey);
+      if (!entry) return;
 
       if (type === "Income") {
         entry.balance += amount;
-      } else if (type === "Expense" && status !== "Canceled") {
+      } else if (type === "Expense") {
         entry.expense += amount;
+
         const catName = category.name;
-        if (activeGraphFilters.categories.includes(catName)) {
-          if (entry[catName] !== undefined) {
-            entry[catName] += amount;
-          }
+        if (categories.includes(catName)) {
+          entry[catName] = (entry[catName] ?? 0) + amount;
         }
       }
     });
 
-    const allDates = getAllDatesInRange(
-      activeGraphFilters.timeRange,
-      allTransactions[0].date
-    );
     let balance = accumuatedProfit;
     const result: InteractiveChartDataEntry[] = [];
 
-    for (const date of allDates) {
-      const databaseEntry = transactionsByDate.get(date);
-      if (databaseEntry) {
-        hasEntryInRange = true;
-      }
-      const entry = databaseEntry || {
-        balance: 0,
-        expense: 0,
-        ...categoryDefaultObject,
-      };
+    for (const period of aggregatedPeriods) {
+      const entry = aggregatedTransactions.get(period);
+      if (!entry) continue;
+
       balance += entry.balance;
       balance -= entry.expense;
+
       result.push({
-        date,
+        date: period,
         ...entry,
         balance,
       });
     }
 
     return result;
-  }, [accumuatedProfit, activeGraphFilters]);
+  }, [
+    aggregatedPeriods,
+    transactionsInRange,
+    periodType,
+    accumuatedProfit,
+    categoryDefaultObject,
+    categories,
+  ]);
 
-  return { dataTableEntries };
+  return { dataTableEntries, periodType };
 }

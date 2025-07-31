@@ -39,12 +39,10 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <main className="min-h-screen flex flex-col items-center">
-            <div className="flex-1 w-full flex flex-col sm:gap-10 items-center">
-              <NavMenu />
+            <NavMenu />
 
-              <div className="flex flex-col gap- p-5 w-full items-center sm:pt-32 mb-40">
-                {children}
-              </div>
+            <div className="flex flex-col p-5 w-full items-center sm:pt-32 mb-40">
+              {children}
             </div>
           </main>
         </ThemeProvider>

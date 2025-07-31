@@ -61,6 +61,7 @@ import {
 import useInteractiveTransactionAreaChartData from "./hooks/useInteractiveTransactionAreaChartData";
 import { CategoryDropdown } from "./CategoryDropdown";
 import TransactionComposedChart from "./TransactionComposedChart";
+import { addMonths, addWeeks } from "date-fns";
 
 const CHART_TYPE_OPTIONS: ChartTypeOptions[] = [
   "Both",
@@ -80,16 +81,41 @@ export default function InteractiveTransactionAreaChart() {
     setActiveGraphFilterType,
   } = useTransactions();
 
-  const { dataTableEntries } = useInteractiveTransactionAreaChartData();
+  const { dataTableEntries, periodType } =
+    useInteractiveTransactionAreaChartData();
 
   React.useEffect(() => {
     setActiveGraphFilterTimeRange(convertSelectedTimeRange(selectedTimeRange));
   }, [selectedTimeRange]);
 
-  const activeDataPoint =
-    activeIndex !== null && dataTableEntries.length
-      ? dataTableEntries[activeIndex]
-      : null;
+  let activeDataRange: { start: string; end: string } | null;
+  if (activeIndex === null || !dataTableEntries.length) {
+    activeDataRange = null;
+  } else {
+    switch (periodType) {
+      case "day":
+        activeDataRange = {
+          start: dataTableEntries[activeIndex].date,
+          end: dataTableEntries[activeIndex].date,
+        };
+        break;
+
+      case "week":
+        activeDataRange = {
+          start: dataTableEntries[activeIndex].date,
+          end: formatDateDash(addWeeks(dataTableEntries[activeIndex].date, 1)),
+        };
+        break;
+      case "month":
+        activeDataRange = {
+          start: dataTableEntries[activeIndex].date,
+          end: formatDateDash(addMonths(dataTableEntries[activeIndex].date, 1)),
+        };
+        break;
+    }
+  }
+
+  console.log(periodType, activeDataRange);
 
   return (
     <>
@@ -106,10 +132,9 @@ export default function InteractiveTransactionAreaChart() {
             disableRotation={false}
             className="absolute w-full h-full z-50"
           />
-          <ShinyText
-            className="absolute font-extrabold sm:text-2xl italic flex w-full h-full items-center justify-center "
-            text={`No Data this ${activeGraphFilters.timeRange}`}
-          />
+          <ShinyText className="absolute font-extrabold sm:text-2xl italic flex w-full h-full items-center justify-center ">
+            No Data from {activeGraphFilters.timeRange.join(" - ")}
+          </ShinyText>
         </div>
       )}
       <CardHeader>
@@ -149,8 +174,8 @@ export default function InteractiveTransactionAreaChart() {
             {activeGraphFilters.timeRange[1]}
           </span>
           <span className="@[540px]/card:hidden">
-            From {formatDateHuman(new Date(activeGraphFilters.timeRange[0]))} -{" "}
-            {formatDateHuman(new Date(activeGraphFilters.timeRange[1]))}
+            From {formatDateHuman(activeGraphFilters.timeRange[0])} -{" "}
+            {formatDateHuman(activeGraphFilters.timeRange[1])}
           </span>
         </CardDescription>
       </CardHeader>
@@ -210,7 +235,7 @@ export default function InteractiveTransactionAreaChart() {
                 onChange={(e) => {
                   const prev = activeGraphFilters.timeRange;
                   const newTimeRange: [string, string] = [
-                    formatDateDash(new Date(e)),
+                    formatDateDash(e),
                     prev[1],
                   ];
                   setActiveGraphFilterTimeRange(newTimeRange);
@@ -226,7 +251,7 @@ export default function InteractiveTransactionAreaChart() {
                   const prev = activeGraphFilters.timeRange;
                   const newTimeRange: [string, string] = [
                     prev[0],
-                    formatDateDash(new Date(e)),
+                    formatDateDash(e),
                   ];
                   setActiveGraphFilterTimeRange(newTimeRange);
                 }}
@@ -252,16 +277,17 @@ export default function InteractiveTransactionAreaChart() {
           <DialogHeader>
             <DialogTitle>
               Transactions for{" "}
-              {formatDateHuman(new Date(activeDataPoint?.date || ""))}
+              {activeDataRange &&
+                `${formatDateHuman(activeDataRange.start)} - ${formatDateHuman(activeDataRange.end)} `}
             </DialogTitle>
             <DialogDescription></DialogDescription>
           </DialogHeader>
           <div className="max-w-full w-full">
-            {activeDataPoint && (
+            {activeDataRange && (
               <DataTable
                 columns={columns}
                 transactionFilters={{
-                  date: activeDataPoint.date,
+                  dateRange: activeDataRange,
                   type: chartOptionToType(activeGraphFilters.type),
                 }}
               />

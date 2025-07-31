@@ -1,6 +1,5 @@
 import { columns } from "@/components/dataTable/columns";
 import { DataTable } from "../../components/dataTable/data-table";
-import InteractiveTransactionAreaChart from "@/components/charts/InteractiveTransactionArea/InteractiveTransactionAreaChart";
 import { UserProvider } from "@/context/UserContext";
 import { CategoryMap, CategoryMapProvider } from "@/context/CategoryMapContext";
 import { TransactionProvider } from "@/context/TransactionsContext";
@@ -9,6 +8,7 @@ import { User } from "@supabase/supabase-js";
 import TransparentCard from "@/components/ui/transparentCard";
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
+import InteractiveTransactionAreaChart from "@/components/charts/InteractiveTransactionArea/InteractiveTransactionAreaChart";
 
 async function getTransactionData() {
   const supabase = await createClient();

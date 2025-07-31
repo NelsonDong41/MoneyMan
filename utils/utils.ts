@@ -1,6 +1,29 @@
 import { redirect } from "next/navigation";
 import { InteractiveChartTimeRanges } from "@/context/TransactionsContext";
 import { TimeFrame } from "./schemas/categorySpendLimitFormSchema";
+import {
+  differenceInDays,
+  differenceInMonths,
+  addDays,
+  addWeeks,
+  addMonths,
+  format,
+  startOfWeek,
+  startOfMonth,
+  parseISO,
+  startOfYear,
+  lastDayOfYear,
+  lastDayOfMonth,
+  lastDayOfWeek,
+  subMonths,
+  endOfMonth,
+  subDays,
+  subWeeks,
+  differenceInCalendarWeeks,
+  differenceInCalendarMonths,
+} from "date-fns";
+import { AggregationPeriod } from "@/components/charts/InteractiveTransactionArea/hooks/useInteractiveTransactionAreaChartData";
+import { formatInTimeZone } from "date-fns-tz";
 
 /**
  * Redirects to a specified path with an encoded message as a query parameter.
@@ -32,28 +55,19 @@ export function copyObjectToClipboard(obj: any) {
   }
 }
 
-export function formatDateHuman(date: Date) {
-  return date.toLocaleDateString("en-US", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-    timeZone: "UTC",
-  });
+export function formatDateHuman(date: string | Date) {
+  return formatInTimeZone(date, "UTC", "PPP");
 }
 
-export function formatDateDash(date: Date): string {
-  const [month, day, year] = date
-    .toLocaleDateString("en-US", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      timeZone: "UTC",
-    })
-    .split("/");
-
-  return `${year}-${month}-${day}`;
+export function formatDateDash(date?: string | Date): string {
+  let dt;
+  if (date === undefined) {
+    dt = new Date();
+  } else {
+    dt = typeof date === "string" ? new Date(date) : date;
+  }
+  return formatInTimeZone(dt, "UTC", "yyyy-MM-dd");
 }
-
 export function getRandomDate(startDate: Date, endDate: Date) {
   const startMillis = startDate.getTime();
   const endMillis = endDate.getTime();
@@ -63,32 +77,15 @@ export function getRandomDate(startDate: Date, endDate: Date) {
 
 // assume date is of type yyyy-mm-dd
 export const getFirstDateOfYear = (dateStr: string): string => {
-  const [yearStr, _monthStr, _dayStr] = dateStr.split("-");
-  const year = Number(yearStr);
-
-  const firstDayOfYear = new Date(year, 0, 1);
-
-  return formatDateDash(firstDayOfYear);
+  return formatDateDash(startOfYear(dateStr));
 };
 
-// assume date is of type yyyy-mm-dd
 export const getFirstDateOfMonth = (dateStr: string): string => {
-  const [yearStr, monthStr, _dayStr] = dateStr.split("-");
-  const year = Number(yearStr);
-  const month = Number(monthStr);
-
-  const firstDayOfMonth = new Date(year, month - 1, 1);
-
-  return formatDateDash(firstDayOfMonth);
+  return formatDateDash(startOfMonth(dateStr));
 };
 
-// assume date is of type yyyy-mm-dd
-export const getFirstDayOfWeek = (date: string): string => {
-  const dt = new Date(date);
-  const day = dt.getDay();
-  const diff = dt.getDate() - day + (day === 0 ? -6 : 1);
-  dt.setDate(diff);
-  return formatDateDash(dt);
+export const getFirstDayOfWeek = (dateStr: string): string => {
+  return formatDateDash(startOfWeek(dateStr, { weekStartsOn: 1 }));
 };
 
 export const getFirstDayWithTimeFrame = (
@@ -117,30 +114,17 @@ export const getFirstDayWithTimeFrame = (
 
 // assume date is of type yyyy-mm-dd
 export const getLastDateOfYear = (dateStr: string): string => {
-  const [yearStr, _monthStr, _dayStr] = dateStr.split("-");
-  const year = Number(yearStr);
-
-  const lastDayOfYear = new Date(year, 12, 0);
-
-  return formatDateDash(lastDayOfYear);
+  return formatDateDash(lastDayOfYear(dateStr));
 };
 
 // assume date is of type yyyy-mm-dd
-export const getLastDateOfMonth = (date: string): string => {
-  const [yearStr, monthStr, _dayStr] = date.split("-");
-  const year = parseInt(yearStr, 10);
-  const month = parseInt(monthStr, 10);
-
-  const lastDate = new Date(year, month, 0);
-
-  return formatDateDash(lastDate);
+export const getLastDateOfMonth = (dateStr: string): string => {
+  return formatDateDash(lastDayOfMonth(dateStr));
 };
 
 // assume date is of type yyyy-mm-dd
-export const getLastDayOfWeek = (date: string): string => {
-  const dt = new Date(date);
-  dt.setDate(dt.getDate() - dt.getDay() + 7 - 1);
-  return formatDateDash(dt);
+export const getLastDayOfWeek = (dateStr: string): string => {
+  return formatDateDash(lastDayOfWeek(dateStr, { weekStartsOn: 1 }));
 };
 
 export const getLastDayWithTimeFrame = (
@@ -168,21 +152,11 @@ export const getLastDayWithTimeFrame = (
 };
 
 export const getNextDay = (date: string): string => {
-  const [yearStr, monthStr, dateStr] = date.split("-");
-  const year = parseInt(yearStr, 10);
-  const month = parseInt(monthStr, 10);
-  const day = parseInt(dateStr, 10);
-  const nextDate = new Date(year, month - 1, day + 1);
-  return formatDateDash(nextDate);
+  return formatDateDash(addDays(date, 1));
 };
 
 export const getLastMonth = (date: string): string => {
-  const [yearStr, monthStr, dateStr] = date.split("-");
-  const year = parseInt(yearStr, 10);
-  const month = parseInt(monthStr, 10);
-  const day = parseInt(dateStr, 10);
-  const nextDate = new Date(year, month - 2, day);
-  return formatDateDash(nextDate);
+  return formatDateDash(subMonths(date, 1));
 };
 
 export function getRandomFloatTwoDecimalPlaces(min: number, max: number) {
@@ -196,48 +170,73 @@ export function getRandomFloatTwoDecimalPlaces(min: number, max: number) {
   return finalNumber;
 }
 
-export function getDaysInDateRange(startDate: Date, endDate: Date) {
-  const dates = [];
-  let currentDate = new Date(startDate);
-
-  while (currentDate <= endDate) {
-    dates.push(new Date(currentDate));
-    currentDate.setDate(currentDate.getDate() + 1);
-  }
-
-  return dates;
-}
-
-export function generateRandomString(length: number) {
-  const result = Math.random()
-    .toString(36)
-    .substring(2, 2 + length);
-  return result;
-}
-
-export function getAllDatesInRange(
+export function getAggregatedPeriodsInRange(
   timeRange: [string, string],
   firstDate: string
-): string[] {
+): { periods: string[]; periodType: AggregationPeriod } {
   let [start, end] = timeRange;
-  if (!timeRange[0] && !timeRange[1]) {
+  if (!start && !end) {
     start = firstDate;
-    end = formatDateDash(new Date());
-  }
-  if (start === end) return [start];
-  const dates: string[] = [];
-  const [startYear, startMonth, startDay] = start.split("-").map(Number);
-  const [endYear, endMonth, endDay] = end.split("-").map(Number);
-
-  let startDate = new Date(startYear, startMonth - 1, startDay);
-  const endDate = new Date(endYear, endMonth - 1, endDay);
-
-  while (startDate <= endDate) {
-    dates.push(formatDateDash(startDate));
-    startDate.setDate(startDate.getDate() + 1);
+    end = formatDateDash();
   }
 
-  return dates;
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+
+  if (start === end) return { periods: [start], periodType: "day" };
+
+  const dayDiff = differenceInDays(endDate, startDate);
+  const monthDiff = differenceInMonths(endDate, startDate);
+
+  let periods: string[] = [];
+  let periodType: AggregationPeriod;
+
+  if (dayDiff <= 31) {
+    periodType = "day";
+    for (let dt = startDate; dt < endDate; dt = addDays(dt, 1)) {
+      periods.push(formatDateDash(dt));
+    }
+  } else if (monthDiff <= 12) {
+    periodType = "week";
+
+    let current = new Date();
+    while (current >= startDate) {
+      periods.unshift(formatDateDash(current));
+      current = subWeeks(current, 1);
+    }
+  } else {
+    periodType = "month";
+
+    let current = new Date();
+    while (current >= startDate) {
+      periods.unshift(formatDateDash(current));
+      current = subMonths(current, 1);
+    }
+  }
+
+  return { periods, periodType };
+}
+
+export function mapDateToPeriodKey(
+  dateStr: string,
+  periodType: AggregationPeriod
+): string {
+  const date = new Date(dateStr);
+  const today = new Date();
+
+  if (periodType === "day") {
+    return formatDateDash(date);
+  } else if (periodType === "week") {
+    const weeksDiff = differenceInCalendarWeeks(today, date, {
+      weekStartsOn: 1,
+    });
+    const periodStart = subWeeks(today, weeksDiff);
+    return formatDateDash(periodStart);
+  } else {
+    const monthsDiff = differenceInCalendarMonths(today, date);
+    const periodStart = subMonths(today, monthsDiff);
+    return formatDateDash(periodStart);
+  }
 }
 
 export function stringToOklchColor(str: string): string {
@@ -260,27 +259,22 @@ export function convertSelectedTimeRange(
     case "all":
       return ["", ""];
     case "custom":
-      return [formatDateDash(today), formatDateDash(today)];
+      return [formatDateDash(), formatDateDash()];
     case "year":
-      return [
-        formatDateDash(new Date(today.getFullYear(), 0, 1)),
-        formatDateDash(today),
-      ];
+      return [formatDateDash(startOfYear(today)), formatDateDash()];
     case "3m": {
-      const start = new Date(today.getFullYear(), today.getMonth() - 2, 1);
-      const end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      const start = subMonths(startOfMonth(today), 2);
+      const end = endOfMonth(today);
       return [formatDateDash(start), formatDateDash(end)];
     }
     case "1m": {
-      const start = new Date(today.getFullYear(), today.getMonth(), 1);
-      const end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      const start = startOfMonth(today);
+      const end = endOfMonth(today);
       return [formatDateDash(start), formatDateDash(end)];
     }
     case "7d": {
-      const start = new Date(today);
-      start.setDate(today.getDate() - 6);
-      const end = today;
-      return [formatDateDash(start), formatDateDash(end)];
+      const start = subDays(today, 7);
+      return [formatDateDash(start), formatDateDash()];
     }
     default:
       throw new Error(`Converting Invalid time range ${selectedTimeRange}`);

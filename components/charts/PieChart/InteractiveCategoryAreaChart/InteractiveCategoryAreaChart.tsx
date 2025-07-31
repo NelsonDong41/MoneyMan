@@ -19,7 +19,7 @@ import {
 import { DialogDescription } from "@radix-ui/react-dialog";
 import { DataTable } from "@/components/dataTable/data-table";
 import { columns } from "@/components/dataTable/columns";
-import { formatDateHuman } from "@/utils/utils";
+import { formatDateDash, formatDateHuman } from "@/utils/utils";
 import {
   ChartTypeOptions,
   useTransactions,
@@ -27,6 +27,8 @@ import {
 import useInteractiveCategoryAreaChartData from "./hooks/useInteractiveCategoryAreaChartData";
 import CategoryComposedChart from "./CategoryComposedChart";
 import CategorySpendLimitSlider from "../CategorySpendLimitSlider/CategorySpendLimitSlider";
+import { data } from "autoprefixer";
+import { addDays, addMonths, addWeeks } from "date-fns";
 
 export default function InteractiveCategoryAreaChart({
   id,
@@ -42,15 +44,35 @@ export default function InteractiveCategoryAreaChart({
   const [dataTableModalOpen, setDataTableModalOpen] = React.useState(false);
   const { activeGraphFilters } = useTransactions();
 
-  const { dataTableEntries } = useInteractiveCategoryAreaChartData(
+  const { dataTableEntries, periodType } = useInteractiveCategoryAreaChartData(
     type,
     pieSelectedCategory
   );
 
-  const activeDataPoint =
-    activeIndex !== null && dataTableEntries.length
-      ? dataTableEntries[activeIndex]
-      : null;
+  let activeDataRange: { start: string; end: string } | null;
+  if (activeIndex === null || !dataTableEntries.length) {
+    activeDataRange = null;
+  } else {
+    switch (periodType) {
+      case "day":
+        activeDataRange = {
+          start: dataTableEntries[activeIndex].date,
+          end: dataTableEntries[activeIndex].date,
+        };
+
+      case "week":
+        activeDataRange = {
+          start: dataTableEntries[activeIndex].date,
+          end: formatDateDash(addWeeks(dataTableEntries[activeIndex].date, 1)),
+        };
+
+      case "month":
+        activeDataRange = {
+          start: dataTableEntries[activeIndex].date,
+          end: formatDateDash(addMonths(dataTableEntries[activeIndex].date, 1)),
+        };
+    }
+  }
 
   return (
     <div className="flex-1 flex-col h-full w-full">
@@ -104,16 +126,17 @@ export default function InteractiveCategoryAreaChart({
           <DialogHeader>
             <DialogTitle>
               Transactions for{" "}
-              {formatDateHuman(new Date(activeDataPoint?.date || ""))}
+              {activeDataRange &&
+                `${formatDateHuman(activeDataRange.start)} - ${formatDateHuman(activeDataRange.end)} `}
             </DialogTitle>
             <DialogDescription></DialogDescription>
           </DialogHeader>
           <div className="max-w-full w-full">
-            {activeDataPoint && (
+            {activeDataRange && (
               <DataTable
                 columns={columns}
                 transactionFilters={{
-                  date: activeDataPoint.date,
+                  dateRange: activeDataRange,
                   type,
                 }}
               />

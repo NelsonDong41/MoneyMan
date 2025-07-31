@@ -13,13 +13,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { formatDateDash, formatDateHuman } from "@/utils/utils";
-function parseLocalDateString(str: string) {
-  // str must be in format "YYYY-MM-DD"
-  const [year, month, day] = str.split("-").map(Number);
-  if (!year || !month || !day) return undefined;
-  // Note: months are 0-based in JS Date
-  return new Date(year, month - 1, day);
-}
 export function NaturalLanguageCalendar({
   value,
   onChange,
@@ -39,12 +32,11 @@ export function NaturalLanguageCalendar({
   // Helper: parse value string to Date (or undefined)
   const getDateFromValue = (val: string): Date | undefined => {
     if (!val) return undefined;
-    return parseLocalDateString(val); // GOOD: parses as local date
+    return new Date(formatDateDash(val)); // GOOD: parses as local date
   };
   // Format for display (when not editing)
   const displayValue = (() => {
-    const parsed = getDateFromValue(value);
-    return parsed ? formatDateHuman(parsed) : "";
+    return value ? formatDateHuman(value) : "";
   })();
 
   // Handle input changes
