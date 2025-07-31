@@ -1,7 +1,7 @@
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
-import "react-photo-view/dist/react-photo-view.css";
+
 import SplashCursor from "@/components/ui/splashCursor";
 import { createClient } from "@/utils/supabase/server";
 import Header from "@/components/Header";

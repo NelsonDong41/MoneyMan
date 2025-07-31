@@ -96,30 +96,30 @@ export default function TableSheet({
 
   const { reset } = form;
 
-  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [imageUrls, setImageUrls] = useState<{ url: string; type: string }[]>(
+    []
+  );
+
   const formImages = form.watch("images");
 
   useEffect(() => {
-    let active = true; // flag for cleanup
+    let active = true;
 
-    // Async convert each File to compatible Blob then URL
     async function generateUrls() {
-      const urls: string[] = [];
+      const urls: { url: string; type: string }[] = [];
 
       if (!formImages || formImages.length === 0) {
         setImageUrls([]);
         return;
       }
 
-      console.log(formImages);
       for (const file of formImages) {
-        // Convert File to Blob to fix TS type errors
         const arrayBuffer = await file.arrayBuffer();
         const blob = new Blob([new Uint8Array(arrayBuffer)], {
           type: file.type,
         });
         const url = URL.createObjectURL(blob);
-        urls.push(url);
+        urls.push({ url, type: file.type });
       }
 
       if (active) {
@@ -129,7 +129,6 @@ export default function TableSheet({
 
     generateUrls();
 
-    // Cleanup on unmount or images change
     return () => {
       active = false;
       imageUrls.forEach((url) => URL.revokeObjectURL(url));
@@ -490,24 +489,26 @@ export default function TableSheet({
                 />
               </div>
 
-              <Label>Images</Label>
+              <div className="max-w-full overflow-x-auto flex">
+                <div>
+                  <Label>Images</Label>
 
-              <div className="flex flex-row h-full">
-                <FormField
-                  control={form.control}
-                  name="images"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <DropzoneComponent {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className=" flex h-full max-h-60flex-nowrap overflow-x-auto space-x-4 p-2 py-5">
-                  {imageUrls.map((url, i) => (
-                    <img src={url} alt="" />
+                  <FormField
+                    control={form.control}
+                    name="images"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <DropzoneComponent {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="flex flex-nowrap overflow-x-auto space-x-4 p-2 py-5">
+                  {imageUrls.map(({ url, type }) => (
+                    <ImageCard src={url} key={url} type={type} />
                   ))}
                 </div>
               </div>
