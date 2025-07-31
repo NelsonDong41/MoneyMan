@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Sheet,
   SheetContent,
@@ -53,6 +52,9 @@ import { ChevronsUpDown, Check, ChevronsRight } from "lucide-react";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { NaturalLanguageCalendar } from "@/components/ui/naturalLanguageCalendar";
 import { useCategoryMap } from "@/context/CategoryMapContext";
+import DropzoneComponent from "../ui/dropzone";
+import ImageCard from "../ui/imageCard";
+import { Label } from "../ui/label";
 
 type TableSheetProps = {
   isNewSheet: boolean;
@@ -74,6 +76,7 @@ const defaultFormValues: FormTransaction = {
   notes: "",
   status: "Complete",
   type: "Expense",
+  images: [],
 };
 
 export default function TableSheet({
@@ -92,6 +95,47 @@ export default function TableSheet({
   });
 
   const { reset } = form;
+
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const formImages = form.watch("images");
+
+  useEffect(() => {
+    let active = true; // flag for cleanup
+
+    // Async convert each File to compatible Blob then URL
+    async function generateUrls() {
+      const urls: string[] = [];
+
+      if (!formImages || formImages.length === 0) {
+        setImageUrls([]);
+        return;
+      }
+
+      console.log(formImages);
+      for (const file of formImages) {
+        // Convert File to Blob to fix TS type errors
+        const arrayBuffer = await file.arrayBuffer();
+        const blob = new Blob([new Uint8Array(arrayBuffer)], {
+          type: file.type,
+        });
+        const url = URL.createObjectURL(blob);
+        urls.push(url);
+      }
+
+      if (active) {
+        setImageUrls(urls);
+      }
+    }
+
+    generateUrls();
+
+    // Cleanup on unmount or images change
+    return () => {
+      active = false;
+      imageUrls.forEach((url) => URL.revokeObjectURL(url));
+      setImageUrls([]);
+    };
+  }, [formImages]);
 
   useEffect(() => {
     if (!sheetOpen) return;
@@ -112,6 +156,8 @@ export default function TableSheet({
     }
     reset(defaultFormValues);
   }, [sheetOpen, activeSheetData, reset]);
+
+  console.log(formImages);
 
   return (
     <Sheet
@@ -443,10 +489,29 @@ export default function TableSheet({
                   )}
                 />
               </div>
-              <div className="grid w-full max-w-sm items-center gap-1.5">
-                <Label htmlFor="image">Image</Label>
-                <Input id="image" type="file" />
+
+              <Label>Images</Label>
+
+              <div className="flex flex-row h-full">
+                <FormField
+                  control={form.control}
+                  name="images"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <DropzoneComponent {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className=" flex h-full max-h-60flex-nowrap overflow-x-auto space-x-4 p-2 py-5">
+                  {imageUrls.map((url, i) => (
+                    <img src={url} alt="" />
+                  ))}
+                </div>
               </div>
+
               <div className="grid w-full max-w-sm items-center gap-1.5">
                 <FormField
                   control={form.control}

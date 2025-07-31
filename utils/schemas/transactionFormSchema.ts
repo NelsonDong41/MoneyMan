@@ -1,8 +1,25 @@
 import { z } from "zod";
 
-// Replace with your actual enum values from Supabase
 const transactionStatusEnum = ["Pending", "Complete", "Canceled"] as const;
 const transactionTypeEnum = ["Income", "Expense"] as const;
+const MAX_FILE_SIZE = 500000;
+const ACCEPTED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+];
+
+const imageFileSchema = z
+  .instanceof(File)
+  .refine((file) => ACCEPTED_IMAGE_TYPES.includes(file.type), {
+    message: "Only .jpeg, .jpg, .png, .webp files are allowed.",
+  })
+  .refine((file) => file.size <= MAX_FILE_SIZE, {
+    message: `Max file size is ${MAX_FILE_SIZE / (1024 * 1024)}MB.`,
+  });
+
+export const imagesSchema = z.array(imageFileSchema).optional();
 
 export const transactionFormSchema = z.object({
   id: z.number().optional().nullable(),
@@ -55,7 +72,7 @@ export const transactionFormSchema = z.object({
     ])
     .optional(),
   type: z.enum(transactionTypeEnum),
-  updated_at: z.string().nullable().optional(),
+  images: imagesSchema,
 });
 
 export type FormTransaction = z.infer<typeof transactionFormSchema>;

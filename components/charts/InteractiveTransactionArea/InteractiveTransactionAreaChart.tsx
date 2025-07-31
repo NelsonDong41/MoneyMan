@@ -1,15 +1,6 @@
 "use client";
 
 import * as React from "react";
-import {
-  Area,
-  CartesianGrid,
-  ComposedChart,
-  Line,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-} from "recharts";
 
 import { useIsMobile } from "@/hooks/useIsMobile";
 import {
@@ -19,21 +10,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  ChartConfig,
-  ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TransactionWithCategory, Type } from "@/utils/supabase/supabase";
+import { Type } from "@/utils/supabase/supabase";
 import {
   Dialog,
   DialogContent,
@@ -114,8 +97,6 @@ export default function InteractiveTransactionAreaChart() {
         break;
     }
   }
-
-  console.log(periodType, activeDataRange);
 
   return (
     <>

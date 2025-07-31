@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { Tables } from "../supabase/types";
 
 export const TIME_FRAME_OPTIONS = [
   "Yearly",
