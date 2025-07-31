@@ -54,7 +54,6 @@ async function getTransactionData() {
   return {
     transactions: transactionData ?? [],
     categoryMap,
-    user,
   };
 }
 export default async function Transactions() {
@@ -78,23 +77,19 @@ export default async function Transactions() {
 }
 
 function Providers({
-  user,
   transactions,
   categoryMap,
   children,
 }: {
-  user: User;
   transactions: TransactionWithCategory[];
   categoryMap: CategoryMap;
   children: React.ReactNode;
 }) {
   return (
-    <UserProvider initial={user}>
-      <TransactionProvider initial={transactions}>
-        <CategoryMapProvider initial={categoryMap}>
-          {children}
-        </CategoryMapProvider>
-      </TransactionProvider>
-    </UserProvider>
+    <TransactionProvider initial={transactions}>
+      <CategoryMapProvider initial={categoryMap}>
+        {children}
+      </CategoryMapProvider>
+    </TransactionProvider>
   );
 }

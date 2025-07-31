@@ -1,12 +1,11 @@
-import { ThemeSwitcher } from "@/components/theme-switcher";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
-import Link from "next/link";
 import "./globals.css";
 import SplashCursor from "@/components/ui/splashCursor";
-import AuthButton from "@/components/header-auth";
-import ClickSpark from "@/components/ui/clickSpark";
-import NavMenu from "@/components/NavMenu";
+import { createClient } from "@/utils/supabase/server";
+import Header from "@/components/Header";
+import { UserProvider } from "@/context/UserContext";
+import { User } from "@supabase/supabase-js";
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -23,30 +22,48 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await (await supabase).auth.getUser();
+
   return (
     <html lang="en" className={geistSans.className} suppressHydrationWarning>
       <body className="bg-background text-foreground overflow-x-hidden">
         <SplashCursor />
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <main className="min-h-screen flex flex-col items-center">
-            <NavMenu />
-
+        <main className="min-h-screen flex flex-col items-center">
+          <Providers user={user}>
+            <Header />
             <div className="flex flex-col p-5 w-full items-center sm:pt-32 mb-40">
               {children}
             </div>
-          </main>
-        </ThemeProvider>
+          </Providers>
+        </main>
       </body>
     </html>
+  );
+}
+
+function Providers({
+  user,
+  children,
+}: {
+  user: User | null;
+  children: React.ReactNode;
+}) {
+  return (
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+    >
+      <UserProvider initial={user}>{children}</UserProvider>
+    </ThemeProvider>
   );
 }

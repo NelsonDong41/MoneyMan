@@ -5,7 +5,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export type UserContextType = {
-  user: User;
+  user: User | null;
 };
 
 export function UserProvider({
@@ -13,9 +13,9 @@ export function UserProvider({
   initial,
 }: {
   children: React.ReactNode;
-  initial: User;
+  initial: User | null;
 }) {
-  const [user, setUser] = useState<User>(initial);
+  const [user, setUser] = useState<User | null>(initial);
   const value = useMemo(() => ({ user }), [user]);
 
   useEffect(() => {
