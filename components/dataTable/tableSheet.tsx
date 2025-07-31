@@ -55,6 +55,7 @@ import { useCategoryMap } from "@/context/CategoryMapContext";
 import DropzoneComponent from "../ui/dropzone";
 import ImageCard from "../ui/imageCard";
 import { Label } from "../ui/label";
+import ImageGallery from "../ui/ImageGallery";
 
 type TableSheetProps = {
   isNewSheet: boolean;
@@ -131,7 +132,7 @@ export default function TableSheet({
 
     return () => {
       active = false;
-      imageUrls.forEach((url) => URL.revokeObjectURL(url));
+      imageUrls.forEach(({ url }) => URL.revokeObjectURL(url));
       setImageUrls([]);
     };
   }, [formImages]);
@@ -507,9 +508,10 @@ export default function TableSheet({
                   />
                 </div>
                 <div className="flex flex-nowrap overflow-x-auto space-x-4 p-2 py-5">
-                  {imageUrls.map(({ url, type }) => (
+                  {/* {imageUrls.map(({ url, type }) => (
                     <ImageCard src={url} key={url} type={type} />
-                  ))}
+                  ))} */}
+                  <ImageGallery images={imageUrls} />
                 </div>
               </div>
 
