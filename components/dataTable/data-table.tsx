@@ -28,7 +28,6 @@ import { DataTableViewOptions } from "@/components/ui/dataTableViewOptions";
 import TableSheet from "./tableSheet";
 import DeleteButton from "./deleteButton";
 import { Database } from "@/utils/supabase/types";
-import { FormTransaction } from "@/utils/schemas/transactionFormSchema";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import {
@@ -39,6 +38,7 @@ import {
 import useTableStates from "@/hooks/useTableStates";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useTransactions } from "@/context/TransactionsContext";
+import { TableSheetForm } from "@/utils/schemas/tableSheetFormSchema";
 
 export type TransactionInsert =
   Database["public"]["Tables"]["transaction"]["Insert"];
@@ -46,7 +46,7 @@ export type TransactionUpdate =
   Database["public"]["Tables"]["transaction"]["Update"];
 
 export type SheetAction = {
-  upsertRow: (values: FormTransaction) => void;
+  upsertRow: (values: TableSheetForm) => void;
   deleteRows: (ids: number[], user_Id?: string) => void;
 };
 
@@ -172,6 +172,20 @@ export function DataTable<TValue>({
     },
   });
 
+  const onAddButtonClick = () => {
+    if (transactionFilters) {
+      const filtersToSheetDataDefault: Partial<TransactionWithCategory> = {
+        type: transactionFilters.type,
+        category:
+          transactionFilters.categories && transactionFilters.categories.length
+            ? { name: transactionFilters.categories[0] }
+            : undefined,
+        date: transactionFilters.dateRange?.start,
+      };
+      setActiveSheetData(filtersToSheetDataDefault);
+    }
+    setIsSheetOpen((prev) => !prev);
+  };
   return (
     <div className="p-1 overflow-x-auto">
       <div className="flex justify-between items-center py-4 gap-4">
@@ -190,14 +204,7 @@ export function DataTable<TValue>({
           {table.getIsSomeRowsSelected() || table.getIsAllRowsSelected() ? (
             <DeleteButton table={table} sheetActions={sheetActions} />
           ) : (
-            <Button
-              variant="secondary"
-              onClick={() => {
-                if (transactionFilters) setActiveSheetData(transactionFilters);
-                setIsSheetOpen((prev) => !prev);
-              }}
-              size="sm"
-            >
+            <Button variant="secondary" onClick={onAddButtonClick} size="sm">
               <PlusCircle />
               Add
             </Button>

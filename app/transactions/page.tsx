@@ -9,6 +9,8 @@ import TransparentCard from "@/components/ui/transparentCard";
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import InteractiveTransactionAreaChart from "@/components/charts/InteractiveTransactionArea/InteractiveTransactionAreaChart";
+import { getCategories } from "../api/categories/route";
+import { getTransactions } from "../api/transactions/route";
 
 async function getTransactionData() {
   const supabase = await createClient();
@@ -24,15 +26,7 @@ async function getTransactionData() {
   const [
     { data: transactionData, error: transactionError },
     { data: categoryData, error: categoryError },
-  ] = await Promise.all([
-    supabase
-      .from("transaction")
-      .select("*, category(name)")
-      .eq("user_id", user.id)
-      .neq("status", "Canceled")
-      .order("date"),
-    supabase.from("category").select("*").order("name"),
-  ]);
+  ] = await Promise.all([getTransactions(user), getCategories()]);
 
   if (transactionError || categoryError) {
     throw new Error(
@@ -63,12 +57,10 @@ export default async function Transactions() {
     <div className="max-w-full sm:max-w-screen-2xl w-full sm:max-h-screen-2xl">
       <h1 className="text-2xl font-bold mb-6 pt-6">Transactions</h1>
       <Providers {...data}>
-        <div className="w-full h-[60dvh] sm:h-[40dvh]">
-          <div className="h-full w-full">
-            <TransparentCard>
-              <InteractiveTransactionAreaChart />
-            </TransparentCard>
-          </div>
+        <div className="w-full h-[60dvh] min-h-[400px] sm:h-[40dvh]">
+          <TransparentCard>
+            <InteractiveTransactionAreaChart />
+          </TransparentCard>
         </div>
         <DataTable columns={columns} />
       </Providers>

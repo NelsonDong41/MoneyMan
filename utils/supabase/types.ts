@@ -32,7 +32,6 @@ export type Database = {
       category_spend_limit: {
         Row: {
           category: string
-          created_at: string
           id: number
           limit: number
           time_frame: Database["public"]["Enums"]["SpendLimitTimeFrame"]
@@ -40,7 +39,6 @@ export type Database = {
         }
         Insert: {
           category: string
-          created_at?: string
           id?: number
           limit?: number
           time_frame?: Database["public"]["Enums"]["SpendLimitTimeFrame"]
@@ -48,7 +46,6 @@ export type Database = {
         }
         Update: {
           category?: string
-          created_at?: string
           id?: number
           limit?: number
           time_frame?: Database["public"]["Enums"]["SpendLimitTimeFrame"]

@@ -18,15 +18,12 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { SheetAction } from "./data-table";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import CurrencyInput from "@/components/ui/currencyInput";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import DeleteAlert from "./deleteAlert";
-import {
-  FormTransaction,
-  transactionFormSchema,
-} from "@/utils/schemas/transactionFormSchema";
+import { transactionFormSchema } from "@/utils/schemas/transactionFormSchema";
 import { Title } from "@radix-ui/react-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -53,9 +50,16 @@ import { useIsMobile } from "@/hooks/useIsMobile";
 import { NaturalLanguageCalendar } from "@/components/ui/naturalLanguageCalendar";
 import { useCategoryMap } from "@/context/CategoryMapContext";
 import DropzoneComponent from "../ui/dropzone";
-import ImageCard from "../ui/imageCard";
 import { Label } from "../ui/label";
 import ImageGallery from "../ui/ImageGallery";
+import { createClient } from "@/utils/supabase/client";
+import { useUser } from "@/context/UserContext";
+import { buildSupabaseFolderPath } from "@/utils/utils";
+import { TableSheetForm } from "@/utils/schemas/tableSheetFormSchema";
+import {
+  ImagesErrorResponse,
+  ImagesResponse,
+} from "@/app/api/images/[transactionId]/route";
 
 type TableSheetProps = {
   isNewSheet: boolean;
@@ -68,7 +72,7 @@ type TableSheetProps = {
   sheetActions: SheetAction;
 };
 
-const defaultFormValues: FormTransaction = {
+const defaultFormValues: TableSheetForm = {
   amount: "0.00",
   category: "",
   date: "",
@@ -90,7 +94,9 @@ export default function TableSheet({
 }: TableSheetProps) {
   const { categoryMap } = useCategoryMap();
   const isMobile = useIsMobile();
-  const form = useForm<FormTransaction>({
+  const { images, setImages } = useTransactionImages(activeSheetData?.id);
+
+  const form = useForm<TableSheetForm>({
     resolver: zodResolver(transactionFormSchema),
     defaultValues: defaultFormValues,
   });
@@ -156,8 +162,6 @@ export default function TableSheet({
     }
     reset(defaultFormValues);
   }, [sheetOpen, activeSheetData, reset]);
-
-  console.log(formImages);
 
   return (
     <Sheet
@@ -493,25 +497,21 @@ export default function TableSheet({
               <div className="max-w-full overflow-x-auto flex">
                 <div>
                   <Label>Images</Label>
-
-                  <FormField
-                    control={form.control}
-                    name="images"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <DropzoneComponent {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <div className="flex flex-nowrap overflow-x-auto space-x-4 p-2 py-5">
-                  {/* {imageUrls.map(({ url, type }) => (
-                    <ImageCard src={url} key={url} type={type} />
-                  ))} */}
-                  <ImageGallery images={imageUrls} />
+                  <div className="flex flex-nowrap overflow-x-auto space-x-4 p-2 py-5">
+                    <FormField
+                      control={form.control}
+                      name="images"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <DropzoneComponent {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <ImageGallery images={imageUrls} />
+                  </div>
                 </div>
               </div>
 
@@ -568,4 +568,67 @@ export default function TableSheet({
       </SheetContent>
     </Sheet>
   );
+}
+
+type ClientImage = {
+  url: string;
+  type: string;
+  file: File;
+  isServer?: false;
+};
+type ServerImage = {
+  url: string;
+  type: string;
+  id: string; // e.g. Supabase file key or database image id
+  isServer: true;
+};
+
+type AnyImage = ClientImage | ServerImage;
+
+function useTransactionImages(transactionId: number | undefined) {
+  const { user } = useUser();
+  const [images, setImages] = useState<AnyImage[]>([]);
+
+  if (!user) {
+    throw new Error("User should exist when using useTransactionImages");
+  }
+
+  const value = useMemo(() => {
+    return { images, setImages };
+  }, [images, setImages, transactionId]);
+
+  useEffect(() => {
+    if (!transactionId) return;
+    const folderPath = buildSupabaseFolderPath(user, transactionId);
+
+    console.log("Grabbing data from:", folderPath);
+
+    const getImagesForTransaction = async () => {
+      try {
+        const response = await fetch(`/api/images/${transactionId}`, {
+          method: "GET",
+        });
+
+        if (!response.ok) {
+          const { error } = (await response.json()) as ImagesErrorResponse;
+          console.error("Error updating category spend limit:", error);
+          return null;
+        }
+
+        const { data } = (await response.json()) as ImagesResponse;
+
+        console.log(data);
+        // setImages(data);
+
+        return data;
+      } catch (err) {
+        console.error("Unexpected error:", err);
+        return null;
+      }
+    };
+
+    getImagesForTransaction();
+  }, [transactionId, user]);
+
+  return value;
 }

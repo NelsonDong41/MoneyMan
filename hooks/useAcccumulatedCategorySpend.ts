@@ -30,6 +30,10 @@ export default function useAccumulatedCategorySpend(category?: string) {
   const { categorySpendLimits } = useCategorySpendLimit();
   const supabase = createClient();
 
+  if (!user) {
+    throw new Error("User Should Exist when using useAccumulatedCategorySpend");
+  }
+
   const timeFrame = category
     ? categorySpendLimits.get(category)?.time_frame
     : undefined;

@@ -1,16 +1,45 @@
 import { categorySpendLimitFormSchema } from "@/utils/schemas/categorySpendLimitFormSchema";
 import { createClient, getUserFromRequest } from "@/utils/supabase/server";
 import { CategorySpendLimitRecord } from "@/utils/supabase/supabase";
+import { User } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
 export type CategorySpendLimitResponse = {
   success: true;
-  data: CategorySpendLimitRecord;
+  data: CategorySpendLimitRecord[];
 };
 export type CategorySpendLimitErrorResponse = {
   error: string;
   details?: any;
 };
+
+export async function getCategorySpendLimits(user: User) {
+  const supabase = await createClient();
+
+  return await supabase
+    .from("category_spend_limit")
+    .select("*")
+    .eq("user_id", user.id);
+}
+
+export async function GET(
+  req: NextRequest
+): Promise<
+  NextResponse<CategorySpendLimitResponse | CategorySpendLimitErrorResponse>
+> {
+  const user = await getUserFromRequest();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { data, error } = await getCategorySpendLimits(user);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true, data });
+}
 
 export async function PUT(
   req: NextRequest
@@ -43,8 +72,7 @@ export async function PUT(
       }
     )
     .eq("user_id", user.id)
-    .select("*")
-    .single();
+    .select("*");
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

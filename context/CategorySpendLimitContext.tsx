@@ -56,13 +56,20 @@ export function CategorySpendLimitProvider({
 
       const { data } = (await response.json()) as CategorySpendLimitResponse;
 
+      if (data.length > 1) {
+        console.error(
+          "Should have updated only one category's spend limit",
+          data
+        );
+      }
+
       setCategorySpendLimits((prev) => {
         const newMap = new Map(prev);
-        newMap.set(data.category, data);
+        newMap.set(data[0].category, data[0]);
         return newMap;
       });
 
-      return data;
+      return data[0];
     } catch (err) {
       console.error("Unexpected error:", err);
       return null;

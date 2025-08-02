@@ -27,8 +27,7 @@ import {
 import useInteractiveCategoryAreaChartData from "./hooks/useInteractiveCategoryAreaChartData";
 import CategoryComposedChart from "./CategoryComposedChart";
 import CategorySpendLimitSlider from "../CategorySpendLimitSlider/CategorySpendLimitSlider";
-import { data } from "autoprefixer";
-import { addDays, addMonths, addWeeks } from "date-fns";
+import { addMonths, addWeeks } from "date-fns";
 
 export default function InteractiveCategoryAreaChart({
   id,

@@ -1,9 +1,22 @@
 "use client";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import Image from "next/image";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import ImageCard from "./imageCard";
-import TransparentCard from "./transparentCard";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselPrevious,
+  CarouselNext,
+  CarouselApi,
+} from "./carousel";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "./dialog";
 
 const ImageGallery = ({
   images,
@@ -13,76 +26,84 @@ const ImageGallery = ({
     type: string;
   }[];
 }) => {
-  const [index, setIndex] = useState(-1);
-  const nextImage = async () => {
-    if (index + 1 == images.length) {
-      setIndex(0);
-    } else {
-      setIndex(index + 1);
-    }
-  };
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [api, setApi] = useState<CarouselApi>();
+  const [current, setCurrent] = useState(0);
+  const [count, setCount] = useState(0);
 
-  const prevImage = async () => {
-    if (index == 0) {
-      setIndex(images.length - 1);
-    } else {
-      setIndex(index - 1);
+  useEffect(() => {
+    if (!api) {
+      return;
     }
-  };
+
+    setCount(api.scrollSnapList().length);
+    setCurrent(api.selectedScrollSnap());
+  }, [api]);
 
   const handleImageClick = (i: number) => {
-    setIndex(i);
+    setCurrent(i);
+    setDialogOpen(true);
   };
 
   return (
     <>
-      <>
-        {images.map((image, i) => (
-          <ImageCard
-            src={image.url}
-            key={image.url}
-            index={i}
-            handleClick={handleImageClick}
-          />
-        ))}
-      </>
-      {index >= 0 && (
-        <div className="fixed h-svh w-svw backdrop-blur-3xl top-0 left-0 z-50">
-          <div
-            className={`fixed h-screen left-[50%] top-[50%] -translate-x-[50%] -translate-y-[50%] flex items-center justify-center`}
-          >
-            <div
-              onClick={prevImage}
-              className="hover:scale-105 rounded-full cursor-pointer p-2 absolute left-0.5 lg:relative bg-blue-900 md:me-10"
-            >
-              <ChevronLeft className="w-10 h-10" color="white" />
-            </div>
-            <div className="h-full w-full flex justify-center items-center">
-              <Image
-                src={index >= 0 ? images[index].url : ""}
-                alt="1st Image"
-                height={500}
-                width={0}
-                style={{ maxHeight: "90%", width: "auto" }}
-                unoptimized
-              />
-            </div>
+      {images.map(({ url, type }, i) => (
+        <ImageCard
+          src={url}
+          key={url}
+          type={type}
+          index={i}
+          handleClick={handleImageClick}
+        />
+      ))}
 
-            <div
-              onClick={nextImage}
-              className="hover:scale-105 rounded-full cursor-pointer p-2 absolute left-0.5 lg:relative bg-blue-900 md:ms-10"
-            >
-              <ChevronRight className="w-10 h-10" color="white" />
-            </div>
-          </div>
-          <div
-            onClick={() => setIndex(-1)}
-            className={`hover:scale-105 fixed top-10 right-5 lg:right-10 rounded-full cursor-pointer p-2 bg-red-900`}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent
+          className={
+            "max-w-[100%] max-h-[100%] sm:max-w-[80%] sm:max-h-[80%] sm:w-fit sm:h-fit w-full h-full flex flex-col items-center overflow-hidden justify-center "
+          }
+        >
+          <DialogHeader>
+            <DialogTitle></DialogTitle>
+            <DialogDescription></DialogDescription>
+          </DialogHeader>
+          <Carousel
+            setApi={setApi}
+            className="sm:mx-20 h-full w-full sm:h-fit sm:w-fit"
+            opts={{
+              startIndex: current,
+              loop: true,
+            }}
           >
-            <X className="w-10 h-10" color="white" />
-          </div>
-        </div>
-      )}
+            <CarouselContent className="flex items-center sm:h-fit sm:w-fit h-full w-full">
+              {images.map((image) => (
+                <CarouselItem
+                  key={image.url}
+                  className="flex justify-center items-center"
+                >
+                  {image.type === "application/pdf" ? (
+                    <iframe
+                      src={image.url}
+                      className="w-hover:scale-105 transition-transform max-w-full max-h-[60vh] min-w-[60vh] min-h-[70vh] h-auto w-auto"
+                    />
+                  ) : (
+                    <Image
+                      src={image.url}
+                      alt="Image"
+                      height={0}
+                      width={0}
+                      className="max-w-full max-h-[60vh] h-auto w-auto"
+                      unoptimized
+                    />
+                  )}
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious />
+            <CarouselNext />
+          </Carousel>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

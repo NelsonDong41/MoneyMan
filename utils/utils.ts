@@ -24,6 +24,7 @@ import {
 } from "date-fns";
 import { AggregationPeriod } from "@/components/charts/InteractiveTransactionArea/hooks/useInteractiveTransactionAreaChartData";
 import { formatInTimeZone } from "date-fns-tz";
+import { User } from "@supabase/supabase-js";
 
 /**
  * Redirects to a specified path with an encoded message as a query parameter.
@@ -280,3 +281,16 @@ export function convertSelectedTimeRange(
       throw new Error(`Converting Invalid time range ${selectedTimeRange}`);
   }
 }
+
+export const isPdf = (src: string, mimeType?: string) => {
+  if (mimeType) return mimeType === "application/pdf";
+  return src.toLowerCase().endsWith(".pdf");
+};
+
+export const buildSupabaseFolderPath = (user: User, transactionId: number) => {
+  return `user-${user.id}/transaction-${transactionId}/images`;
+};
+
+export const defaultUrl = process.env.VERCEL_URL
+  ? `https://${process.env.VERCEL_URL}`
+  : "http://localhost:3000";

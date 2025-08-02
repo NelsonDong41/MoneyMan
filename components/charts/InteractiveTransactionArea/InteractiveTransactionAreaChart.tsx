@@ -100,7 +100,7 @@ export default function InteractiveTransactionAreaChart() {
 
   return (
     <>
-      {!dataTableEntries.length && (
+      {!dataTableEntries.some((entry) => entry.balance || entry.expense) && (
         <div className="-z-50 pointer-events-none">
           <Particles
             particleColors={["#ffffff", "#ffffff"]}

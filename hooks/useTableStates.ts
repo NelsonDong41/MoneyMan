@@ -1,11 +1,11 @@
 import { TransactionInsert } from "@/components/dataTable/data-table";
-import { FormTransaction } from "@/utils/schemas/transactionFormSchema";
 import { createClient } from "@/utils/supabase/client";
 import { TransactionWithCategory } from "@/utils/supabase/supabase";
 import { Row } from "@tanstack/react-table";
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/context/UserContext";
+import { TableSheetForm } from "@/utils/schemas/tableSheetFormSchema";
 
 export default function useTableStates() {
   const { user } = useUser();
@@ -16,7 +16,7 @@ export default function useTableStates() {
   const router = useRouter();
 
   const upsertRow = useCallback(
-    async (values: FormTransaction) => {
+    async (values: TableSheetForm) => {
       setLoadingRows((prev) => {
         if (values.id) {
           return new Set(prev).add(values.id);
@@ -24,10 +24,29 @@ export default function useTableStates() {
         return prev;
       });
 
+      const formData = new FormData();
+      const { images, ...clientFormValues } = values;
+      images?.forEach((file) => {
+        formData.append("images", file);
+      });
+
+      Object.entries(clientFormValues).forEach(([key, entry]) => {
+        if (
+          Array.isArray(entry) &&
+          entry.length > 0 &&
+          typeof entry[0] !== "object"
+        ) {
+          entry.forEach((v) => formData.append(key, v));
+        } else if (typeof entry === "object" && entry !== null) {
+          formData.append(key, JSON.stringify(entry));
+        } else if (entry !== undefined && entry !== null) {
+          formData.append(key, String(entry));
+        }
+      });
+
       const response = await fetch("/api/transactions", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: formData,
       });
 
       if (!response.ok) {
@@ -58,6 +77,8 @@ export default function useTableStates() {
       setLoadingRows((prev) => {
         return new Set(prev).union(idSet);
       });
+
+      console.log("user before making delete reqeuest", user);
       const response = await fetch("/api/transactions", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
