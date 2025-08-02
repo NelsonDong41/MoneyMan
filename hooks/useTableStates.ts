@@ -6,6 +6,16 @@ import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/context/UserContext";
 import { TableSheetForm } from "@/utils/schemas/tableSheetFormSchema";
+import {
+  TransactionsErrorResponse,
+  TransactionsResponse,
+} from "@/app/api/transactions/route";
+import {
+  ImagesErrorResponse,
+  ImagesGetResponse,
+  ImagesPutResponse,
+} from "@/app/api/images/[transactionId]/route";
+import { toast } from "sonner";
 
 export default function useTableStates() {
   const { user } = useUser();
@@ -24,11 +34,8 @@ export default function useTableStates() {
         return prev;
       });
 
-      const formData = new FormData();
-      const { images, ...clientFormValues } = values;
-      images?.forEach((file) => {
-        formData.append("images", file);
-      });
+      const transactionFormData = new FormData();
+      const { imagesToAdd, imagesToDelete, ...clientFormValues } = values;
 
       Object.entries(clientFormValues).forEach(([key, entry]) => {
         if (
@@ -36,26 +43,80 @@ export default function useTableStates() {
           entry.length > 0 &&
           typeof entry[0] !== "object"
         ) {
-          entry.forEach((v) => formData.append(key, v));
+          entry.forEach((v) => transactionFormData.append(key, v));
         } else if (typeof entry === "object" && entry !== null) {
-          formData.append(key, JSON.stringify(entry));
+          transactionFormData.append(key, JSON.stringify(entry));
         } else if (entry !== undefined && entry !== null) {
-          formData.append(key, String(entry));
+          transactionFormData.append(key, String(entry));
         }
       });
 
-      const response = await fetch("/api/transactions", {
+      const transactionsResponse = await fetch("/api/transactions", {
         method: "PUT",
-        body: formData,
+        body: transactionFormData,
       });
 
-      if (!response.ok) {
-        const { error } = await response.json();
+      if (!transactionsResponse.ok) {
+        const { error } =
+          (await transactionsResponse.json()) as TransactionsErrorResponse;
+        toast.error("Error upserting transaction", { description: error });
         console.error("Error upserting transaction:", error);
         return null;
       }
 
+      const { data: transactionData } =
+        (await transactionsResponse.json()) as TransactionsResponse;
+
+      if (transactionData.length > 1) {
+        toast.error("Should have only uploaded 1 transaction", {
+          description: JSON.stringify(
+            transactionData.map((data) => data.description).join(" | ")
+          ),
+        });
+
+        console.error(
+          "Should have only uploaded 1 transaction",
+          JSON.stringify(
+            transactionData.map((data) => data.description).join(" | ")
+          )
+        );
+      }
+
+      const uploadedTransaction = transactionData[0];
+      const imagesFormData = new FormData();
+
+      imagesToAdd?.forEach((file) => {
+        imagesFormData.append("imagesToAdd", file);
+      });
+      imagesToDelete?.forEach((file) => {
+        imagesFormData.append("imagesToDelete", file);
+      });
+
+      const imagesResponse = await fetch(
+        `/api/images/${uploadedTransaction.id}`,
+        {
+          method: "PUT",
+          body: imagesFormData,
+        }
+      );
+
+      if (!imagesResponse.ok) {
+        const { error } = (await imagesResponse.json()) as ImagesErrorResponse;
+        toast.error("Error inserting images", {
+          description: error,
+        });
+        console.error("Error inserting images:", error);
+        return null;
+      }
+
+      const { data: imagesData } =
+        (await imagesResponse.json()) as ImagesPutResponse;
+
       router.refresh();
+
+      toast.success(`Transaction ${values.id ? "Updated" : "Created"}`, {
+        description: values.description,
+      });
 
       setActiveSheetData(null);
       setIsSheetOpen(false);

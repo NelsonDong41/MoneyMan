@@ -52,14 +52,20 @@ import { useCategoryMap } from "@/context/CategoryMapContext";
 import DropzoneComponent from "../ui/dropzone";
 import { Label } from "../ui/label";
 import ImageGallery from "../ui/ImageGallery";
-import { createClient } from "@/utils/supabase/client";
 import { useUser } from "@/context/UserContext";
 import { buildSupabaseFolderPath } from "@/utils/utils";
-import { TableSheetForm } from "@/utils/schemas/tableSheetFormSchema";
 import {
+  TableSheetForm,
+  tableSheetFormSchema,
+} from "@/utils/schemas/tableSheetFormSchema";
+import {
+  FileObject,
   ImagesErrorResponse,
-  ImagesResponse,
+  ImagesGetResponse,
 } from "@/app/api/images/[transactionId]/route";
+import { User } from "@supabase/supabase-js";
+import { createClient } from "@/utils/supabase/client";
+import { toast } from "sonner";
 
 type TableSheetProps = {
   isNewSheet: boolean;
@@ -81,7 +87,8 @@ const defaultFormValues: TableSheetForm = {
   notes: "",
   status: "Complete",
   type: "Expense",
-  images: [],
+  imagesToAdd: [],
+  imagesToDelete: [],
 };
 
 export default function TableSheet({
@@ -92,56 +99,25 @@ export default function TableSheet({
   setActiveSheetData,
   sheetActions,
 }: TableSheetProps) {
-  const { categoryMap } = useCategoryMap();
-  const isMobile = useIsMobile();
-  const { images, setImages } = useTransactionImages(activeSheetData?.id);
+  const { user } = useUser();
+
+  if (!user) {
+    throw new Error("User Should Exist when using Table Sheet");
+  }
 
   const form = useForm<TableSheetForm>({
-    resolver: zodResolver(transactionFormSchema),
+    resolver: zodResolver(tableSheetFormSchema),
     defaultValues: defaultFormValues,
   });
 
   const { reset } = form;
+  const formClientImages = form.watch("imagesToAdd");
+  const formServerImagesToDelete = form.watch("imagesToDelete");
 
-  const [imageUrls, setImageUrls] = useState<{ url: string; type: string }[]>(
-    []
-  );
-
-  const formImages = form.watch("images");
-
-  useEffect(() => {
-    let active = true;
-
-    async function generateUrls() {
-      const urls: { url: string; type: string }[] = [];
-
-      if (!formImages || formImages.length === 0) {
-        setImageUrls([]);
-        return;
-      }
-
-      for (const file of formImages) {
-        const arrayBuffer = await file.arrayBuffer();
-        const blob = new Blob([new Uint8Array(arrayBuffer)], {
-          type: file.type,
-        });
-        const url = URL.createObjectURL(blob);
-        urls.push({ url, type: file.type });
-      }
-
-      if (active) {
-        setImageUrls(urls);
-      }
-    }
-
-    generateUrls();
-
-    return () => {
-      active = false;
-      imageUrls.forEach(({ url }) => URL.revokeObjectURL(url));
-      setImageUrls([]);
-    };
-  }, [formImages]);
+  const { categoryMap } = useCategoryMap();
+  const isMobile = useIsMobile();
+  const { loading, allImages, setClientImages, setServerImages } =
+    useTransactionImages(activeSheetData?.id, formClientImages);
 
   useEffect(() => {
     if (!sheetOpen) return;
@@ -162,6 +138,30 @@ export default function TableSheet({
     }
     reset(defaultFormValues);
   }, [sheetOpen, activeSheetData, reset]);
+
+  const handleDeleteImage = async (image: AnyImage) => {
+    if (!activeSheetData || !activeSheetData.id) {
+      toast.error(
+        `Attempting to delete image when transaction is not being updated `,
+        { description: `Image Name: ${image.name}` }
+      );
+      return;
+    }
+
+    const { isServer } = image;
+    if (isServer) {
+      form.setValue(
+        "imagesToDelete",
+        [image.name].concat(formServerImagesToDelete ?? [])
+      );
+      setServerImages((prev) =>
+        prev.filter((saveImage) => saveImage !== image)
+      );
+      return;
+    }
+
+    setClientImages((prev) => prev.filter((saveImage) => saveImage !== image));
+  };
 
   return (
     <Sheet
@@ -500,7 +500,7 @@ export default function TableSheet({
                   <div className="flex flex-nowrap overflow-x-auto space-x-4 p-2 py-5">
                     <FormField
                       control={form.control}
-                      name="images"
+                      name="imagesToAdd"
                       render={({ field }) => (
                         <FormItem>
                           <FormControl>
@@ -510,7 +510,16 @@ export default function TableSheet({
                         </FormItem>
                       )}
                     />
-                    <ImageGallery images={imageUrls} />
+                    <FormField
+                      control={form.control}
+                      name="imagesToDelete"
+                      render={() => <></>}
+                    />
+                    <ImageGallery
+                      loading={loading}
+                      images={allImages}
+                      handleDelete={handleDeleteImage}
+                    />
                   </div>
                 </div>
               </div>
@@ -570,40 +579,90 @@ export default function TableSheet({
   );
 }
 
-type ClientImage = {
+export type ClientImage = {
   url: string;
   type: string;
   file: File;
   isServer?: false;
+  name: string;
 };
-type ServerImage = {
+export type ServerImage = {
   url: string;
   type: string;
   id: string; // e.g. Supabase file key or database image id
   isServer: true;
+  name: string;
 };
 
-type AnyImage = ClientImage | ServerImage;
+export type AnyImage = ClientImage | ServerImage;
 
-function useTransactionImages(transactionId: number | undefined) {
+function useTransactionImages(
+  transactionId: number | undefined,
+  formClientImages?: File[]
+) {
   const { user } = useUser();
-  const [images, setImages] = useState<AnyImage[]>([]);
+  const [serverImages, setServerImages] = useState<ServerImage[]>([]);
+  const [clientImages, setClientImages] = useState<ClientImage[]>([]);
+  const [allImages, setAllImages] = useState<AnyImage[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
 
   if (!user) {
     throw new Error("User should exist when using useTransactionImages");
   }
 
-  const value = useMemo(() => {
-    return { images, setImages };
-  }, [images, setImages, transactionId]);
+  useEffect(() => {
+    let newImages: AnyImage[] = [];
+    newImages = newImages.concat(clientImages);
+    newImages = newImages.concat(serverImages);
+
+    setAllImages(newImages);
+  }, [serverImages, clientImages, setAllImages]);
+
+  //converts the client uploaded Files into ClientImage objects
+  useEffect(() => {
+    let active = true;
+
+    async function generateClientImages() {
+      const urls: ClientImage[] = [];
+
+      if (!formClientImages || formClientImages.length === 0) {
+        setClientImages([]);
+        return;
+      }
+
+      for (const file of formClientImages) {
+        const arrayBuffer = await file.arrayBuffer();
+        const blob = new Blob([new Uint8Array(arrayBuffer)], {
+          type: file.type,
+        });
+        const url = URL.createObjectURL(blob);
+        urls.push({
+          url,
+          type: file.type,
+          file,
+          isServer: false,
+          name: file.name,
+        });
+      }
+
+      if (active) {
+        setClientImages(urls);
+      }
+    }
+
+    generateClientImages();
+
+    return () => {
+      active = false;
+      clientImages.forEach(({ url }) => URL.revokeObjectURL(url));
+      setClientImages([]);
+    };
+  }, [formClientImages]);
 
   useEffect(() => {
     if (!transactionId) return;
-    const folderPath = buildSupabaseFolderPath(user, transactionId);
-
-    console.log("Grabbing data from:", folderPath);
-
-    const getImagesForTransaction = async () => {
+    const getServerImagesForTransaction = async () => {
+      setLoading(true);
       try {
         const response = await fetch(`/api/images/${transactionId}`, {
           method: "GET",
@@ -614,21 +673,51 @@ function useTransactionImages(transactionId: number | undefined) {
           console.error("Error updating category spend limit:", error);
           return null;
         }
+        const { data } = (await response.json()) as ImagesGetResponse;
 
-        const { data } = (await response.json()) as ImagesResponse;
+        const serverImages = data.map((fileObj) =>
+          convertFileObjectToServerImage(fileObj, user, transactionId)
+        );
+        setServerImages(serverImages);
 
-        console.log(data);
-        // setImages(data);
-
+        setLoading(false);
         return data;
       } catch (err) {
+        setLoading(false);
         console.error("Unexpected error:", err);
         return null;
       }
     };
 
-    getImagesForTransaction();
+    getServerImagesForTransaction();
   }, [transactionId, user]);
 
-  return value;
+  return {
+    loading,
+    clientImages,
+    serverImages,
+    allImages,
+    setClientImages,
+    setServerImages,
+  };
 }
+
+export const convertFileObjectToServerImage = (
+  fileObj: FileObject,
+  user: User,
+  transactionId: number
+): ServerImage => {
+  const supabase = createClient();
+  const rootFilePath = buildSupabaseFolderPath(user, transactionId);
+  const { data } = supabase.storage
+    .from("images")
+    .getPublicUrl(`${rootFilePath}/${fileObj.name}`);
+
+  return {
+    url: data.publicUrl,
+    type: fileObj.metadata["mimetype"],
+    id: fileObj.id,
+    name: fileObj.name,
+    isServer: true,
+  };
+};

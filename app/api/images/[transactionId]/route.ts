@@ -28,7 +28,7 @@ export interface FileObject {
   buckets: Bucket;
 }
 
-export type ImagesResponse = {
+export type ImagesGetResponse = {
   success: true;
   data: FileObject[];
 };
@@ -36,11 +36,23 @@ export type ImagesErrorResponse = {
   error: string;
   details?: any;
 };
+export type ImagesPutResponse = {
+  success: true;
+  data: {
+    inserted: ({
+      id: string;
+      path: string;
+      fullPath: string;
+    } | null)[];
+    deleted: FileObject[] | null;
+  } | null;
+};
 
 export async function GET(
   req: Request,
-  { params }: { params: { transactionId: number } }
-): Promise<NextResponse<ImagesResponse | ImagesErrorResponse>> {
+  props: { params: Promise<{ transactionId: number }> }
+): Promise<NextResponse<ImagesGetResponse | ImagesErrorResponse>> {
+  const params = await props.params;
   const transactionId = params.transactionId;
 
   const user = await getUserFromRequest();
@@ -50,8 +62,6 @@ export async function GET(
 
   const rootFilePathName = buildSupabaseFolderPath(user, transactionId);
   const supabase = await createClient();
-
-  console.log("BACKEND GETTING", rootFilePathName);
 
   const { data, error } = await supabase.storage
     .from("images")
@@ -73,8 +83,10 @@ export async function GET(
 
 export async function PUT(
   req: Request,
-  { params }: { params: { transactionId: number } }
-): Promise<NextResponse<ImagesResponse | ImagesErrorResponse>> {
+  props: { params: Promise<{ transactionId: number }> }
+): Promise<NextResponse<ImagesPutResponse | ImagesErrorResponse>> {
+  console.log("backend put endpoint hit");
+  const params = await props.params;
   const transactionId = params.transactionId;
 
   const user = await getUserFromRequest();
@@ -85,7 +97,8 @@ export async function PUT(
   const raw = await req.formData();
 
   const dataObj = {
-    images: raw.getAll("images") as File[],
+    imagesToAdd: raw.getAll("imagesToAdd") as File[],
+    imagesToDelete: raw.getAll("imagesToDelete") as string[],
   };
 
   const parseResult = imagesFormSchema.safeParse(dataObj);
@@ -97,39 +110,71 @@ export async function PUT(
     );
   }
 
-  const images = parseResult.data.images;
+  const { imagesToAdd, imagesToDelete } = parseResult.data;
 
-  if (!images) {
-    return NextResponse.json({ success: true, data: [] });
+  if (
+    (!imagesToAdd || !imagesToAdd.length) &&
+    (!imagesToDelete || !imagesToDelete.length)
+  ) {
+    return NextResponse.json({ success: true, data: null });
   }
 
+  console.log(imagesToAdd, imagesToDelete);
+
   const supabase = await createClient();
-  const allImagePromises = images.map((image) => {
+  const allImagesToAddPromises = imagesToAdd?.map((image) => {
     return supabase.storage
-      .from("receipts")
+      .from("images")
       .upload(`${rootFilePathName}/${image.name}-${uuidv4()}`, image, {
         cacheControl: "3600",
         upsert: false,
       });
   });
 
-  const allImagesUploadData = await Promise.all(allImagePromises);
+  const imagesToDeletePaths = imagesToDelete?.map(
+    (image) => `${rootFilePathName}/${image}`
+  );
+  const allImageToDeletePromises =
+    imagesToDeletePaths &&
+    imagesToDeletePaths.length &&
+    supabase.storage.from("images").remove(imagesToDeletePaths);
 
-  const allErrors = allImagesUploadData.map((data) => {
-    return data.error;
-  });
+  const allImagesInsertionResponse =
+    allImagesToAddPromises &&
+    allImagesToAddPromises.length &&
+    (await Promise.all(allImagesToAddPromises));
+  const allImagesDeletionResponse =
+    allImageToDeletePromises && (await allImageToDeletePromises);
+
+  const allErrors = (allImagesInsertionResponse || [])
+    .map((data) => {
+      return data.error;
+    })
+    .concat(!!allImagesDeletionResponse ? allImagesDeletionResponse.error : []);
 
   const hasSomeErrors = allErrors.some(Boolean);
 
   if (hasSomeErrors) {
-    return NextResponse.json({ error: allErrors.join(" | ") }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: allErrors
+          .map((error) => JSON.stringify(error, null, 2))
+          .join(" | "),
+      },
+      { status: 500 }
+    );
   }
 
-  const allData = allImagesUploadData.map((data) => {
-    return data.data;
+  const allInsertionData =
+    !!allImagesInsertionResponse &&
+    allImagesInsertionResponse.map((data) => {
+      return data.data;
+    });
+  const allDeletionData =
+    !!allImagesDeletionResponse && allImagesDeletionResponse.data;
+
+  return NextResponse.json({
+    success: true,
+    data: { inserted: allInsertionData || [], deleted: allDeletionData || [] },
   });
-
-  console.log(allData);
-
-  return NextResponse.json({ success: true, data: allData });
 }

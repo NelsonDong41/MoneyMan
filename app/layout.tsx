@@ -7,6 +7,7 @@ import { createClient } from "@/utils/supabase/server";
 import Header from "@/components/Header";
 import { UserProvider } from "@/context/UserContext";
 import { User } from "@supabase/supabase-js";
+import { Toaster } from "@/components/ui/sonner";
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -36,6 +37,7 @@ export default async function RootLayout({
   return (
     <html lang="en" className={geistSans.className} suppressHydrationWarning>
       <body className="bg-background text-foreground overflow-x-hidden">
+        <Toaster position="bottom-left" expand={true} richColors closeButton />
         <SplashCursor />
         <main className="min-h-screen flex flex-col items-center">
           <Providers user={user}>

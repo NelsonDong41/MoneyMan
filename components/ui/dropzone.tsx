@@ -1,17 +1,35 @@
-import { FormTransaction } from "@/utils/schemas/transactionFormSchema";
+import {
+  ACCEPTED_IMAGE_TYPES,
+  MAX_FILE_SIZE,
+} from "@/utils/schemas/imagesFormSchema";
+import { TableSheetForm } from "@/utils/schemas/tableSheetFormSchema";
 import { Plus } from "lucide-react";
 import React, { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { ControllerRenderProps } from "react-hook-form";
+import { toast } from "sonner";
 
 function DropzoneComponent({
   value,
   onChange,
   ...props
-}: ControllerRenderProps<FormTransaction, "images">) {
+}: ControllerRenderProps<TableSheetForm, "imagesToAdd">) {
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
-      onChange(value ? acceptedFiles.concat(value) : acceptedFiles);
+      const filteredAcceptedFiles = acceptedFiles.filter((file) => {
+        if (file.size > MAX_FILE_SIZE) {
+          toast.warning(`${file.name} is too large to upload ${file.size}`);
+          return false;
+        }
+        if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+          toast.warning(`${file.name} is not the right format ${file.type}`);
+          return false;
+        }
+        return true;
+      });
+      onChange(
+        value ? filteredAcceptedFiles.concat(value) : filteredAcceptedFiles
+      );
     },
     [value]
   );

@@ -6,6 +6,8 @@ import TransparentCard from "@/components/ui/transparentCard";
 import { PieChartCard } from "@/components/charts/PieChart/PieChartCard";
 import SectionCards from "@/components/charts/SectionCards/SectionCards";
 import InteractiveTransactionAreaChart from "@/components/charts/InteractiveTransactionArea/InteractiveTransactionAreaChart";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 const layouts: Layouts = {
   lg: [
@@ -27,39 +29,41 @@ const ResponsiveGridLayout = WidthProvider(Responsive);
 
 export default function DashboardGrid() {
   return (
-    <div className="">
-      <SectionCards />
-      <ResponsiveGridLayout
-        className="layout w-full"
-        layouts={layouts}
-        cols={cols}
-        rowHeight={50}
-        draggableHandle=".drag-handle"
-        isResizable={false}
-      >
-        <div
-          key="a"
-          className="rounded shadow flex items-center justify-center col-span-3"
+    <>
+      <div>
+        <SectionCards />
+        <ResponsiveGridLayout
+          className="layout w-full"
+          layouts={layouts}
+          cols={cols}
+          rowHeight={50}
+          draggableHandle=".drag-handle"
+          isResizable={false}
         >
-          <div className="h-full w-full">
-            <TransparentCard>
-              <InteractiveTransactionAreaChart />
-            </TransparentCard>
+          <div
+            key="a"
+            className="rounded shadow flex items-center justify-center col-span-3"
+          >
+            <div className="h-full w-full">
+              <TransparentCard>
+                <InteractiveTransactionAreaChart />
+              </TransparentCard>
+            </div>
           </div>
-        </div>
-        <div
-          key="b"
-          className="rounded shadow flex items-center justify-center sm:p2"
-        >
-          <PieChartCard type={"Expense"} />
-        </div>
-        <div
-          key="c"
-          className="rounded shadow flex items-center justify-center sm:p2"
-        >
-          <PieChartCard type={"Income"} />
-        </div>
-      </ResponsiveGridLayout>
-    </div>
+          <div
+            key="b"
+            className="rounded shadow flex items-center justify-center sm:p2"
+          >
+            <PieChartCard type={"Expense"} />
+          </div>
+          <div
+            key="c"
+            className="rounded shadow flex items-center justify-center sm:p2"
+          >
+            <PieChartCard type={"Income"} />
+          </div>
+        </ResponsiveGridLayout>
+      </div>
+    </>
   );
 }

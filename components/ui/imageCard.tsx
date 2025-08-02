@@ -1,29 +1,37 @@
-import { isPdf } from "@/utils/utils";
-import { Download } from "lucide-react";
+import { Download, X } from "lucide-react";
 import Image from "next/image";
-import { MouseEventHandler, useState } from "react";
+import { AnyImage } from "../dataTable/tableSheet";
+import { cn } from "@/lib/utils";
 
 type ImageCardProps = {
-  src: string;
-  alt?: string;
+  image: AnyImage;
   handleClick: (index: number) => void;
+  handleDelete: (image: AnyImage) => void;
   index: number;
-  type: string;
 };
 
 export default function ImageCard({
-  src,
-  alt,
+  image,
   handleClick,
+  handleDelete,
   index,
-  type,
 }: ImageCardProps) {
-  const handleDownload = (e: any) => {
+  const { url, type, isServer, name } = image;
+  const handleDownload = async (e: any) => {
     e.stopPropagation();
     const link = document.createElement("a");
-    link.href = src;
-    link.download = src.split("/").pop() || "file";
+    link.href = url;
+    link.download = name;
+
+    if (isServer) {
+      const urlWithDownload =
+        url + (url.includes("?") ? "&" : "?") + "download";
+      link.href = urlWithDownload;
+    }
+
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -35,21 +43,31 @@ export default function ImageCard({
       }}
     >
       <div
-        className="absolute top-4 right-4 z-50 hover:scale-125"
-        onClick={(e) => handleDownload(e)}
+        className="absolute top-5 right-5 z-50 hover:scale-125"
+        onClick={handleDownload}
       >
         <Download />
       </div>
+      <div
+        className="absolute top-0 left-0 z-50 bg-red-500 hover:scale-125"
+        onClick={(e) => {
+          e.stopPropagation();
+          handleDelete(image);
+        }}
+      >
+        <X />
+      </div>
       {type === "application/pdf" ? (
         <iframe
-          src={src}
-          className="transition-transform h-full w-auto pointer-events-none"
-          title={alt || "PDF preview"}
+          src={url}
+          className={cn(
+            "transition-transform h-full w-auto pointer-events-none"
+          )}
         />
       ) : (
         <Image
-          src={src}
-          alt={alt || "uploaded image"}
+          src={url}
+          alt={`image-${index}`}
           height={300}
           width={0}
           className=" transition-transform h-full w-auto"

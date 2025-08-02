@@ -17,14 +17,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "./dialog";
+import { AnyImage } from "../dataTable/tableSheet";
+import { Skeleton } from "./skeleton";
 
 const ImageGallery = ({
+  loading,
   images,
+  handleDelete,
 }: {
-  images: {
-    url: string;
-    type: string;
-  }[];
+  loading: boolean;
+  images: AnyImage[];
+  handleDelete: (image: AnyImage) => void;
 }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [api, setApi] = useState<CarouselApi>();
@@ -47,13 +50,14 @@ const ImageGallery = ({
 
   return (
     <>
-      {images.map(({ url, type }, i) => (
+      {loading && <Skeleton className="h-52 w-44" />}
+      {images.map((image, i) => (
         <ImageCard
-          src={url}
-          key={url}
-          type={type}
+          key={image.url}
+          image={image}
           index={i}
           handleClick={handleImageClick}
+          handleDelete={handleDelete}
         />
       ))}
 
