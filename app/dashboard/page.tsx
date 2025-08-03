@@ -8,9 +8,6 @@ import {
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import { CategorySpendLimitProvider } from "@/context/CategorySpendLimitContext";
-import { getTransactions } from "../api/transactions/route";
-import { getCategories } from "../api/categories/route";
-import { getCategorySpendLimits } from "../api/categorySpendLimits/route";
 
 async function getDashboardData() {
   const supabase = await createClient();
@@ -28,9 +25,13 @@ async function getDashboardData() {
     { data: categoryData, error: categoryError },
     { data: spendLimitData, error: spendLimitError },
   ] = await Promise.all([
-    getTransactions(user),
-    getCategories(),
-    getCategorySpendLimits(user),
+    supabase
+      .from("transaction")
+      .select("*, category(name)")
+      .eq("user_id", user.id)
+      .order("date"),
+    supabase.from("category").select("*"),
+    supabase.from("category_spend_limit").select("*").eq("user_id", user.id),
   ]);
 
   if (transactionError || categoryError || spendLimitError) {

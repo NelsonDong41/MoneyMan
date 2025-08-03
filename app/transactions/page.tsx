@@ -1,16 +1,12 @@
 import { columns } from "@/components/dataTable/columns";
 import { DataTable } from "../../components/dataTable/data-table";
-import { UserProvider } from "@/context/UserContext";
 import { CategoryMap, CategoryMapProvider } from "@/context/CategoryMapContext";
 import { TransactionProvider } from "@/context/TransactionsContext";
 import { TransactionWithCategory } from "@/utils/supabase/supabase";
-import { User } from "@supabase/supabase-js";
 import TransparentCard from "@/components/ui/transparentCard";
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import InteractiveTransactionAreaChart from "@/components/charts/InteractiveTransactionArea/InteractiveTransactionAreaChart";
-import { getCategories } from "../api/categories/route";
-import { getTransactions } from "../api/transactions/route";
 
 async function getTransactionData() {
   const supabase = await createClient();
@@ -26,7 +22,14 @@ async function getTransactionData() {
   const [
     { data: transactionData, error: transactionError },
     { data: categoryData, error: categoryError },
-  ] = await Promise.all([getTransactions(user), getCategories()]);
+  ] = await Promise.all([
+    supabase
+      .from("transaction")
+      .select("*, category(name)")
+      .eq("user_id", user.id)
+      .order("date"),
+    supabase.from("category").select("*"),
+  ]);
 
   if (transactionError || categoryError) {
     throw new Error(

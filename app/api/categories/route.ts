@@ -11,18 +11,13 @@ export type CategoriesErrorResponse = {
   details?: any;
 };
 
-export async function getCategories() {
-  const supabase = await createClient();
-  const response = await supabase.from("category").select("*");
-  return response;
-}
-
 export const dynamic = "force-static";
 
 export async function GET(
   req: NextRequest
 ): Promise<NextResponse<CategoriesResponse | CategoriesErrorResponse>> {
-  const { data, error } = await getCategories();
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("category").select("*");
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

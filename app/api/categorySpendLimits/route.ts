@@ -13,15 +13,6 @@ export type CategorySpendLimitErrorResponse = {
   details?: any;
 };
 
-export async function getCategorySpendLimits(user: User) {
-  const supabase = await createClient();
-
-  return await supabase
-    .from("category_spend_limit")
-    .select("*")
-    .eq("user_id", user.id);
-}
-
 export async function GET(
   req: NextRequest
 ): Promise<
@@ -31,8 +22,12 @@ export async function GET(
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const supabase = await createClient();
 
-  const { data, error } = await getCategorySpendLimits(user);
+  const { data, error } = await supabase
+    .from("category_spend_limit")
+    .select("*")
+    .eq("user_id", user.id);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

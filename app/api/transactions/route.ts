@@ -14,16 +14,6 @@ export type TransactionsErrorResponse = {
   details?: any;
 };
 
-export async function getTransactions(user: User) {
-  const supabase = await createClient();
-
-  return await supabase
-    .from("transaction")
-    .select("*, category(name)")
-    .eq("user_id", user.id)
-    .order("date");
-}
-
 export async function GET(): Promise<
   NextResponse<TransactionsResponse | TransactionsErrorResponse>
 > {
@@ -32,8 +22,12 @@ export async function GET(): Promise<
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data: transactionData, error: transactionError } =
-    await getTransactions(user);
+  const supabase = await createClient();
+  const { data: transactionData, error: transactionError } = await supabase
+    .from("transaction")
+    .select("*, category(name)")
+    .eq("user_id", user.id)
+    .order("date");
 
   if (transactionError) {
     return NextResponse.json(

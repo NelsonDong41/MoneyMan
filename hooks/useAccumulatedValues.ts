@@ -5,6 +5,9 @@ import { useEffect, useState } from "react";
 
 export default function useAccumulatedValues(startDate: string) {
   const { user } = useUser();
+  if (!user) {
+    throw new Error("User shoudl exist when using useAccumulatedValues");
+  }
   const { activeGraphFilters } = useTransactions();
   const [accumuatedIncome, setAccumulatedIncome] = useState(0);
   const [accumulatedSpend, setAccumulatedSpend] = useState(0);
