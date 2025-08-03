@@ -6,7 +6,6 @@ import {
 } from "@/utils/utils";
 import useAccumulatedIncome from "@/hooks/useAccumulatedValues";
 import { useTransactions } from "@/context/TransactionsContext";
-import { format } from "date-fns";
 
 export type InteractiveChartDataEntry = {
   date: string;

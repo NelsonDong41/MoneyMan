@@ -94,7 +94,9 @@ export function PieChartCard({ type }: { type: Type }) {
 
   const categoryConfigObj = buildChartConfig(categoryMap[type]);
 
-  const chartConfig: ChartConfig = categoryConfigObj;
+  const chartConfig: ChartConfig = Object.fromEntries(
+    categoryConfigObj.entries()
+  );
 
   const innerRadius = isMobile ? 30 : 50;
 
@@ -143,12 +145,16 @@ export function PieChartCard({ type }: { type: Type }) {
                       >
                         <stop
                           offset="0%"
-                          stopColor={categoryConfigObj[entry.category].color}
+                          stopColor={
+                            categoryConfigObj.get(entry.category)?.color
+                          }
                           stopOpacity={0.8}
                         />
                         <stop
                           offset="100%"
-                          stopColor={categoryConfigObj[entry.category].color}
+                          stopColor={
+                            categoryConfigObj.get(entry.category)?.color
+                          }
                           stopOpacity={0.55}
                         />
                       </linearGradient>

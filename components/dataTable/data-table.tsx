@@ -105,6 +105,7 @@ export function DataTable<TValue>({
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnOrder, setColumnOrder] =
     React.useState<string[]>(defaultColumnOrder);
+  const [globalFilter, setGlobalFilter] = React.useState<any>([]);
 
   const filteredTransactions = React.useMemo(() => {
     return allTransactions.filter((t) => {
@@ -159,7 +160,8 @@ export function DataTable<TValue>({
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
-    getFilteredRowModel: getFilteredRowModel(),
+    onGlobalFilterChange: setGlobalFilter,
+
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     onColumnOrderChange: setColumnOrder,
@@ -169,6 +171,7 @@ export function DataTable<TValue>({
       columnVisibility,
       rowSelection,
       columnOrder,
+      globalFilter,
     },
   });
 
@@ -190,13 +193,16 @@ export function DataTable<TValue>({
     <div className="p-1 overflow-x-auto">
       <div className="flex justify-between items-center py-4 gap-4">
         <Input
-          placeholder="Filter Transactions..."
-          value={
-            (table.getColumn("description")?.getFilterValue() as string) ?? ""
-          }
-          onChange={(event) =>
-            table.getColumn("description")?.setFilterValue(event.target.value)
-          }
+          // placeholder="Search Transactions..."
+          // value={
+          //   (table.getColumn("description")?.getFilterValue() as string) ?? ""
+          // }
+          // onChange={(event) =>
+          //   table.getColumn("description")?.setFilterValue(event.target.value)
+          // }
+          value={globalFilter}
+          onChange={(e) => table.setGlobalFilter(String(e.target.value))}
+          placeholder="Search..."
           className="max-w-sm rounded-lg"
         />
         <div className="flex gap-4">

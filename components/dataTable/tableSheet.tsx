@@ -570,7 +570,7 @@ export default function TableSheet({
           </Button>
           <SheetClose asChild>
             <Button variant="outline" className="w-full">
-              Done
+              Cancel
             </Button>
           </SheetClose>
         </SheetFooter>

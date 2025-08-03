@@ -34,7 +34,9 @@ export default function TransactionComposedChart({
 }: TransactionComposedChartProps) {
   const isMobile = useIsMobile();
   const { activeGraphFilters } = useTransactions();
-  const categoryConfigObj = buildChartConfig(activeGraphFilters.categories);
+  const categoryConfigObj = Object.fromEntries(
+    buildChartConfig(activeGraphFilters.categories).entries()
+  );
 
   const chartConfig: ChartConfig = {
     expense: {
@@ -169,12 +171,12 @@ export default function TransactionComposedChart({
 
 export function buildChartConfig(
   categories: string[]
-): Record<string, { label: string; color: string }> {
+): Map<string, { label: string; color: string }> {
   return categories.reduce(
     (acc, c) => {
-      acc[c] = { label: c, color: stringToOklchColor(c) };
+      acc.set(c, { label: c, color: stringToOklchColor(c) });
       return acc;
     },
-    {} as Record<string, { label: string; color: string }>
+    {} as Map<string, { label: string; color: string }>
   );
 }
