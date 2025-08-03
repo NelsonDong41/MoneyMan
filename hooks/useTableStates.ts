@@ -139,7 +139,19 @@ export default function useTableStates() {
         return new Set(prev).union(idSet);
       });
 
-      console.log("user before making delete reqeuest", user);
+      const imageDeleteResponse = await fetch("/api/images", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(ids),
+      });
+
+      if (!imageDeleteResponse.ok) {
+        const { error } =
+          (await imageDeleteResponse.json()) as ImagesErrorResponse;
+        console.error("Error deleting transaction's images:", error);
+        toast("Error deleting transaction's images", { description: error });
+      }
+
       const response = await fetch("/api/transactions", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
@@ -147,9 +159,10 @@ export default function useTableStates() {
       });
 
       if (!response.ok) {
-        const { error } = await response.json();
+        const { error } = (await response.json()) as TransactionsErrorResponse;
+        toast("Error deleting transaction's images", { description: error });
+
         console.error("Error deleting transaction:", error);
-        return null;
       }
 
       router.refresh();

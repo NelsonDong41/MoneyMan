@@ -98,6 +98,53 @@ export const columns = (
         return cell;
       },
     });
+
+    columns.push({
+      id: "actions",
+      cell: ({ row }) => {
+        const transaction = row.original;
+        const [deleteOpen, setDeleteOpen] = useState(false);
+
+        return (
+          <div
+            className="flex justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <span className="sr-only">Open menu</span>
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuItem
+                  onClick={() => copyObjectToClipboard(transaction)}
+                >
+                  Copy Transaction info
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>View Transaction Image</DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setDeleteOpen((prev) => !prev)}
+                >
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DeleteAlert
+              showTrigger={false}
+              onOpenChange={setDeleteOpen}
+              open={deleteOpen}
+              action={() =>
+                sheetActions.deleteRows([transaction.id], transaction.user_id)
+              }
+            />
+          </div>
+        );
+      },
+    });
   }
 
   columns = columns.concat([
@@ -279,52 +326,6 @@ export const columns = (
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="notes" />
       ),
-    },
-    {
-      id: "actions",
-      cell: ({ row }) => {
-        const transaction = row.original;
-        const [deleteOpen, setDeleteOpen] = useState(false);
-
-        return (
-          <div
-            className="flex justify-center"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                  <span className="sr-only">Open menu</span>
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuItem
-                  onClick={() => copyObjectToClipboard(transaction)}
-                >
-                  Copy Transaction info
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>View Transaction Image</DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setDeleteOpen((prev) => !prev)}
-                >
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <DeleteAlert
-              showTrigger={false}
-              onOpenChange={setDeleteOpen}
-              open={deleteOpen}
-              action={() =>
-                sheetActions.deleteRows([transaction.id], transaction.user_id)
-              }
-            />
-          </div>
-        );
-      },
     },
   ]);
 

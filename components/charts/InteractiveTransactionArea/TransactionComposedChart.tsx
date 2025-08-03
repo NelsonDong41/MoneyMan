@@ -172,11 +172,8 @@ export default function TransactionComposedChart({
 export function buildChartConfig(
   categories: string[]
 ): Map<string, { label: string; color: string }> {
-  return categories.reduce(
-    (acc, c) => {
-      acc.set(c, { label: c, color: stringToOklchColor(c) });
-      return acc;
-    },
-    {} as Map<string, { label: string; color: string }>
-  );
+  return categories.reduce((acc, c) => {
+    acc.set(c, { label: c, color: stringToOklchColor(c) });
+    return acc;
+  }, new Map());
 }

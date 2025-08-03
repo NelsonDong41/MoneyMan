@@ -193,13 +193,6 @@ export function DataTable<TValue>({
     <div className="p-1 overflow-x-auto">
       <div className="flex justify-between items-center py-4 gap-4">
         <Input
-          // placeholder="Search Transactions..."
-          // value={
-          //   (table.getColumn("description")?.getFilterValue() as string) ?? ""
-          // }
-          // onChange={(event) =>
-          //   table.getColumn("description")?.setFilterValue(event.target.value)
-          // }
           value={globalFilter}
           onChange={(e) => table.setGlobalFilter(String(e.target.value))}
           placeholder="Search..."
