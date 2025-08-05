@@ -24,7 +24,7 @@ export async function DELETE(
   const supabase = await createClient();
   const foldersToDelete = body.map((id) => buildSupabaseFolderPath(user, id));
 
-  const allFilesToDeletePromise = foldersToDelete.map((folder) => {
+  const allFilesToDeletePromise = foldersToDelete.map(async (folder) => {
     return supabase.storage
       .from("images")
       .list(folder)
@@ -32,24 +32,35 @@ export async function DELETE(
         if (response.error || !response.data) {
           return;
         }
-        supabase.storage
+        return supabase.storage
           .from("images")
           .remove(response.data.map((fileObj) => `${folder}/${fileObj.name}`));
       });
   });
 
-  const allFilesToDelete = await Promise.all(allFilesToDeletePromise);
+  const allFilesToDeleteResponse = await Promise.all(allFilesToDeletePromise);
 
-  console.log(JSON.stringify(allFilesToDelete, null, 2));
-  //   allFilesToDelete.map((file) => {
-  //     supabase.storage.from("images").remove(file);
-  //   });
+  let someErrors = false;
 
-  const { data, error } = await supabase.storage.from("images").remove([""]);
+  const allErrors = allFilesToDeleteResponse.map((response) => {
+    if (response?.error) {
+      someErrors = true;
+    }
+    return response?.error;
+  });
 
-  if (error) {
-    return NextResponse.json({ error: error.message, status: 500 });
+  if (someErrors) {
+    return NextResponse.json({
+      error: allErrors.map((error) => error?.message).join(" | "),
+      status: 500,
+    });
   }
 
-  return NextResponse.json({ success: true, data });
+  const allData = allFilesToDeleteResponse
+    .map((response) => response?.data)
+    .filter((data) => !!data)
+    .flat();
+
+  console.log(allData);
+  return NextResponse.json({ success: true, data: allData });
 }
