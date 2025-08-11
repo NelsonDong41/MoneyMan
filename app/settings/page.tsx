@@ -1,15 +1,9 @@
 import { CategoryMap, CategoryMapProvider } from "@/context/CategoryMapContext";
-import { TransactionProvider } from "@/context/TransactionsContext";
-import DashboardGrid from "./DashboardGrid";
-import {
-  CategorySpendLimitRecord,
-  TransactionWithCategory,
-} from "@/utils/supabase/supabase";
+import { CategorySpendLimitRecord } from "@/utils/supabase/supabase";
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import { CategorySpendLimitProvider } from "@/context/CategorySpendLimitContext";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import SettingsForm from "./SettingsForm";
 
 async function getDashboardData() {
   const supabase = await createClient();
@@ -23,25 +17,17 @@ async function getDashboardData() {
   }
 
   const [
-    { data: transactionData, error: transactionError },
     { data: categoryData, error: categoryError },
     { data: spendLimitData, error: spendLimitError },
   ] = await Promise.all([
-    supabase
-      .from("transaction")
-      .select("*, category(name)")
-      .eq("user_id", user.id)
-      .order("date"),
     supabase.from("category").select("*"),
     supabase.from("category_spend_limit").select("*").eq("user_id", user.id),
   ]);
 
-  if (transactionError || categoryError || spendLimitError) {
+  if (categoryError || spendLimitError) {
     throw new Error(
       "Error fetching data from supabase: " +
-        (transactionError?.message ||
-          categoryError?.message ||
-          spendLimitError?.message)
+        (categoryError?.message || spendLimitError?.message)
     );
   }
 
@@ -56,27 +42,19 @@ async function getDashboardData() {
   }, initCategoryMap);
 
   return {
-    transactions: transactionData,
     categoryMap,
     categorySpendLimits: spendLimitData,
   };
 }
 
-export default async function Dashboard() {
+export default async function Settings() {
   const data = await getDashboardData();
   return (
     <>
       <div className="max-w-full sm:max-w-screen-2xl w-full">
-        <h1 className="text-2xl font-bold mb-6 pt-6 flex justify-between">
-          Dashboard{" "}
-          <Button variant={"outline"}>
-            <Link href={"/limits"} className="w-full h-full">
-              Spending Limits
-            </Link>
-          </Button>
-        </h1>
+        <h1 className="text-2xl font-bold mb-6 pt-6">Dashboard</h1>
         <Providers {...data}>
-          <DashboardGrid />
+          <SettingsForm />
         </Providers>
       </div>
     </>
@@ -84,23 +62,19 @@ export default async function Dashboard() {
 }
 
 function Providers({
-  transactions,
   categoryMap,
   categorySpendLimits,
   children,
 }: {
-  transactions: TransactionWithCategory[];
   categoryMap: CategoryMap;
   categorySpendLimits: CategorySpendLimitRecord[];
   children: React.ReactNode;
 }) {
   return (
-    <TransactionProvider initial={transactions}>
-      <CategoryMapProvider initial={categoryMap}>
-        <CategorySpendLimitProvider initial={categorySpendLimits}>
-          {children}
-        </CategorySpendLimitProvider>
-      </CategoryMapProvider>
-    </TransactionProvider>
+    <CategoryMapProvider initial={categoryMap}>
+      <CategorySpendLimitProvider initial={categorySpendLimits}>
+        {children}
+      </CategorySpendLimitProvider>
+    </CategoryMapProvider>
   );
 }

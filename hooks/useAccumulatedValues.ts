@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 export default function useAccumulatedValues(startDate: string) {
   const { user } = useUser();
   if (!user) {
-    throw new Error("User shoudl exist when using useAccumulatedValues");
+    throw new Error("User should exist when using useAccumulatedValues");
   }
   const { activeGraphFilters } = useTransactions();
   const [accumuatedIncome, setAccumulatedIncome] = useState(0);
@@ -45,7 +45,7 @@ export default function useAccumulatedValues(startDate: string) {
           numOutgoingTransactions += 1;
         }
         if (transactionData.type === "Income") {
-          spendSum += transactionData.amount;
+          incomeSum += transactionData.amount;
           numIncomingTransactions += 1;
         }
       });

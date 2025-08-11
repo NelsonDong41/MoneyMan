@@ -40,8 +40,8 @@ export default async function RootLayout({
         <Toaster position="bottom-left" expand={true} richColors closeButton />
         <SplashCursor />
         <main className="min-h-screen flex flex-col items-center">
+          <Header />
           <Providers user={user}>
-            <Header />
             <div className="flex flex-col p-5 w-full items-center sm:pt-32 mb-40">
               {children}
             </div>

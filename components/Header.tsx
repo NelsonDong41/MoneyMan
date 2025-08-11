@@ -1,9 +1,18 @@
 import Link from "next/link";
-import AuthButton from "./header-auth";
-import { LayoutDashboard, Table2 } from "lucide-react";
+import { LayoutDashboard, Table2, User } from "lucide-react";
 import { ThemeSwitcher } from "./theme-switcher";
 import ShinyText from "./ui/shinyText";
 import { createClient } from "@/utils/supabase/server";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import { signInAction, signOutAction } from "@/app/actions";
 
 export default async function Header() {
   const supabase = await createClient();
@@ -11,6 +20,35 @@ export default async function Header() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  const ProfileDropdown = () => {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <User className="cursor-pointer hover:scale-110" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-56" align="end">
+          <DropdownMenuLabel>Hey, {user?.email} </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem>
+            {user ? (
+              <form action={signOutAction}>
+                <button type="submit" className="w-full h-full">
+                  Sign out
+                </button>
+              </form>
+            ) : (
+              <form action={signInAction}>
+                <button type="submit" className="w-full h-full">
+                  Sign in
+                </button>
+              </form>
+            )}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
 
   return (
     <>
@@ -24,12 +62,15 @@ export default async function Header() {
               <>
                 <Link href={"/dashboard"}>Dashboard</Link>
                 <Link href={"/transactions"}>Transactions</Link>
+                <Link href={"/gallery"}>Gallery</Link>
               </>
             )}
           </div>
 
-          <ThemeSwitcher />
-          <AuthButton />
+          <div className="flex gap-5">
+            <ThemeSwitcher />
+            <ProfileDropdown />
+          </div>
         </div>
       </nav>
       <nav className="flex sm:hidden fixed z-50 justify-center border-t border-t-foreground/10 bottom-0 sm:w-full h-20 px-20 bg-background w-full">
@@ -45,7 +86,7 @@ export default async function Header() {
             </>
           )}
           <ThemeSwitcher />
-          <AuthButton />
+          <ProfileDropdown />
         </div>
       </nav>
     </>
