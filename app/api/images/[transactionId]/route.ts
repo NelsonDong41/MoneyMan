@@ -85,7 +85,6 @@ export async function PUT(
   req: Request,
   props: { params: Promise<{ transactionId: number }> }
 ): Promise<NextResponse<ImagesPutResponse | ImagesErrorResponse>> {
-  console.log("backend put endpoint hit");
   const params = await props.params;
   const transactionId = params.transactionId;
 
@@ -118,8 +117,6 @@ export async function PUT(
   ) {
     return NextResponse.json({ success: true, data: null });
   }
-
-  console.log(imagesToAdd, imagesToDelete);
 
   const supabase = await createClient();
   const allImagesToAddPromises = imagesToAdd?.map((image) => {

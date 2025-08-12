@@ -46,4 +46,4 @@ export function useCategoryMap() {
   return context;
 }
 
-export type CategoryMap = Record<Type, string[]>;
+export type CategoryMap = Map<Type, string[]>;

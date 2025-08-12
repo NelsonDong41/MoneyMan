@@ -72,13 +72,6 @@ export default function SectionCards() {
     ? outgoingTransactionsCountDiff / lastMonthOutgoingTransactions
     : undefined;
 
-  console.log({
-    incomingTransactionsPercentDiff,
-    incomingTransactionsCountDiff,
-    totalIncomingTransactions,
-    lastMonthIncomingTransactions,
-  });
-
   let incomeValueFooter: React.ReactNode = (
     <>
       No Money Earned Last Month, up $${accumulatedIncome.toFixed(2)}

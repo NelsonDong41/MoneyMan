@@ -6,7 +6,6 @@ import {
   useMotionValueEvent,
   useTransform,
 } from "framer-motion";
-import { Input } from "../input";
 import { ControllerRenderProps } from "react-hook-form";
 
 const MAX_OVERFLOW = 50;
@@ -27,7 +26,7 @@ const ElasticSlider = ({
 > & { className?: string }) => {
   return (
     <div
-      className={`flex flex-col items-center justify-center gap-4 w-full ${className}`}
+      className={`flex flex-col items-center justify-center gap-4 ${className}`}
     >
       <Slider value={value} onChange={onChange} {...props} />
     </div>

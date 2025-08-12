@@ -90,7 +90,7 @@ export default function InteractiveCategoryAreaChart({
           </span>
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex-1 p-0 w-full max-h-[300px] h-full">
+      <CardContent className="flex-1 p-0 w-full max-h-[400px] h-full">
         {!dataTableEntries.length && <div className="h-full w-full sm:p-6" />}
 
         {!!dataTableEntries.length && (
@@ -101,11 +101,6 @@ export default function InteractiveCategoryAreaChart({
             setActiveIndex={setActiveIndex}
             setDataTableModalOpen={setDataTableModalOpen}
           />
-        )}
-      </CardContent>
-      <CardContent className="flex-1 p-0 w-full">
-        {pieSelectedCategory && type === "Expense" && (
-          <CategorySpendLimitSlider category={pieSelectedCategory} />
         )}
       </CardContent>
       <Dialog

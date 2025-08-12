@@ -10,6 +10,7 @@ import { redirect } from "next/navigation";
 import { CategorySpendLimitProvider } from "@/context/CategorySpendLimitContext";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import SpendingLimitsPopover from "./SpendingLimitsPopover";
 
 async function getDashboardData() {
   const supabase = await createClient();
@@ -45,13 +46,14 @@ async function getDashboardData() {
     );
   }
 
-  const initCategoryMap: CategoryMap = {
-    Income: [],
-    Expense: [],
-  };
+  const initCategoryMap: CategoryMap = new Map();
+
+  initCategoryMap.set("Income", []);
+  initCategoryMap.set("Expense", []);
+
   const categoryMap: CategoryMap = categoryData.reduce((acc, curr) => {
     const { type, name } = curr;
-    acc[type].push(name);
+    acc.get(type)!.push(name);
     return acc;
   }, initCategoryMap);
 
@@ -67,15 +69,10 @@ export default async function Dashboard() {
   return (
     <>
       <div className="max-w-full sm:max-w-screen-2xl w-full">
-        <h1 className="text-2xl font-bold mb-6 pt-6 flex justify-between">
-          Dashboard{" "}
-          <Button variant={"outline"}>
-            <Link href={"/limits"} className="w-full h-full">
-              Spending Limits
-            </Link>
-          </Button>
-        </h1>
         <Providers {...data}>
+          <h1 className="text-2xl font-bold mb-6 pt-6 flex justify-between">
+            Dashboard <SpendingLimitsPopover />
+          </h1>
           <DashboardGrid />
         </Providers>
       </div>

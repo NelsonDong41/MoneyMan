@@ -92,7 +92,7 @@ export function PieChartCard({ type }: { type: Type }) {
     new Date(activeGraphFilters.timeRange[0])
   )} - ${formatDateHuman(new Date(activeGraphFilters.timeRange[1]))}`;
 
-  const categoryConfigObj = buildChartConfig(categoryMap[type]);
+  const categoryConfigObj = buildChartConfig(categoryMap.get(type) || []);
 
   const chartConfig: ChartConfig = Object.fromEntries(
     categoryConfigObj.entries()

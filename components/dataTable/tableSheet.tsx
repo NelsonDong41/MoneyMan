@@ -23,7 +23,6 @@ import CurrencyInput from "@/components/ui/currencyInput";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import DeleteAlert from "./deleteAlert";
-import { transactionFormSchema } from "@/utils/schemas/transactionFormSchema";
 import { Title } from "@radix-ui/react-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -66,6 +65,7 @@ import {
 import { User } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
+import { Type } from "@/utils/supabase/supabase";
 
 type TableSheetProps = {
   isNewSheet: boolean;
@@ -378,41 +378,14 @@ export default function TableSheet({
                           </FormControl>
                         </PopoverTrigger>
                         <PopoverContent className="w-full p-0 z-50 border border-accent rounded-lg">
-                          <Command>
-                            <CommandInput
-                              placeholder="Search category..."
-                              className="h-9"
-                            />
-                            <CommandList>
-                              <CommandEmpty>No category found.</CommandEmpty>
-                              <CommandGroup>
-                                {categoryMap[form.getValues("type")].map(
-                                  (category, i) => (
-                                    <CommandItem
-                                      value={`${category}-select`}
-                                      key={category}
-                                      onSelect={() => {
-                                        form.setValue("category", category);
-                                        setOpen(false);
-                                      }}
-                                      className={i === 0 ? "font-bold" : ""}
-                                    >
-                                      {i !== 0 && <span className="px-1.5" />}
-                                      {category}
-                                      <Check
-                                        className={cn(
-                                          "ml-auto",
-                                          category === field.value
-                                            ? "opacity-100"
-                                            : "opacity-0"
-                                        )}
-                                      />
-                                    </CommandItem>
-                                  )
-                                )}
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
+                          <CategoryCommand
+                            value={field.value}
+                            type={form.getValues("type")}
+                            onSelect={(e) => {
+                              field.onChange(e);
+                              setOpen(false);
+                            }}
+                          />
                         </PopoverContent>
                       </Popover>
                       <FormMessage />
@@ -721,3 +694,38 @@ export const convertFileObjectToServerImage = (
     isServer: true,
   };
 };
+
+type CategoryCommand = {
+  value: string;
+  type: Type;
+  onSelect: (category: string) => void;
+};
+
+export function CategoryCommand({ value, type, onSelect }: CategoryCommand) {
+  const { categoryMap } = useCategoryMap();
+  return (
+    <Command>
+      <CommandInput placeholder="Search category..." className="h-9" />
+      <CommandList>
+        <CommandEmpty>No category found.</CommandEmpty>
+        <CommandGroup>
+          {categoryMap[type].map((category: any) => (
+            <CommandItem
+              value={`${category}`}
+              key={category}
+              onSelect={onSelect}
+            >
+              {category}
+              <Check
+                className={cn(
+                  "ml-auto",
+                  category === value ? "opacity-100" : "opacity-0"
+                )}
+              />
+            </CommandItem>
+          ))}
+        </CommandGroup>
+      </CommandList>
+    </Command>
+  );
+}

@@ -6,8 +6,6 @@ import TransparentCard from "@/components/ui/transparentCard";
 import { PieChartCard } from "@/components/charts/PieChart/PieChartCard";
 import SectionCards from "@/components/charts/SectionCards/SectionCards";
 import InteractiveTransactionAreaChart from "@/components/charts/InteractiveTransactionArea/InteractiveTransactionAreaChart";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 
 const layouts: Layouts = {
   lg: [

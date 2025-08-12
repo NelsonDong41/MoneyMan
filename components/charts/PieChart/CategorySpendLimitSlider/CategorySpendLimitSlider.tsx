@@ -65,7 +65,7 @@ export default function CategorySpendLimitSlider({
         className="flex flex-col gap-4 p-1 justify-center"
         onSubmit={handleFormSubmit}
       >
-        <div className="flex flex-row justify-center items-center gap-5">
+        <div className="w-full max-w-[50vw] flex flex-row justify-between items-center px-52">
           <FormField control={form.control} name="id" render={() => <></>} />
           <FormField
             control={form.control}

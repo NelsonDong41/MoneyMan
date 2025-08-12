@@ -61,6 +61,5 @@ export async function DELETE(
     .filter((data) => !!data)
     .flat();
 
-  console.log(allData);
   return NextResponse.json({ success: true, data: allData });
 }
