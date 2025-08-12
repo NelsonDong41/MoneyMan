@@ -3,9 +3,11 @@ import useAccumulatedValues from "@/hooks/useAccumulatedValues";
 import {
   formatDateDash,
   getFirstDateOfMonth,
+  getLastDateOfMonth,
   getLastMonth,
 } from "@/utils/utils";
 import { Layouts, Responsive, WidthProvider } from "react-grid-layout";
+import { TrendingDown, TrendingUp, TrendingUpDown } from "lucide-react";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -30,35 +32,125 @@ export default function SectionCards() {
   const firstDateOfMonth = getFirstDateOfMonth(todayFormatted);
   const firstDateLastMonth = getFirstDateOfMonth(getLastMonth(todayFormatted));
   const {
-    accumuatedIncome,
+    accumulatedIncome,
     accumulatedSpend,
     totalIncomingTransactions,
     totalOutgoingTransactions,
-  } = useAccumulatedValues(firstDateOfMonth);
+  } = useAccumulatedValues({
+    startDate: firstDateOfMonth,
+    endDate: getLastDateOfMonth(todayFormatted),
+  });
   const {
-    accumuatedIncome: lastMonthIncome,
+    accumulatedIncome: lastMonthIncome,
     accumulatedSpend: lastMonthSpend,
     totalIncomingTransactions: lastMonthIncomingTransactions,
     totalOutgoingTransactions: lastMonthOutgoingTransactions,
-  } = useAccumulatedValues(firstDateLastMonth);
+  } = useAccumulatedValues({
+    startDate: firstDateLastMonth,
+    endDate: getLastDateOfMonth(getLastMonth(todayFormatted)),
+  });
 
+  const incomeDiff = accumulatedIncome - lastMonthIncome;
   const incomePercentDiff = !!lastMonthIncome
-    ? (accumuatedIncome - lastMonthIncome) / lastMonthIncome
+    ? incomeDiff / lastMonthIncome
     : undefined;
 
+  const spendDiff = accumulatedSpend - lastMonthSpend;
   const spendPercentDiff = !!lastMonthSpend
-    ? (accumulatedSpend - lastMonthSpend) / lastMonthSpend
+    ? spendDiff / lastMonthSpend
     : undefined;
 
-  const outgoingTransactionsDiff = !!lastMonthOutgoingTransactions
-    ? (totalOutgoingTransactions - lastMonthOutgoingTransactions) /
-      lastMonthOutgoingTransactions
+  const incomingTransactionsCountDiff =
+    totalIncomingTransactions - lastMonthIncomingTransactions;
+  const incomingTransactionsPercentDiff = !!lastMonthIncomingTransactions
+    ? incomingTransactionsCountDiff / lastMonthIncomingTransactions
     : undefined;
 
-  const incomingTransactionsDiff = !!lastMonthIncomingTransactions
-    ? (totalIncomingTransactions - lastMonthIncomingTransactions) /
-      lastMonthIncomingTransactions
+  const outgoingTransactionsCountDiff =
+    totalOutgoingTransactions - lastMonthOutgoingTransactions;
+  const outgoingTransactionsPercentDiff = !!lastMonthOutgoingTransactions
+    ? outgoingTransactionsCountDiff / lastMonthOutgoingTransactions
     : undefined;
+
+  console.log({
+    incomingTransactionsPercentDiff,
+    incomingTransactionsCountDiff,
+    totalIncomingTransactions,
+    lastMonthIncomingTransactions,
+  });
+
+  let incomeValueFooter: React.ReactNode = (
+    <>
+      No Money Earned Last Month, up $${accumulatedIncome.toFixed(2)}
+      <div className={`text-green-500`}>
+        <TrendingUp />
+      </div>
+    </>
+  );
+  let incomeValueColor = "white";
+
+  if (incomeDiff) {
+    incomeValueColor = incomeDiff >= 0 ? "green" : "red";
+    incomeValueFooter = (
+      <>
+        Income {incomeDiff >= 0 ? "Up" : "Down"} by $
+        {Math.abs(incomeDiff).toFixed(2)} since last month
+        <div className={`text-${incomeValueColor}-500`}>
+          {incomeDiff >= 0 ? <TrendingUp /> : <TrendingDown />}
+        </div>
+      </>
+    );
+  }
+
+  let spendValueFooter: React.ReactNode = (
+    <>
+      No Money Spent Last Month, up ${accumulatedIncome.toFixed(2)}
+      <div className={`text-red-500`}>
+        <TrendingUp />
+      </div>
+    </>
+  );
+  let spendValueColor = "white";
+  if (spendDiff) {
+    spendValueColor = spendDiff >= 0 ? "red" : "green";
+    spendValueFooter = (
+      <>
+        Spend {spendDiff >= 0 ? "Up" : "Down"} by $
+        {Math.abs(spendDiff).toFixed(2)} since last month
+        <div className={`text-${spendValueColor}-500`}>
+          {spendDiff >= 0 ? <TrendingUp /> : <TrendingDown />}
+        </div>
+      </>
+    );
+  }
+
+  const incomingTransactionsColor =
+    incomingTransactionsCountDiff >= 0 ? "green" : "red";
+
+  let incomingTransactionsFooter: React.ReactNode = (
+    <>
+      {incomingTransactionsCountDiff >= 0 ? "Up" : "Down"} by{" "}
+      {incomingTransactionsCountDiff} from last month's{" "}
+      <strong>{lastMonthIncomingTransactions}</strong> transactions
+      <div className={`text-${incomingTransactionsColor}-500`}>
+        <TrendingUp />
+      </div>
+    </>
+  );
+
+  const outgoingTransactionsColor =
+    outgoingTransactionsCountDiff >= 0 ? "red" : "green";
+
+  let outgoingTransactionsFooter: React.ReactNode = (
+    <>
+      {outgoingTransactionsCountDiff >= 0 ? "Up" : "Down"} by{" "}
+      {outgoingTransactionsCountDiff} from last month's{" "}
+      <strong>{lastMonthOutgoingTransactions}</strong> transactions
+      <div className={`text-${outgoingTransactionsColor}-500`}>
+        <TrendingUp />
+      </div>
+    </>
+  );
 
   return (
     <ResponsiveGridLayout
@@ -71,32 +163,38 @@ export default function SectionCards() {
     >
       <div key="a" className="rounded shadow sm:p2 drag-handle">
         <SectionCard
-          title={`$${accumuatedIncome.toFixed(2)}`}
+          title={`$${accumulatedIncome.toFixed(2)}`}
           description="Monthly Income"
-          value={incomePercentDiff}
+          badgeValue={incomePercentDiff}
+          footer={incomeValueFooter}
+          color={incomeValueColor}
         />
       </div>
       <div key="b" className="rounded shadow sm:p2 drag-handle">
         <SectionCard
           title={`$${accumulatedSpend.toFixed(2)}`}
           description="Monthly Spend"
-          value={spendPercentDiff}
-          isMoreBetter={false}
+          badgeValue={spendPercentDiff}
+          footer={spendValueFooter}
+          color={spendValueColor}
         />
       </div>
       <div key="c" className="rounded shadow sm:p2 drag-handle">
         <SectionCard
           title={`${totalIncomingTransactions}`}
           description="Monthly Incoming transactions"
-          value={incomingTransactionsDiff}
+          badgeValue={incomingTransactionsPercentDiff}
+          footer={incomingTransactionsFooter}
+          color={incomingTransactionsColor}
         />
       </div>
       <div key="d" className="rounded shadow sm:p2 drag-handle">
         <SectionCard
           title={`${totalOutgoingTransactions}`}
           description="Monthly Outgoing transactions"
-          value={outgoingTransactionsDiff}
-          isMoreBetter={false}
+          badgeValue={outgoingTransactionsPercentDiff}
+          footer={outgoingTransactionsFooter}
+          color={outgoingTransactionsColor}
         />
       </div>
     </ResponsiveGridLayout>

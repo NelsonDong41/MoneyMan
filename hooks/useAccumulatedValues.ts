@@ -3,29 +3,42 @@ import { useUser } from "@/context/UserContext";
 import { createClient } from "@/utils/supabase/client";
 import { useEffect, useState } from "react";
 
-export default function useAccumulatedValues(startDate: string) {
+export default function useAccumulatedValues({
+  startDate,
+  endDate,
+}: {
+  startDate?: string;
+  endDate?: string;
+}) {
   const { user } = useUser();
   if (!user) {
     throw new Error("User should exist when using useAccumulatedValues");
   }
   const { activeGraphFilters } = useTransactions();
-  const [accumuatedIncome, setAccumulatedIncome] = useState(0);
+  const [accumulatedIncome, setAccumulatedIncome] = useState(0);
   const [accumulatedSpend, setAccumulatedSpend] = useState(0);
-  const accumuatedProfit = accumuatedIncome - accumulatedSpend;
+  const accumuatedProfit = accumulatedIncome - accumulatedSpend;
   const [totalIncomingTransactions, setTotalIncomingTransactions] = useState(0);
   const [totalOutgoingTransactions, setTotalOutgoingTransactions] = useState(0);
 
   const supabase = createClient();
 
   useEffect(() => {
-    if (!startDate) return setAccumulatedIncome(0);
-    const getStartingIncome = async (startDate: string) => {
-      const { data: transactionData, error } = await supabase
+    if (!endDate) return setAccumulatedIncome(0);
+    const getStartingIncome = async () => {
+      let supabaseQuery = supabase
         .from("transaction")
         .select("amount, type")
         .eq("user_id", user.id)
-        .neq("status", "Canceled")
-        .lt("date", startDate);
+        .neq("status", "Canceled");
+      if (startDate) {
+        supabaseQuery = supabaseQuery.gt("date", startDate);
+      }
+      if (endDate) {
+        supabaseQuery = supabaseQuery.lt("date", endDate);
+      }
+
+      const { data: transactionData, error } = await supabaseQuery;
 
       if (error) {
         console.error(
@@ -56,10 +69,10 @@ export default function useAccumulatedValues(startDate: string) {
       setTotalOutgoingTransactions(numOutgoingTransactions);
     };
 
-    getStartingIncome(startDate);
-  }, [activeGraphFilters.timeRange, startDate]);
+    getStartingIncome();
+  }, [activeGraphFilters.timeRange, startDate, endDate]);
   return {
-    accumuatedIncome,
+    accumulatedIncome,
     accumulatedSpend,
     accumuatedProfit,
     totalIncomingTransactions,

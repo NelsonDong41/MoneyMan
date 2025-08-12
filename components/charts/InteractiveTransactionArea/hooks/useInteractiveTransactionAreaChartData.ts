@@ -29,9 +29,9 @@ export default function useInteractiveTransactionAreaChartData() {
     categories.map((cat) => [cat, 0])
   );
 
-  const { accumuatedProfit } = useAccumulatedIncome(
-    activeGraphFilters.timeRange[0]
-  );
+  const { accumuatedProfit } = useAccumulatedIncome({
+    endDate: activeGraphFilters.timeRange[0],
+  });
 
   const { periods: aggregatedPeriods, periodType } = useMemo(() => {
     return getAggregatedPeriodsInRange(

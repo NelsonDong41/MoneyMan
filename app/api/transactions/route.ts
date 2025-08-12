@@ -3,7 +3,6 @@ import { transactionFormSchema } from "@/utils/schemas/transactionFormSchema";
 import { createClient, getUserFromRequest } from "@/utils/supabase/server";
 import { z } from "zod";
 import { TransactionWithCategory } from "@/utils/supabase/supabase";
-import { User } from "@supabase/supabase-js";
 
 export type TransactionsResponse = {
   success: true;
