@@ -1,7 +1,8 @@
+"use client";
 import { Download, X } from "lucide-react";
 import Image from "next/image";
-import { AnyImage } from "../dataTable/tableSheet";
 import { cn } from "@/lib/utils";
+import { AnyImage } from "../dataTable/hooks/useTransactionImages";
 
 type ImageCardProps = {
   image: AnyImage;
@@ -16,16 +17,18 @@ export default function ImageCard({
   handleDelete,
   index,
 }: ImageCardProps) {
-  const { url, type, isServer, name } = image;
+  const { image_public_path, type, isServer, name } = image;
   const handleDownload = async (e: any) => {
     e.stopPropagation();
     const link = document.createElement("a");
-    link.href = url;
+    link.href = image_public_path;
     link.download = name;
 
     if (isServer) {
       const urlWithDownload =
-        url + (url.includes("?") ? "&" : "?") + "download";
+        image_public_path +
+        (image_public_path.includes("?") ? "&" : "?") +
+        "download";
       link.href = urlWithDownload;
     }
 
@@ -36,7 +39,7 @@ export default function ImageCard({
 
   return (
     <div
-      className="flex-shrink-0 h-52 relative w-auto cursor-pointer hover:scale-105"
+      className="flex-shrink-0 h-52 relative w-auto cursor-pointer hover:scale-105 transition-transform"
       onClick={(e) => {
         e.preventDefault();
         handleClick(index);
@@ -59,14 +62,14 @@ export default function ImageCard({
       </div>
       {type === "application/pdf" ? (
         <iframe
-          src={url}
+          src={image_public_path}
           className={cn(
             "transition-transform h-full w-auto pointer-events-none"
           )}
         />
       ) : (
         <Image
-          src={url}
+          src={image_public_path}
           alt={`image-${index}`}
           height={300}
           width={0}

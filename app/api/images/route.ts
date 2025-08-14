@@ -1,11 +1,11 @@
 import { createClient, getUserFromRequest } from "@/utils/supabase/server";
-import { buildSupabaseFolderPath } from "@/utils/utils";
+import { Tables } from "@/utils/supabase/types";
 import { NextResponse } from "next/server";
-import { FileObject } from "./[transactionId]/route";
+import { ImagesGetResponse } from "./[transactionId]/route";
 
 export type ImagesDeleteResponse = {
   success: true;
-  data: FileObject[];
+  data: Tables<"transaction_to_images">[];
 };
 export type ImagesErrorResponse = {
   error: string;
@@ -22,44 +22,82 @@ export async function DELETE(
 
   const body: number[] = await req.json();
   const supabase = await createClient();
-  const foldersToDelete = body.map((id) => buildSupabaseFolderPath(user, id));
 
-  const allFilesToDeletePromise = foldersToDelete.map(async (folder) => {
-    return supabase.storage
-      .from("images")
-      .list(folder)
-      .then((response) => {
-        if (response.error || !response.data) {
-          return;
-        }
-        return supabase.storage
-          .from("images")
-          .remove(response.data.map((fileObj) => `${folder}/${fileObj.name}`));
-      });
-  });
+  const transactionsImages = await Promise.all(
+    body.map(async (transactionId) => {
+      const { data, error } = await supabase
+        .from("transaction_to_images")
+        .delete()
+        .eq("transaction_id", transactionId)
+        .select();
 
-  const allFilesToDeleteResponse = await Promise.all(allFilesToDeletePromise);
+      if (error) {
+        return error;
+      }
 
-  let someErrors = false;
+      return data;
+    })
+  );
 
-  const allErrors = allFilesToDeleteResponse.map((response) => {
-    if (response?.error) {
-      someErrors = true;
-    }
-    return response?.error;
-  });
+  const errors = transactionsImages.filter((r) => "error" in r) as {
+    error: string;
+  }[];
 
-  if (someErrors) {
-    return NextResponse.json({
-      error: allErrors.map((error) => error?.message).join(" | "),
-      status: 500,
-    });
+  if (errors.length) {
+    return NextResponse.json(
+      {
+        error: errors
+          .map((error, i) => `(${i}) - ${JSON.stringify(error, null, 2)}`)
+          .join(" | "),
+      },
+      { status: 500 }
+    );
   }
 
-  const allData = allFilesToDeleteResponse
-    .map((response) => response?.data)
-    .filter((data) => !!data)
-    .flat();
+  const validtransactionsImages = transactionsImages.filter(
+    (r): r is Tables<"transaction_to_images">[] => !("error" in r)
+  );
 
-  return NextResponse.json({ success: true, data: allData });
+  const flattenedTransactionImages = validtransactionsImages.flat();
+  const allTransactionImagesPaths = flattenedTransactionImages.map(
+    (image) => image.path
+  );
+
+  if (!allTransactionImagesPaths.length) {
+    return NextResponse.json({ success: true, data: [] });
+  }
+
+  const { data, error: storageError } = await supabase.storage
+    .from("images")
+    .remove(allTransactionImagesPaths);
+
+  if (storageError) {
+    return NextResponse.json({ error: storageError.message }, { status: 500 });
+  }
+
+  return NextResponse.json({
+    success: true,
+    data: flattenedTransactionImages,
+  });
+}
+
+export async function GET(): Promise<
+  NextResponse<ImagesGetResponse | ImagesErrorResponse>
+> {
+  const user = await getUserFromRequest();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("transaction_to_images")
+    .select()
+    .eq("user_id", user.id);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true, data });
 }

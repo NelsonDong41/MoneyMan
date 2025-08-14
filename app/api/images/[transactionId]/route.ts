@@ -1,6 +1,6 @@
 import { imagesFormSchema } from "@/utils/schemas/imagesFormSchema";
 import { createClient, getUserFromRequest } from "@/utils/supabase/server";
-import { Tables } from "@/utils/supabase/types";
+import { Database, Tables, TablesInsert } from "@/utils/supabase/types";
 import { buildSupabaseFolderPath } from "@/utils/utils";
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
@@ -16,21 +16,9 @@ export interface Bucket {
   public: boolean;
 }
 
-export interface FileObject {
-  name: string;
-  bucket_id: string;
-  owner: string;
-  id: string;
-  updated_at: string;
-  created_at: string;
-  last_accessed_at: string;
-  metadata: Record<string, any>;
-  buckets: Bucket;
-}
-
 export type ImagesGetResponse = {
   success: true;
-  data: FileObject[];
+  data: Tables<"transaction_to_images">[];
 };
 export type ImagesErrorResponse = {
   error: string;
@@ -39,12 +27,8 @@ export type ImagesErrorResponse = {
 export type ImagesPutResponse = {
   success: true;
   data: {
-    inserted: ({
-      id: string;
-      path: string;
-      fullPath: string;
-    } | null)[];
-    deleted: FileObject[] | null;
+    inserted: Tables<"transaction_to_images">[];
+    deleted: Tables<"transaction_to_images">[] | null;
   } | null;
 };
 
@@ -59,21 +43,13 @@ export async function GET(
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-
-  const rootFilePathName = buildSupabaseFolderPath(user, transactionId);
   const supabase = await createClient();
 
-  const { data, error } = await supabase.storage
-    .from("images")
-    .list(rootFilePathName, {
-      limit: 100, // optional: max number of files to return
-      offset: 0, // optional: offset for pagination
-      sortBy: {
-        // optional: sort files by name, ascending or descending
-        column: "name",
-        order: "asc",
-      },
-    });
+  const { data, error } = await supabase
+    .from("transaction_to_images")
+    .select()
+    .eq("transaction_id", transactionId);
+
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -111,6 +87,10 @@ export async function PUT(
 
   const { imagesToAdd, imagesToDelete } = parseResult.data;
 
+  if (!imagesToAdd?.length && !imagesToDelete?.length) {
+    return NextResponse.json({ success: true, data: null });
+  }
+
   if (
     (!imagesToAdd || !imagesToAdd.length) &&
     (!imagesToDelete || !imagesToDelete.length)
@@ -119,42 +99,99 @@ export async function PUT(
   }
 
   const supabase = await createClient();
-  const allImagesToAddPromises = imagesToAdd?.map((image) => {
-    return supabase.storage
-      .from("images")
-      .upload(`${rootFilePathName}/${image.name}-${uuidv4()}`, image, {
-        cacheControl: "3600",
-        upsert: false,
-      });
-  });
 
-  const imagesToDeletePaths = imagesToDelete?.map(
-    (image) => `${rootFilePathName}/${image}`
-  );
-  const allImageToDeletePromises =
-    imagesToDeletePaths &&
-    imagesToDeletePaths.length &&
-    supabase.storage.from("images").remove(imagesToDeletePaths);
+  const uploadResults = await Promise.all(
+    (imagesToAdd || []).map(async (image: File) => {
+      const path = `${rootFilePathName}/${uuidv4()}-${image.name}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from("images")
+        .upload(path, image, { cacheControl: "3600", upsert: false });
 
-  const allImagesInsertionResponse =
-    allImagesToAddPromises &&
-    allImagesToAddPromises.length &&
-    (await Promise.all(allImagesToAddPromises));
-  const allImagesDeletionResponse =
-    allImageToDeletePromises && (await allImageToDeletePromises);
+      if (uploadError) {
+        return uploadError;
+      }
 
-  const allErrors = (allImagesInsertionResponse || [])
-    .map((data) => {
-      return data.error;
+      const publicUrl = supabase.storage.from("images").getPublicUrl(path)
+        .data.publicUrl;
+
+      return {
+        transaction_id: transactionId,
+        image_id: uploadData.id,
+        path: uploadData.path,
+        image_public_path: publicUrl,
+        bucket: "images",
+        name: image.name,
+        type: image.type,
+        user_id: user.id,
+      } as TablesInsert<"transaction_to_images">;
     })
-    .concat(!!allImagesDeletionResponse ? allImagesDeletionResponse.error : []);
+  );
 
-  const hasSomeErrors = allErrors.some(Boolean);
+  const deleteResults =
+    imagesToDelete &&
+    imagesToDelete.length &&
+    (await supabase.storage.from("images").remove(imagesToDelete));
 
-  if (hasSomeErrors) {
+  const errors = uploadResults.filter((r) => "error" in r) as {
+    error: string;
+  }[];
+
+  if (deleteResults && deleteResults.error) {
+    errors.push({ error: deleteResults.error.message });
+  }
+
+  if (errors.length) {
     return NextResponse.json(
       {
-        error: allErrors
+        error: errors
+          .map((error, i) => `(${i}) - ${JSON.stringify(error, null, 2)}`)
+          .join(" | "),
+      },
+      { status: 500 }
+    );
+  }
+
+  const validInserts = uploadResults.filter(
+    (r): r is TablesInsert<"transaction_to_images"> => !("error" in r)
+  );
+
+  let insertedRows: Tables<"transaction_to_images">[] = [];
+  if (validInserts.length > 0) {
+    const { data: insertData, error: insertError } = await supabase
+      .from("transaction_to_images")
+      .insert(validInserts)
+      .select();
+
+    if (insertError) {
+      errors.push({ error: insertError.message });
+    } else {
+      insertedRows = insertData || [];
+    }
+  }
+  if (imagesToDelete && imagesToDelete.length) {
+    const { data, error } = await supabase
+      .from("transaction_to_images")
+      .delete()
+      .in("path", imagesToDelete)
+      .select();
+
+    if (error) {
+      return NextResponse.json(
+        { error: errors.concat([{ error: error.message }]).join(" | ") },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: { inserted: insertedRows, deleted: data },
+    });
+  }
+
+  if (errors.length) {
+    return NextResponse.json(
+      {
+        error: errors
           .map((error) => JSON.stringify(error, null, 2))
           .join(" | "),
       },
@@ -162,16 +199,8 @@ export async function PUT(
     );
   }
 
-  const allInsertionData =
-    !!allImagesInsertionResponse &&
-    allImagesInsertionResponse.map((data) => {
-      return data.data;
-    });
-  const allDeletionData =
-    !!allImagesDeletionResponse && allImagesDeletionResponse.data;
-
   return NextResponse.json({
     success: true,
-    data: { inserted: allInsertionData || [], deleted: allDeletionData || [] },
+    data: { inserted: insertedRows, deleted: [] },
   });
 }

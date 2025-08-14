@@ -47,7 +47,7 @@ export type TransactionUpdate =
 
 export type SheetAction = {
   upsertRow: (values: TableSheetForm) => void;
-  deleteRows: (ids: number[], user_Id?: string) => void;
+  deleteRows: (ids: number[]) => void;
 };
 
 interface DataTableProps<TValue> {

@@ -17,10 +17,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "./dialog";
-import { AnyImage } from "../dataTable/tableSheet";
 import { Skeleton } from "./skeleton";
+import { AnyImage } from "../dataTable/hooks/useTransactionImages";
 
-const ImageGallery = ({
+const InteractableImageCarousel = ({
   loading,
   images,
   handleDelete,
@@ -53,7 +53,7 @@ const ImageGallery = ({
       {loading && <Skeleton className="h-52 w-44" />}
       {images.map((image, i) => (
         <ImageCard
-          key={image.url}
+          key={image.image_public_path}
           image={image}
           index={i}
           handleClick={handleImageClick}
@@ -82,17 +82,17 @@ const ImageGallery = ({
             <CarouselContent className="flex items-center sm:h-fit sm:w-fit h-full w-full">
               {images.map((image) => (
                 <CarouselItem
-                  key={image.url}
+                  key={image.image_public_path}
                   className="flex justify-center items-center"
                 >
                   {image.type === "application/pdf" ? (
                     <iframe
-                      src={image.url}
+                      src={image.image_public_path}
                       className="w-hover:scale-105 transition-transform max-w-full max-h-[60vh] min-w-[60vh] min-h-[70vh] h-auto w-auto"
                     />
                   ) : (
                     <Image
-                      src={image.url}
+                      src={image.image_public_path}
                       alt="Image"
                       height={0}
                       width={0}
@@ -112,4 +112,4 @@ const ImageGallery = ({
   );
 };
 
-export default ImageGallery;
+export default InteractableImageCarousel;
