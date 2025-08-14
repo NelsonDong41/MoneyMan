@@ -22,9 +22,7 @@ export function CategoryDropdown() {
   const activeGraphType = chartOptionToType(activeGraphFilters.type);
 
   const allCategories =
-    activeGraphType && categoryMap[activeGraphType]
-      ? categoryMap[activeGraphType]
-      : [];
+    (activeGraphType && categoryMap.get(activeGraphType)) || [];
 
   const allSelected =
     allCategories.length > 0 &&
@@ -73,7 +71,7 @@ export function CategoryDropdown() {
           )}
           <DropdownMenuSeparator />
           {activeGraphType && allCategories.length ? (
-            categoryMap[activeGraphType].map((category) => {
+            allCategories.map((category) => {
               const isSelected =
                 activeGraphFilters.categories.includes(category);
               return (

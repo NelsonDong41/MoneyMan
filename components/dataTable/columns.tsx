@@ -137,9 +137,7 @@ export const columns = (
               showTrigger={false}
               onOpenChange={setDeleteOpen}
               open={deleteOpen}
-              action={() =>
-                sheetActions.deleteRows([transaction.id], transaction.user_id)
-              }
+              action={() => sheetActions.deleteRows([transaction.id])}
             />
           </div>
         );

@@ -1,13 +1,7 @@
-import {
-  ImagesGetResponse,
-  FileObject,
-} from "@/app/api/images/[transactionId]/route";
+import { ImagesGetResponse } from "@/app/api/images/[transactionId]/route";
 import { ImagesErrorResponse } from "@/app/api/images/route";
 import { useUser } from "@/context/UserContext";
-import { createClient } from "@/utils/supabase/client";
-import { Type } from "@/utils/supabase/supabase";
-import { buildSupabaseFolderPath } from "@/utils/utils";
-import { User } from "@supabase/supabase-js";
+import { Tables } from "@/utils/supabase/types";
 import { useState, useEffect } from "react";
 
 export type ClientImage = {
@@ -18,7 +12,7 @@ export type ClientImage = {
   name: string;
 };
 
-export type ServerImage = FileObject & {
+export type ServerImage = Tables<"transaction_to_images"> & {
   isServer: true;
 };
 
@@ -133,7 +127,7 @@ export default function useTransactionImages(
 }
 
 export const convertFileObjectToServerImage = (
-  fileObj: FileObject
+  fileObj: Tables<"transaction_to_images">
 ): ServerImage => {
   return {
     ...fileObj,
