@@ -31,13 +31,14 @@ async function getDashboardData() {
     );
   }
 
-  const initCategoryMap: CategoryMap = {
-    Income: [],
-    Expense: [],
-  };
+  const initCategoryMap: CategoryMap = new Map();
+
+  initCategoryMap.set("Income", []);
+  initCategoryMap.set("Expense", []);
+
   const categoryMap: CategoryMap = categoryData.reduce((acc, curr) => {
     const { type, name } = curr;
-    acc[type].push(name);
+    acc.get(type)!.push(name);
     return acc;
   }, initCategoryMap);
 
